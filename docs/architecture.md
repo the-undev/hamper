@@ -227,8 +227,10 @@ The server makes the plan row, so an operation on the plan refuses until the
 first pull has brought it.
 
 Screens read the store through Dexie live queries, so a screen re-renders
-when the store changes, whether from the user or from a pull. TanStack Query
-serves only the REST endpoints, such as history and export.
+when the store changes, whether from the user or from a pull. A screen writes
+by running domain operations inside one `write` transaction; a refused
+operation shows its reason and changes nothing. TanStack Query serves only the
+REST endpoints, such as history and export.
 
 The app opens the store and makes one sync loop at start, and provides both
 to every screen; the loop runs while the app is mounted.

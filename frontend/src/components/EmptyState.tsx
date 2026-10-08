@@ -8,3 +8,12 @@ export function EmptyState({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+/** What a plan screen shows before the first pull has brought the plan. */
+export function WaitingForServer() {
+  return (
+    <EmptyState>
+      Waiting for the server. The plan arrives with the first sync.
+    </EmptyState>
+  );
+}

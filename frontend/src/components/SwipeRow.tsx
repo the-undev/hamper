@@ -109,7 +109,7 @@ export function SwipeRow({
   };
 
   return (
-    <div ref={rowRef} className="relative overflow-hidden">
+    <div ref={rowRef} data-swipe-row className="relative overflow-hidden">
       <div
         className={cn(
           "relative z-[1] touch-pan-y bg-surface",

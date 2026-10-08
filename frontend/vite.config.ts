@@ -13,7 +13,11 @@ export default defineConfig({
   },
   // tanstackRouter must come before react(); tests beside routes are not routes.
   plugins: [
-    tanstackRouter({ target: "react", routeFileIgnorePattern: "\\.test\\." }),
+    tanstackRouter({
+      target: "react",
+      autoCodeSplitting: true,
+      routeFileIgnorePattern: "\\.test\\.",
+    }),
     react(),
     tailwindcss(),
   ],

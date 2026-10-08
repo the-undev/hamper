@@ -14,6 +14,7 @@ import { Route as MealsIndexRouteImport } from './routes/meals.index'
 import { Route as MoreIndexRouteImport } from './routes/more.index'
 import { Route as PlanIndexRouteImport } from './routes/plan.index'
 import { Route as ShopIndexRouteImport } from './routes/shop.index'
+import { Route as PlanDayPositionRouteImport } from './routes/plan.day.$position'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const ShopIndexRoute = ShopIndexRouteImport.update({
   path: '/shop/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanDayPositionRoute = PlanDayPositionRouteImport.update({
+  id: '/plan/day/$position',
+  path: '/plan/day/$position',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/more/': typeof MoreIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/plan/day/$position': typeof PlanDayPositionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/more': typeof MoreIndexRoute
   '/plan': typeof PlanIndexRoute
   '/shop': typeof ShopIndexRoute
+  '/plan/day/$position': typeof PlanDayPositionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,22 @@ export interface FileRoutesById {
   '/more/': typeof MoreIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/plan/day/$position': typeof PlanDayPositionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/meals/' | '/more/' | '/plan/' | '/shop/'
+  fullPaths:
+    '/' | '/meals/' | '/more/' | '/plan/' | '/shop/' | '/plan/day/$position'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/meals' | '/more' | '/plan' | '/shop'
-  id: '__root__' | '/' | '/meals/' | '/more/' | '/plan/' | '/shop/'
+  to: '/' | '/meals' | '/more' | '/plan' | '/shop' | '/plan/day/$position'
+  id:
+    | '__root__'
+    | '/'
+    | '/meals/'
+    | '/more/'
+    | '/plan/'
+    | '/shop/'
+    | '/plan/day/$position'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +94,7 @@ export interface RootRouteChildren {
   MoreIndexRoute: typeof MoreIndexRoute
   PlanIndexRoute: typeof PlanIndexRoute
   ShopIndexRoute: typeof ShopIndexRoute
+  PlanDayPositionRoute: typeof PlanDayPositionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plan/day/$position': {
+      id: '/plan/day/$position'
+      path: '/plan/day/$position'
+      fullPath: '/plan/day/$position'
+      preLoaderRoute: typeof PlanDayPositionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   MoreIndexRoute: MoreIndexRoute,
   PlanIndexRoute: PlanIndexRoute,
   ShopIndexRoute: ShopIndexRoute,
+  PlanDayPositionRoute: PlanDayPositionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

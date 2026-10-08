@@ -10,7 +10,8 @@ Opens here. A segmented control at the top switches between two views, and a
 swipe does the same. The view last used is remembered.
 
 **Meals.** The header holds the start date, which opens the phone's date
-picker, and − N days +. A read-only line says when the plan starts and ends.
+picker, and − N days +. A read-only line says when the plan starts and ends:
+"Starts Mon 1 Jun, ends Sun 7 Jun", with dates in the browser's locale.
 Below it, one slot per day:
 
 - An empty day shows "Pick a meal". Tapping it opens the picker: a type-ahead
@@ -20,6 +21,9 @@ Below it, one slot per day:
   underneath. Tapping the name opens the day. A ≡ handle on the right drags
   the meal onto another day to swap. Swiping left reveals Clear.
 - "Start new plan from <date>" at the bottom, which asks for a confirm.
+
+Until the first sync brings the plan, the plan's screens say they are waiting
+for the server.
 
 **Day.** The date, the planned meal's name, and a line saying which library
 meal it came from and whether it has been changed for this day, or that it is
@@ -86,5 +90,7 @@ Tapping one opens it read only. "Copy these meals to the plan" on each.
 - The type-ahead is the same control wherever a line is added: type, pick an
   existing item, or take the first row to create one. Enter picks the first
   row.
+- Until images arrive, a picture is a coloured block with the name's first
+  letter.
 - On a desktop the same screens render in a centred column; nothing is
   desktop-only.

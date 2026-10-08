@@ -6,6 +6,7 @@ import { afterEach } from "vitest";
 // Without Vitest globals mode, Testing Library's auto-cleanup never registers.
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
 });
 
 // Node's experimental localStorage global (Node >= 25) shadows jsdom's and does nothing without --localstorage-file.
