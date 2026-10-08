@@ -99,8 +99,10 @@ History needs the server, and says so while offline.
   footer that stays above the tabs, holding Done, which goes back, and on a
   Day, Clear day.
 - Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
-  press and hold on the handle on a phone, a plain drag with a mouse, with the
-  day under the finger highlighted.
+  press and hold on the handle on a phone, a plain drag with a mouse. The day
+  under the finger is highlighted and says Swap, or Move here when it is
+  empty, and the dragged day's slot shows the name it would take. After the
+  drop both days fade in.
 - The type-ahead is the same control wherever a line is added: type, then
   pick an existing item or take the row that creates one. Matches come first,
   the best at the top, and the create row comes last; when nothing matches it

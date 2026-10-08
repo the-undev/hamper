@@ -121,7 +121,9 @@ test("a day drags onto another to swap", async ({ page }) => {
   await clearDay(page, secondDay);
 });
 
-test("the page keeps its height while a day is dragged", async ({ page }) => {
+test("a dragged day shows the swap and the page keeps its height", async ({
+  page,
+}) => {
   test.skip(!!test.info().project.use.hasTouch, "a mouse drag is a desktop's");
   const first = uniqueName("Hash");
   const second = uniqueName("Bake");
@@ -132,6 +134,16 @@ test("the page keeps its height while a day is dragged", async ({ page }) => {
   const secondDay = await placeOnFirstEmptyDay(page, second);
   const from = await centre(dayHandle(page, first, firstDay));
   const to = await centre(dayHandle(page, second, secondDay));
+  // The target's handle gives way to "Swap" mid-drag, so the slots are found by position.
+  const slotOf = async (mealName: string, dayLabel: string) => {
+    const position = await page
+      .locator("li[data-position]")
+      .filter({ has: dayHandle(page, mealName, dayLabel) })
+      .getAttribute("data-position");
+    return page.locator(`li[data-position="${position}"]`);
+  };
+  const origin = await slotOf(first, firstDay);
+  const target = await slotOf(second, secondDay);
   const scrollHeight = () =>
     page.evaluate(() => document.documentElement.scrollHeight);
   const before = await scrollHeight();
@@ -146,6 +158,8 @@ test("the page keeps its height while a day is dragged", async ({ page }) => {
     );
     heights.push(await scrollHeight());
   }
+  await expect(target).toContainText("Swap");
+  await expect(origin.getByRole("link")).toContainText(second);
   await page.mouse.up();
   await expect(dayHandle(page, first, secondDay)).toBeVisible();
   heights.push(await scrollHeight());

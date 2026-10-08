@@ -292,3 +292,42 @@ test("a_filled_days_link_is_not_natively_draggable", async () => {
     await screen.findByRole("link", { name: /Curry\s*Naan, Rice/ }),
   ).toHaveAttribute("draggable", "false");
 });
+
+function slotAt(position: number): HTMLElement {
+  const element = document.querySelector<HTMLElement>(
+    `[data-position="${position}"]`,
+  );
+  if (!element) {
+    throw new Error(`No slot at ${position}`);
+  }
+  return element;
+}
+
+test("mid_drag_the_target_says_what_a_drop_does_and_the_dragged_day_shows_the_name_it_would_take", async () => {
+  laySlotsOut();
+  await seed(db, { days: [aDay(0, "Curry", curry), aDay(1, "Fajitas")] });
+  const { user } = renderApp("/plan", db, fakeLoop());
+
+  (
+    await screen.findByRole("button", { name: `Move Curry from ${monday}` })
+  ).focus();
+  await user.keyboard("[Space]");
+  await user.keyboard("[ArrowDown]");
+
+  expect(within(slotAt(1)).getByText("Swap")).toBeInTheDocument();
+  expect(
+    within(slotAt(1)).queryByRole("button", { name: /^Move Fajitas/ }),
+  ).not.toBeInTheDocument();
+  expect(within(slotAt(0)).getByRole("link")).toHaveTextContent("Fajitas");
+
+  await user.keyboard("[ArrowDown]");
+
+  expect(within(slotAt(2)).getByText("Move here")).toBeInTheDocument();
+  expect(within(slotAt(1)).queryByText("Swap")).not.toBeInTheDocument();
+  expect(within(slotAt(0)).getByRole("link")).toHaveTextContent("Curry");
+
+  await user.keyboard("[Escape]");
+
+  expect(screen.queryByText("Move here")).not.toBeInTheDocument();
+  expect(await db.days.get(dayIdFor(0))).toMatchObject({ name: "Curry" });
+});
