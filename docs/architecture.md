@@ -60,6 +60,8 @@ path gets the app shell.
   tombstones it.
 - `GET /api/history`: archived shops, newest first, with a line count.
 - `GET /api/history/{id}`: one archived shop with its lines.
+- `GET /api/export`: the export zip.
+- `POST /api/import`: takes an export zip into an empty database.
 
 The sync and image endpoints are added in their phases of the
 [build order](roadmap.md#build-order).
@@ -149,10 +151,19 @@ long cache headers, and the service worker caches responses it has seen.
 
 ## Export and import
 
-`GET /api/export` streams a zip: `data.json` holding every table including
-history, and `images/`. `POST /api/import` takes the same zip into an empty
-database and refuses a database that already has data. The JSON carries a
-format version.
+`GET /api/export` returns a zip named `hamper-<yyyyMMdd-HHmmss>.zip` holding
+`data.json`: format 1, the plan's start date and length, every live row of
+the synced tables without revisions or tombstones, and all of history. A
+deleted item that a live line still points at is exported with it, so every
+reference resolves on import, where it arrives undeleted. Images join the zip
+in their phase of the [build order](roadmap.md#build-order).
+
+`POST /api/import` takes the same zip as the raw request body
+(`application/zip`) and writes it in one transaction: every row, with new
+revisions, and the plan's start date and length. It refuses with 409 when any
+item, meal, day, wanted line, shop or archived shop exists, deleted ones
+included, and with 400 when the zip has no `data.json`, the format is not 1,
+or the JSON does not fit the schema.
 
 ## Share and download
 
