@@ -3,13 +3,18 @@ import { expect, openApp, syncState, test } from "./helpers.ts";
 test("the worker installs, the manifest names the app, and the Plan opens offline", async ({
   page,
   context,
+  browserName,
 }) => {
   await openApp(page, "/plan");
-  const workerState = await page.evaluate(async () => {
-    const registration = await navigator.serviceWorker.ready;
-    return registration.active?.state;
-  });
-  expect(workerState).toBe("activated");
+  // ready resolves once a worker is active, which can still be activating.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const registration = await navigator.serviceWorker.ready;
+        return registration.active?.state;
+      }),
+    )
+    .toBe("activated");
 
   const manifestHref = await page
     .locator('link[rel="manifest"]')
@@ -28,5 +33,9 @@ test("the worker installs, the manifest names the app, and the Plan opens offlin
     .toBe("Offline. Changes are kept on this phone.");
 
   await context.setOffline(false);
+  if (browserName === "firefox") {
+    // Playwright's Firefox fires no online event for a page loaded while offline, so the test sends it.
+    await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  }
   await expect.poll(() => syncState(page)).toBeNull();
 });

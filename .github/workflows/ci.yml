@@ -74,7 +74,7 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
 
       - run: pnpm -C frontend install --frozen-lockfile
-      - run: pnpm -C frontend exec playwright install --with-deps chromium
+      - run: pnpm -C frontend exec playwright install --with-deps chromium firefox
       - run: make e2e
 
       - if: failure()

@@ -24,6 +24,13 @@ export default defineConfig({
         viewport: { width: 1280, height: 900 },
       },
     },
+    {
+      name: "desktop-firefox",
+      use: {
+        ...devices["Desktop Firefox"],
+        viewport: { width: 1280, height: 900 },
+      },
+    },
   ],
   webServer: {
     command: "node e2e/server.mjs",

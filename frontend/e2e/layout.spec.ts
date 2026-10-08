@@ -8,8 +8,13 @@ test.use({
 
 test("the column stays put whether or not the view scrolls", async ({
   page,
+  browserName,
 }) => {
   test.skip(!!test.info().project.use.hasTouch, "a phone's scrollbar overlays");
+  test.skip(
+    browserName === "firefox",
+    "headless Firefox's scrollbars take no width, so there is no gutter to test",
+  );
   await openApp(page, "/plan");
   const main = page.getByRole("main");
   // The frame's height follows the view on show over 200 ms.

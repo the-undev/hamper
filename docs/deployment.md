@@ -79,7 +79,9 @@ alone on `127.0.0.1:8777` with its own database and data directory under
 never touches the dev database. `make check` runs every gate. `make e2e`
 builds the frontend, starts the API on `127.0.0.1:8778` with its own temp
 database, data directory and the build as its web root, and runs the
-Playwright suite against it. Neither instance
+Playwright suite against it: a phone and a desktop in Chromium, and a desktop
+in Firefox. It needs both browsers, installed once with
+`pnpm -C frontend exec playwright install chromium firefox`. Neither instance
 is reachable from a phone by default, so sync and PWA behaviour are tested on a
 phone against the live-test instance over the local network or through a dev
 tunnel, `TBD`.
