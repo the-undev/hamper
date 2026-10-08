@@ -1,4 +1,10 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type Ref,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { Segmented } from "@/components/Segmented";
 import { usePlan } from "@/hooks/data";
@@ -16,9 +22,6 @@ const views = [
   { value: "meals", label: "Meals" },
   { value: "items", label: "Items" },
 ] as const;
-
-/** How long the track takes to settle, matching its duration-200 transition. */
-const settleMs = 200;
 
 function rememberedView(): PlanView {
   return readSetting(viewSetting) === "items" ? "items" : "meals";
@@ -41,33 +44,43 @@ function trackTransform(
 export function PlanScreen() {
   const plan = usePlan();
   const [view, setView] = useState<PlanView>(rememberedView);
-  const [settling, setSettling] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
-  const settleTimer = useRef<number | undefined>(undefined);
+  const mealsRef = useRef<HTMLDivElement>(null);
+  const itemsRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+  // The frame is as tall as the view on show; the first size after a switch animates with the slide, and later ones apply at once.
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    const shown = (view === "meals" ? mealsRef : itemsRef).current;
+    if (!frame || !shown) {
+      return;
+    }
+    let switching = true;
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry?.borderBoxSize[0]?.blockSize;
+      if (height === undefined) {
+        return;
+      }
+      frame.style.transitionProperty = switching ? "" : "none";
+      frame.style.height = `${height}px`;
+      switching = false;
+    });
+    observer.observe(shown);
+    return () => observer.disconnect();
+  }, [view]);
 
-  const settle = (): void => {
-    setSettling(true);
-    window.clearTimeout(settleTimer.current);
-    settleTimer.current = window.setTimeout(() => setSettling(false), settleMs);
-  };
   const choose = (chosenView: PlanView): void => {
     setView(chosenView);
     writeSetting(viewSetting, chosenView);
-    settle();
   };
   const { drag, handlers } = useViewSwipe(
     () => frameRef.current?.offsetWidth || window.innerWidth,
     (direction: SwipeDirection) => {
-      if (!direction) {
-        settle();
-        return;
+      if (direction) {
+        choose(direction === "left" ? "items" : "meals");
       }
-      choose(direction === "left" ? "items" : "meals");
     },
   );
-  const moving = drag !== null || settling;
 
   return (
     <div className="flex flex-1 flex-col gap-3.5">
@@ -84,52 +97,55 @@ export function PlanScreen() {
         onChange={choose}
       />
       <div
-        ref={frameRef}
-        className="-mx-4 flex flex-1 touch-pan-y touch-pinch-zoom overflow-hidden"
+        className="-mx-4 flex flex-1 touch-pan-y touch-pinch-zoom flex-col"
         {...handlers}
       >
         <div
-          data-plan-track
-          className={cn(
-            "flex w-[200%] flex-none items-start",
-            !drag &&
-              "transition-transform duration-200 motion-reduce:transition-none",
-          )}
-          style={{ transform: trackTransform(view, drag) }}
+          ref={frameRef}
+          data-plan-frame
+          className="overflow-clip transition-[height] duration-200 motion-reduce:transition-none"
         >
-          <ViewPane name="meals" active={view === "meals"} moving={moving}>
-            <PlanMeals />
-          </ViewPane>
-          <ViewPane name="items" active={view === "items"} moving={moving}>
-            <PlanItems />
-          </ViewPane>
+          <div
+            data-plan-track
+            className={cn(
+              "flex w-[200%] items-start",
+              !drag &&
+                "transition-transform duration-200 motion-reduce:transition-none",
+            )}
+            style={{ transform: trackTransform(view, drag) }}
+          >
+            <ViewPane ref={mealsRef} name="meals" active={view === "meals"}>
+              <PlanMeals />
+            </ViewPane>
+            <ViewPane ref={itemsRef} name="items" active={view === "items"}>
+              <PlanItems />
+            </ViewPane>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/** One view on the track; the inactive one is inert and hidden from screen readers, and collapses once the track is still so the page is as tall as the view on show. */
+/** One view on the track; the inactive one is inert and hidden from screen readers. */
 function ViewPane({
+  ref,
   name,
   active,
-  moving,
   children,
 }: {
+  ref: Ref<HTMLDivElement>;
   name: PlanView;
   active: boolean;
-  moving: boolean;
   children: ReactNode;
 }) {
   return (
     <div
+      ref={ref}
       data-plan-view={name}
       inert={!active}
       aria-hidden={active ? undefined : true}
-      className={cn(
-        "flex w-1/2 min-w-0 flex-none flex-col gap-3.5 px-4",
-        !active && !moving && "h-0 overflow-hidden",
-      )}
+      className="flex w-1/2 min-w-0 flex-none flex-col gap-3.5 px-4"
     >
       {children}
     </div>

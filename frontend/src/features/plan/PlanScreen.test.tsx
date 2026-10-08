@@ -4,6 +4,7 @@ import type { HamperDb } from "@/store/db";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
+import { resizeTo } from "@/test/fake-resize-observer";
 import { seed, thePlan } from "@/test/rows";
 
 let db: HamperDb;
@@ -22,6 +23,14 @@ function track(): HTMLElement {
   const element = document.querySelector<HTMLElement>("[data-plan-track]");
   if (!element) {
     throw new Error("No plan track");
+  }
+  return element;
+}
+
+function frame(): HTMLElement {
+  const element = document.querySelector<HTMLElement>("[data-plan-frame]");
+  if (!element) {
+    throw new Error("No plan frame");
   }
   return element;
 }
@@ -127,4 +136,26 @@ test("the_inactive_view_is_inert", async () => {
   expect(
     screen.getByRole("textbox", { name: "Add an item" }),
   ).toBeInTheDocument();
+});
+
+test("the_frame_is_as_tall_as_the_view_on_show_and_animates_only_on_a_switch", async () => {
+  const { user } = renderApp("/plan", db, fakeLoop());
+  await screen.findByText(/^Starts/);
+
+  resizeTo(pane("meals"), 480);
+  resizeTo(pane("items"), 900);
+  expect(frame().style.height).toBe("480px");
+
+  resizeTo(pane("meals"), 520);
+  expect(frame().style.height).toBe("520px");
+  expect(frame().style.transitionProperty).toBe("none");
+
+  await user.click(screen.getByRole("radio", { name: "Items" }));
+  resizeTo(pane("items"), 300);
+  expect(frame().style.height).toBe("300px");
+  expect(frame().style.transitionProperty).toBe("");
+  expect(pane("meals")).toHaveAttribute("inert");
+
+  resizeTo(pane("meals"), 1000);
+  expect(frame().style.height).toBe("300px");
 });

@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
+import { FakeResizeObserver } from "./fake-resize-observer";
 
 // Without Vitest globals mode, Testing Library's auto-cleanup never registers.
 afterEach(() => {
@@ -45,3 +46,6 @@ Object.defineProperty(window, "isSecureContext", {
 
 // jsdom does not implement scrolling; the router scrolls to the top on every navigation.
 window.scrollTo = () => {};
+
+// jsdom has no ResizeObserver; tests report sizes through resizeTo.
+window.ResizeObserver = FakeResizeObserver;

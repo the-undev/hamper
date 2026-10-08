@@ -85,6 +85,41 @@ test("a day drags onto another to swap", async ({ page }) => {
   await clearDay(page, secondDay);
 });
 
+test("the page keeps its height while a day is dragged", async ({ page }) => {
+  test.skip(!!test.info().project.use.hasTouch, "a mouse drag is a desktop's");
+  const first = uniqueName("Hash");
+  const second = uniqueName("Bake");
+  await openApp(page, "/meals");
+  await addMeal(page, first, []);
+  await addMeal(page, second, []);
+  const firstDay = await placeOnFirstEmptyDay(page, first);
+  const secondDay = await placeOnFirstEmptyDay(page, second);
+  const from = await centre(dayHandle(page, first, firstDay));
+  const to = await centre(dayHandle(page, second, secondDay));
+  const scrollHeight = () =>
+    page.evaluate(() => document.documentElement.scrollHeight);
+  const before = await scrollHeight();
+
+  const heights: number[] = [];
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  for (let step = 1; step <= 12; step += 1) {
+    await page.mouse.move(
+      from.x + ((to.x - from.x) * step) / 12,
+      from.y + ((to.y - from.y) * step) / 12,
+    );
+    heights.push(await scrollHeight());
+  }
+  await page.mouse.up();
+  await expect(dayHandle(page, first, secondDay)).toBeVisible();
+  heights.push(await scrollHeight());
+
+  expect(heights).toEqual(heights.map(() => before));
+  await page.waitForTimeout(100);
+  await clearDay(page, firstDay);
+  await clearDay(page, secondDay);
+});
+
 test("a swipe clears a day on a phone", async ({ page }) => {
   test.skip(!test.info().project.use.hasTouch, "a swipe needs a finger");
   const meal = uniqueName("Curry");
