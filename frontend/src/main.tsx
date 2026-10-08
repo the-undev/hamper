@@ -3,6 +3,7 @@ import { createBrowserHistory } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App, createAppRouter } from "./app";
+import { registerServiceWorker } from "./pwa/register";
 import { HamperDb } from "./store/db";
 import { openEvents, syncApi } from "./sync/api";
 import { createSyncLoop } from "./sync/loop";
@@ -28,6 +29,7 @@ createRoot(rootElement).render(
     <App
       db={db}
       loop={syncLoop}
+      appUpdate={registerServiceWorker()}
       queryClient={new QueryClient()}
       router={createAppRouter(createBrowserHistory())}
     />

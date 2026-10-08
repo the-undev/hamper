@@ -33,3 +33,15 @@ test("the_bar_is_hidden_online_with_nothing_to_send_and_says_offline_or_the_chan
   ).toBeInTheDocument();
   expect(screen.queryByText(/to send/)).not.toBeInTheDocument();
 });
+
+test("update_ready_shows_a_reload_button_that_switches_to_the_new_version", async () => {
+  const { appUpdate, user } = renderApp("/more", db, fakeLoop(quietStatus));
+  await screen.findByRole("heading", { name: "More" });
+  expect(screen.queryByText("Update ready")).not.toBeInTheDocument();
+
+  act(() => appUpdate.makeReady());
+  expect(screen.getByText("Update ready")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Reload" }));
+  expect(appUpdate.reload).toHaveBeenCalledTimes(1);
+});

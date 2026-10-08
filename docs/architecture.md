@@ -33,7 +33,8 @@ Makefile   setup, dev, live-test, check, image
 ```
 
 `make check` runs build, format, backend tests, lint, typecheck, frontend
-tests and the frontend build. Nothing merges without it.
+tests and the frontend build, which fails when it emits no `sw.js` or
+`manifest.webmanifest`. Nothing merges without it.
 
 ### Ports
 
@@ -334,8 +335,8 @@ cleared.
 
 Share builds the unticked lines as text on the device and calls
 `navigator.share`. Where that is absent, it copies to the clipboard and says
-so. Download writes the same text to a `.txt` file through a blob link. Both
-work offline.
+so. Share shows only on a secure context. Download writes the same text to a
+`.txt` file through a blob link, on any address. Both work offline.
 
 ## PWA
 
@@ -347,14 +348,26 @@ and `icon-512.png`, and to `icon-maskable-512.png` with the corners filled.
 `index.html` carries the same theme colour and `icon-192.png` as the Apple
 touch icon.
 
-The service worker
-precaches the app shell on install, so the app opens with no connection, and
-caches image responses as they are seen. API and sync requests are never
-cached by it; the data lives in Dexie.
+Workbox builds the service worker in `generateSW` mode. It precaches
+`index.html`, every script and stylesheet under `assets/`, the icons and the
+manifest, so the app opens with no connection. A navigation is answered with
+the cached `index.html`, except under `/api/`, `/sync/`, `/images/` and
+`/health`, which go to the network. Responses under `/images/` are cached as
+they are seen, cache first, in a cache named `images` that keeps at most 300
+entries for at most 60 days. Nothing else is cached by it: API and sync
+requests go to the network, and the data lives in Dexie. The worker is built
+only by `vite build`; `make dev` runs without one.
 
-The service worker and `navigator.share` need a secure context, so they are
-present on the HTTPS address and absent on the plain HTTP one; the app detects
-each and hides what is absent. See [deployment](deployment.md).
+`frontend/src/pwa/register.ts` registers the worker through
+`virtual:pwa-register` with the prompt register type. When a new version has
+installed and waits, the status bar shows Update ready with a Reload button,
+which activates the new worker and reloads the page.
+
+The service worker, install and `navigator.share` need a secure context, so
+they are present on the HTTPS address and absent on the plain HTTP one. The
+app reads `window.isSecureContext`: on an insecure page there is no worker
+and so no Update ready, Share is hidden, and More says "Offline, install and
+share need the HTTPS address." See [deployment](deployment.md).
 
 ## Identity
 

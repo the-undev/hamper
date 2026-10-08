@@ -5,8 +5,9 @@ import userEvent from "@testing-library/user-event";
 import { App, createAppRouter } from "@/app";
 import type { HamperDb } from "@/store/db";
 import type { SyncLoop } from "@/sync/loop";
+import { fakeAppUpdate } from "./fake-app-update";
 
-/** Renders the whole app at a path over a real store, returning the router and a user to drive it. */
+/** Renders the whole app at a path over a real store, returning the router, a user to drive it and the app update to make ready. */
 export function renderApp(path: string, db: HamperDb, loop: SyncLoop) {
   const router = createAppRouter(
     createMemoryHistory({ initialEntries: [path] }),
@@ -15,6 +16,15 @@ export function renderApp(path: string, db: HamperDb, loop: SyncLoop) {
     defaultOptions: { queries: { retry: false } },
   });
   const user = userEvent.setup();
-  render(<App db={db} loop={loop} queryClient={queryClient} router={router} />);
-  return { router, user, queryClient };
+  const appUpdate = fakeAppUpdate();
+  render(
+    <App
+      db={db}
+      loop={loop}
+      appUpdate={appUpdate}
+      queryClient={queryClient}
+      router={router}
+    />,
+  );
+  return { router, user, queryClient, appUpdate };
 }

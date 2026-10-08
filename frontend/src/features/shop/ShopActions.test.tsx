@@ -69,6 +69,18 @@ test("share_opens_the_share_sheet_where_there_is_one", async () => {
   );
 });
 
+test("share_is_hidden_on_an_insecure_context_and_download_stays", async () => {
+  vi.spyOn(window, "isSecureContext", "get").mockReturnValue(false);
+  renderApp(`/shop/${shop.id}`, db, fakeLoop());
+
+  expect(
+    await screen.findByRole("button", { name: "Download" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Share" }),
+  ).not.toBeInTheDocument();
+});
+
 test("download_saves_the_same_text_as_a_file_named_after_the_list", async () => {
   const blobs: Blob[] = [];
   vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => {

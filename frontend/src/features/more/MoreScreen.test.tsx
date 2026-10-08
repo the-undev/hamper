@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { formatTime, formatTimestampDay } from "@/lib/dates";
 import type { HamperDb } from "@/store/db";
@@ -17,6 +17,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   await db.delete();
 });
 
@@ -93,4 +94,17 @@ test("the_sync_status_says_when_the_last_sync_finished", async () => {
       `Last synced ${formatTimestampDay(lastSyncAt)} at ${formatTime(lastSyncAt)}. The server refused the last changes: Bad change.`,
     ),
   ).toBeInTheDocument();
+});
+
+test("the_https_line_shows_only_on_an_insecure_context", async () => {
+  const httpsLine = "Offline, install and share need the HTTPS address.";
+  renderApp("/more", db, fakeLoop());
+  await screen.findByRole("heading", { name: "More" });
+  expect(screen.queryByText(httpsLine)).not.toBeInTheDocument();
+  cleanup();
+
+  vi.spyOn(window, "isSecureContext", "get").mockReturnValue(false);
+  renderApp("/more", db, fakeLoop());
+
+  expect(await screen.findByText(httpsLine)).toBeInTheDocument();
 });

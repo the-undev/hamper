@@ -5,6 +5,7 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint } from "@/components/styles";
 import { useLiveItems } from "@/hooks/data";
 import { formatTime, formatTimestampDay } from "@/lib/dates";
+import { useSecureContext } from "@/pwa/secure";
 import { useSyncLoop } from "@/store/provider";
 import { type SyncStatus, useSyncStatus } from "@/sync/loop";
 
@@ -23,11 +24,12 @@ export function syncSummary(status: SyncStatus): string {
   return `${lastSync}${offline}${problem}`;
 }
 
-/** The menu: Items, History, Export, Import, and the sync status. */
+/** The menu: Items, History, Export, Import, the sync status, and the HTTPS line on an insecure page. */
 export function MoreScreen() {
   const items = useLiveItems();
   const loop = useSyncLoop();
   const status = useSyncStatus(loop);
+  const secure = useSecureContext();
   const [importResult, setImportResult] = useState<string | null>(null);
 
   const importFile = async (
@@ -86,6 +88,11 @@ export function MoreScreen() {
         </p>
       )}
       <p className={hint}>{syncSummary(status)}</p>
+      {!secure && (
+        <p className={hint}>
+          Offline, install and share need the HTTPS address.
+        </p>
+      )}
     </>
   );
 }

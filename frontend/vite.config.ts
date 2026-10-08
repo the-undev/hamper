@@ -22,7 +22,35 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    VitePWA({ manifest, injectRegister: false }),
+    // src/pwa/register.ts registers the worker and asks before an update reloads the page.
+    VitePWA({
+      strategies: "generateSW",
+      registerType: "prompt",
+      injectRegister: false,
+      manifest,
+      devOptions: { enabled: false },
+      workbox: {
+        // Every chunk under assets: the router splits each route into its own.
+        globPatterns: ["**/*.{js,css,html,svg}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/sync\//,
+          /^\/images\//,
+          /^\/health$/,
+        ],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/images/"),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "images",
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 24 * 60 * 60 },
+            },
+          },
+        ],
+      },
+    }),
   ],
   server: {
     port: 5276,
@@ -40,5 +68,12 @@ export default defineConfig({
     // Without a real origin jsdom has no localStorage.
     environmentOptions: { jsdom: { url: "http://localhost" } },
     setupFiles: ["./src/test/setup.ts"],
+    // The plugin's virtual module exists only in a Vite build; tests record what the app registers.
+    alias: {
+      "virtual:pwa-register": path.resolve(
+        import.meta.dirname,
+        "./src/test/fake-pwa-register.ts",
+      ),
+    },
   },
 });

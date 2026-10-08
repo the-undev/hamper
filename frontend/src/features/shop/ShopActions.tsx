@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toast";
 import { deleteShop, restToWanted, shopText } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
+import { useSecureContext } from "@/pwa/secure";
 import { useSyncLoop } from "@/store/provider";
 import type { Item, Shop, ShopLine } from "@/store/types";
 import { useSyncStatus } from "@/sync/loop";
@@ -35,6 +36,7 @@ export function ShopActions({
   const loop = useSyncLoop();
   const { online } = useSyncStatus(loop);
   const queryClient = useQueryClient();
+  const secure = useSecureContext();
   const [confirming, setConfirming] = useState<"archive" | "delete" | null>(
     null,
   );
@@ -72,13 +74,15 @@ export function ShopActions({
   return (
     <>
       <div className="flex gap-2">
-        <button
-          type="button"
-          className={secondaryButton}
-          onClick={() => void share()}
-        >
-          Share
-        </button>
+        {secure && (
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => void share()}
+          >
+            Share
+          </button>
+        )}
         <button
           type="button"
           className={secondaryButton}

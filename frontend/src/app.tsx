@@ -5,6 +5,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { ToastProvider } from "./components/Toast";
+import { type AppUpdate, AppUpdateContext } from "./pwa/update";
 import { routeTree } from "./routeTree.gen";
 import type { HamperDb } from "./store/db";
 import { StoreProvider } from "./store/provider";
@@ -24,25 +25,29 @@ declare module "@tanstack/react-router" {
   }
 }
 
-/** The app with its store, sync loop, REST cache and router. */
+/** The app with its store, sync loop, service worker update, REST cache and router. */
 export function App({
   db,
   loop,
+  appUpdate,
   queryClient,
   router,
 }: {
   db: HamperDb;
   loop: SyncLoop;
+  appUpdate: AppUpdate;
   queryClient: QueryClient;
   router: AppRouter;
 }) {
   return (
     <StoreProvider db={db} loop={loop}>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
-      </QueryClientProvider>
+      <AppUpdateContext value={appUpdate}>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </QueryClientProvider>
+      </AppUpdateContext>
     </StoreProvider>
   );
 }

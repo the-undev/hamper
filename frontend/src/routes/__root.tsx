@@ -3,6 +3,7 @@ import { useState } from "react";
 import { HeaderSlotContext } from "@/components/ScreenHeader";
 import { StatusBar } from "@/components/StatusBar";
 import { TabBar } from "@/components/TabBar";
+import { useAppUpdate } from "@/pwa/update";
 import { useSyncLoop } from "@/store/provider";
 import { useSyncStatus } from "@/sync/loop";
 
@@ -17,6 +18,7 @@ export const Route = createRootRoute({
 function Shell() {
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   const status = useSyncStatus(useSyncLoop());
+  const appUpdate = useAppUpdate();
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-surface min-[480px]:border-line min-[480px]:border-x">
       <div className="sticky top-0 z-10 bg-surface">
@@ -24,7 +26,11 @@ function Shell() {
           ref={setHeaderSlot}
           className="flex min-h-14 items-center justify-between gap-2 border-line border-b px-4 pt-[max(10px,env(safe-area-inset-top,0px))] pb-2.5"
         />
-        <StatusBar status={status} />
+        <StatusBar
+          status={status}
+          updateReady={appUpdate.ready}
+          onReload={() => void appUpdate.reload()}
+        />
       </div>
       <main className="flex flex-1 flex-col gap-3.5 px-4 pt-3 pb-6">
         <HeaderSlotContext value={headerSlot}>

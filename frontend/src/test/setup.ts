@@ -37,5 +37,11 @@ Object.defineProperty(window, "localStorage", {
   value: new MemoryStorage(),
 });
 
+// jsdom has no isSecureContext; the app is tested as on the HTTPS address unless a test spies otherwise.
+Object.defineProperty(window, "isSecureContext", {
+  configurable: true,
+  get: () => true,
+});
+
 // jsdom does not implement scrolling; the router scrolls to the top on every navigation.
 window.scrollTo = () => {};

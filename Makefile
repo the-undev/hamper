@@ -62,5 +62,7 @@ frontend-typecheck:
 frontend-test:
 	pnpm -C $(FRONTEND) test
 
+# A build without the service worker or the manifest fails the gate.
 frontend-build:
 	pnpm -C $(FRONTEND) build
+	ls $(FRONTEND)/dist/sw.js $(FRONTEND)/dist/manifest.webmanifest
