@@ -65,6 +65,8 @@ export default defineConfig({
     port: 4276,
   },
   test: {
+    // e2e/ holds the Playwright suite, which runs in a browser against the API.
+    include: ["src/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     // Without a real origin jsdom has no localStorage.
     environmentOptions: { jsdom: { url: "http://localhost" } },

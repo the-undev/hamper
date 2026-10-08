@@ -27,6 +27,7 @@ to phones. The code follows the docs, never the other way round.
 | What | Command |
 | --- | --- |
 | Every gate | `make check` |
+| Browser tests, before a merge; CI runs it too | `make e2e` |
 | Run the API and Vite | `make dev` |
 | Isolated API for live checks (own database and data dir) | `make live-test` |
 | Build the production image | `make image` (optional `VERSION=x.y.z`) |
@@ -44,6 +45,7 @@ to phones. The code follows the docs, never the other way round.
 | Vite dev server, proxies `/api`, `/sync` and `/images` to 8776 | 5276 |
 | Vite preview | 4276 |
 | API, live test | 8777 |
+| API, browser tests | 8778 |
 | Container | 8080 |
 
 Never use skarrow's ports (8766, 8767, 8768, 5273, 4273) or the legacy app's
@@ -64,6 +66,8 @@ which runs the API on 8777 with its own database and data directory.
   operation. `Infrastructure/` is cross-cutting plumbing only.
 - Every behaviour change ships with a test in the same commit, an integration
   test through `HamperApiFactory` by default. Never mock the database.
+- A behaviour the jsdom suite cannot see (gestures, timing, the worker, the
+  network) ships with a Playwright test under `frontend/e2e/` instead.
 - Dependencies are required parameters, never optional with a null guard.
 - No infrastructure without a consumer.
 - API errors are always problem+json.

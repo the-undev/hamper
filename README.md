@@ -13,7 +13,8 @@ for it.
 The API, the frontend, sync, images, the PWA and the release image are built.
 It needs the .NET 10 SDK, Node 24 and pnpm. `make setup` installs the
 dependencies, `make dev` runs the API and Vite, and `make check` runs every
-gate. A pushed `v*` tag publishes the image to `ghcr.io/the-undev/hamper`;
+gate. `make e2e` runs the browser tests, which drive the built app in
+Chromium. A pushed `v*` tag publishes the image to `ghcr.io/the-undev/hamper`;
 [docs/deployment.md](docs/deployment.md) says how to run it.
 [docs/prototype.html](docs/prototype.html) is a clickable sketch of the screens
 on sample data.

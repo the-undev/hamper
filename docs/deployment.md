@@ -76,7 +76,10 @@ runs the API on `localhost:8776` and Vite on 5276 against the developer's own
 database and data directory in the checkout. `make live-test` runs the API
 alone on `127.0.0.1:8777` with its own database and data directory under
 `/tmp/hamper-live-test`, which `LIVE_TEST_DIR` moves, for manual checks, and
-never touches the dev database. `make check` runs every gate. Neither instance
+never touches the dev database. `make check` runs every gate. `make e2e`
+builds the frontend, starts the API on `127.0.0.1:8778` with its own temp
+database, data directory and the build as its web root, and runs the
+Playwright suite against it. Neither instance
 is reachable from a phone by default, so sync and PWA behaviour are tested on a
 phone against the live-test instance over the local network or through a dev
 tunnel, `TBD`.

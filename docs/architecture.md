@@ -16,7 +16,7 @@ PWA added.
 | Real time | Server-sent events |
 | PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode, and `workbox-window` under its register module: the web app manifest, and a service worker for the app shell and viewed images |
 | Images | Cropped on the phone with a canvas, resized on the server with Magick.NET (`Magick.NET-Q8-AnyCPU`, Apache 2.0) |
-| Tests | Backend: xUnit v3, integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database, with `FakeTimeProvider`. Frontend: Vitest, Testing Library, jsdom and `fake-indexeddb` |
+| Tests | Backend: xUnit v3, integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database, with `FakeTimeProvider`. Frontend: Vitest, Testing Library, jsdom and `fake-indexeddb`. Browser: Playwright in Chromium, as a phone and as a desktop, against the API serving the built frontend on 8778 with its own temp database, run by `make e2e` |
 
 One process: the API serves the built frontend from `wwwroot`. One `/data`
 volume holds `hamper.db` and `images/`.
@@ -29,16 +29,17 @@ as in skarrow.
 
 ```
 backend/   Hamper.slnx: src/Hamper.Api, tests/Hamper.Api.Tests
-frontend/  Vite + React, pnpm
+frontend/  Vite + React, pnpm; e2e/ holds the Playwright suite
 docs/
 Dockerfile
-Makefile   setup, dev, live-test, check, image
+Makefile   setup, dev, live-test, check, e2e, image
 .github/workflows/   ci.yml (the gates), release.yml (the image on a v* tag)
 ```
 
 `make check` runs build, format, backend tests, lint, typecheck, frontend
 tests and the frontend build, which fails when it emits no `sw.js` or
-`manifest.webmanifest`. Nothing merges without it.
+`manifest.webmanifest`. Nothing merges without it. `make e2e` runs the
+browser suite; it runs before a merge and in CI.
 
 ### Ports
 
@@ -48,6 +49,7 @@ tests and the frontend build, which fails when it emits no `sw.js` or
 | Vite dev server, proxies `/api`, `/sync` and `/images` to the API | 5276 |
 | Vite preview | 4276 |
 | API, live test (own database and data dir) | 8777 |
+| API, browser tests (own temp database and data dir) | 8778 |
 | Container | 8080 |
 
 Chosen clear of skarrow (8766, 5273, 4273, 8767, 8768) and the legacy app
