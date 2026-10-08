@@ -88,4 +88,18 @@ public sealed class SpaHostingTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
+
+    [Fact]
+    public async Task Unknown_sync_paths_stay_problem_json_404()
+    {
+        using var temp = new TempDirectory();
+        using var factory = BuildWebRoot(temp);
+        using var client = factory.CreateClient();
+        var ct = TestContext.Current.CancellationToken;
+
+        var response = await client.GetAsync(new Uri("/sync/does-not-exist", UriKind.Relative), ct);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
 }
