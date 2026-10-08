@@ -48,6 +48,22 @@ tests and the frontend build. Nothing merges without it.
 Chosen clear of skarrow (8766, 5273, 4273, 8767, 8768) and the legacy app
 (8765, 5173) on the same machine.
 
+## API
+
+Every endpoint lives under `/api` except `/health`, the `/sync` endpoints and
+`/images`, which the service worker treats differently from API calls. An
+unknown path under `/api` or `/sync` is a problem+json 404; any other unknown
+path gets the app shell.
+
+- `GET /health`: the status for a monitor.
+- `POST /api/shops/{id}/archive`: copies an open shop into history and
+  tombstones it.
+- `GET /api/history`: archived shops, newest first, with a line count.
+- `GET /api/history/{id}`: one archived shop with its lines.
+
+The sync and image endpoints are added in their phases of the
+[build order](roadmap.md#build-order).
+
 ## Sync
 
 Every device holds the whole synced dataset and a queue of changes not yet
@@ -125,16 +141,16 @@ bar shows it, and the size of the outbox.
 
 An item or meal has at most one image. The client opens the camera or the
 photo picker, shows a crop box, and uploads the cropped image as JPEG.
-`POST /items/{id}/image` and `POST /meals/{id}/image` take it; the server
-resizes to two fixed sizes, a thumbnail for lists and a larger one for the
-meal screen, and stores both under `/data/images/<id>/`. The database holds
-the image's id and sizes. `GET /images/<id>/<size>` serves them with long
-cache headers, and the service worker caches responses it has seen.
+`POST /api/items/{id}/image` and `POST /api/meals/{id}/image` take it; the
+server resizes to two fixed sizes, a thumbnail for lists and a larger one for
+the meal screen, and stores both under `/data/images/<id>/`. The database
+holds the image's id and sizes. `GET /images/<id>/<size>` serves them with
+long cache headers, and the service worker caches responses it has seen.
 
 ## Export and import
 
-`GET /export` streams a zip: `data.json` holding every table including
-history, and `images/`. `POST /import` takes the same zip into an empty
+`GET /api/export` streams a zip: `data.json` holding every table including
+history, and `images/`. `POST /api/import` takes the same zip into an empty
 database and refuses a database that already has data. The JSON carries a
 format version.
 

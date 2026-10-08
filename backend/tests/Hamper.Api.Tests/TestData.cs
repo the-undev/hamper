@@ -25,7 +25,7 @@ internal sealed record ShopSeed(
     int? PlanLengthDays = null,
     IReadOnlyList<ShopMeal>? Meals = null);
 
-/// <summary>What a shop line is made with.</summary>
+/// <summary>What a shop line is made with; lines get CreatedAt a millisecond apart in list order.</summary>
 internal sealed record ShopLineSeed(
     Item Item,
     int Count,
@@ -100,7 +100,7 @@ internal static class TestData
                 Meals = seed.Meals ?? [],
             };
             var shopLines = lines
-                .Select(line => new ShopLine
+                .Select((line, index) => new ShopLine
                 {
                     Id = Guid.NewGuid(),
                     ShopId = shop.Id,
@@ -110,7 +110,7 @@ internal static class TestData
                     SizeOverride = line.SizeOverride,
                     Sources = line.Sources ?? [],
                     Ticked = line.Ticked,
-                    CreatedAt = now,
+                    CreatedAt = now.AddMilliseconds(index),
                 })
                 .ToList();
             db.Shops.Add(shop);

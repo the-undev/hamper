@@ -106,6 +106,9 @@ the length and the planned meals' names by day. It is held as text so that
 renaming, merging or deleting items and meals afterwards changes nothing in
 it.
 
+Each day's library meal id is kept with its name, so "last shopped" is found
+by id after a rename.
+
 ## Images
 
 Items and meals can each have one image. An image is taken or chosen on the
