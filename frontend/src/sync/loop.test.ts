@@ -284,6 +284,62 @@ test("status_pending_tracks_the_outbox_count", async () => {
   await vi.waitFor(() => expect(loop.status.get().pending).toBe(0));
 });
 
+test("a_local_write_pushes_after_a_moment", async () => {
+  loop.start();
+
+  await putItems(milk);
+  await settle();
+  expect(api.pushes).toEqual([]);
+
+  await vi.waitFor(() => expect(api.pushes).toHaveLength(1));
+  expect(api.pushes[0]?.[0]?.row).toMatchObject({ id: milk.id });
+});
+
+test("a_burst_of_writes_pushes_once", async () => {
+  loop.start();
+
+  await putItems(milk);
+  await putItems(bread);
+  await putItems({ ...milk, name: "Oat milk" });
+  await vi.waitFor(() => expect(api.pushes).toHaveLength(1));
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  expect(api.pushes).toHaveLength(1);
+  expect(api.pushes[0]).toHaveLength(2);
+});
+
+test("a_write_while_offline_waits_for_the_online_event", async () => {
+  api.onPush = async () => {
+    throw new SyncUnreachableError("Could not reach /sync");
+  };
+  loop.start();
+  await putItems(milk);
+  await vi.waitFor(() => expect(loop.status.get().online).toBe(false));
+  api.onPush = fakeSyncApi().onPush;
+
+  await putItems(bread);
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  expect(api.pushes).toHaveLength(1);
+
+  window.dispatchEvent(new Event("online"));
+  await vi.waitFor(() => expect(api.pushes).toHaveLength(2));
+});
+
+test("a_refused_batch_does_not_push_again_until_the_next_write", async () => {
+  api.onPush = async () => {
+    throw new SyncError(400, "Push rejected", null);
+  };
+  loop.start();
+
+  await putItems(milk);
+  await vi.waitFor(() => expect(api.pushes).toHaveLength(1));
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  expect(api.pushes).toHaveLength(1);
+
+  await putItems(bread);
+  await vi.waitFor(() => expect(api.pushes).toHaveLength(2));
+});
+
 test("stop_closes_the_event_stream", () => {
   loop.start();
 

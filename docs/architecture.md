@@ -260,8 +260,8 @@ in the outbox, and stores the returned revision as the cursor. Only the pull
 moves the cursor. A pull follows every push, a refused one included.
 
 The loop syncs when the event stream opens or reopens, on a `revision` event
-above the cursor, when the browser comes online, and when the app comes back
-into focus or view.
+above the cursor, when the browser comes online, when the app comes back
+into focus or view, and 300 ms after a local write while online.
 
 Offline is `navigator.onLine` false, or the last push, pull or event stream
 failing to reach the server. The loop's status holds that, the size of the

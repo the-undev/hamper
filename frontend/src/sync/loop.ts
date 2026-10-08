@@ -54,6 +54,9 @@ export interface SyncLoopDeps {
   online: () => boolean;
 }
 
+/** How long the loop waits after the outbox changes before it pushes, so a burst of edits pushes once. */
+const pushDebounceMs = 300;
+
 /** An outbox entry as it stood when its row went into a batch. */
 interface SentEntry {
   seq: number;
@@ -80,6 +83,8 @@ export function createSyncLoop({
   let running: Promise<void> | null = null;
   let rerunQueued = false;
   let stopListening: (() => void) | null = null;
+  let pushTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastOutboxCount = 0;
 
   const update = (changes: Partial<SyncStatus>): void => {
     status = { ...status, ...changes };
@@ -240,7 +245,21 @@ export function createSyncLoop({
     document.addEventListener("visibilitychange", syncWhenVisible);
 
     const pendingSubscription = liveQuery(() => db.outbox.count()).subscribe({
-      next: (pending) => update({ pending }),
+      next: (pending) => {
+        update({ pending });
+        const outboxChanged = pending !== lastOutboxCount;
+        lastOutboxCount = pending;
+        if (!outboxChanged || pending === 0 || !status.online) {
+          return;
+        }
+        if (pushTimer) {
+          clearTimeout(pushTimer);
+        }
+        pushTimer = setTimeout(() => {
+          pushTimer = null;
+          void syncNow();
+        }, pushDebounceMs);
+      },
       error: (error: unknown) => update({ lastError: String(error) }),
     });
 
@@ -251,6 +270,11 @@ export function createSyncLoop({
       window.removeEventListener("focus", syncOnWake);
       document.removeEventListener("visibilitychange", syncWhenVisible);
       pendingSubscription.unsubscribe();
+      if (pushTimer) {
+        clearTimeout(pushTimer);
+        pushTimer = null;
+      }
+      lastOutboxCount = 0;
     };
   };
 
