@@ -76,6 +76,8 @@
   }
   html {
     @apply font-sans;
+    /* A desktop's scrollbar takes width; reserving it keeps the column still whether or not the screen scrolls. */
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground;
