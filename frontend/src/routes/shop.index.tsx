@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ScreenHeader } from "@/components/ScreenHeader";
+import { ShopEntry } from "@/features/shop/ShopEntry";
 
 export const Route = createFileRoute("/shop/")({
-  component: () => <ScreenHeader title="Shop" />,
+  component: ShopEntry,
 });

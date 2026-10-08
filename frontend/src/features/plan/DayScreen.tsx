@@ -1,12 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
 import { EmptyState, WaitingForServer } from "@/components/EmptyState";
-import { ItemTypeAhead } from "@/components/ItemTypeAhead";
-import { LineList, lineViews } from "@/components/LineList";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, secondaryButton, sectionLabel } from "@/components/styles";
-import { liveWhere } from "@/domain/checks";
 import { dayDate } from "@/domain/display";
-import { clearDay, resetDay, saveDayAsMeal, setDayLine } from "@/domain/plan";
+import { clearDay, resetDay, saveDayAsMeal } from "@/domain/plan";
 import { useItemsById, usePlan } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
@@ -14,6 +11,7 @@ import { dayIdFor } from "@/store/ids";
 import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
 import type { DayLine, Meal, MealLine } from "@/store/types";
+import { DayLines } from "./DayLines";
 import { MealPicker } from "./MealPicker";
 
 /** Whether the day's lines differ from the meal's, item by item and count by count. */
@@ -142,27 +140,11 @@ export function DayScreen({ position }: { position: number }) {
           this day only
         </span>
       </h3>
-      <ItemTypeAhead
-        label="Add an item for this day"
-        placeholder="Add an item for this day…"
-        addLine={async (w, itemId) => {
-          const currentLines = await liveWhere(w, "dayLines", "dayId", dayId);
-          const currentCount =
-            currentLines.find((line) => line.itemId === itemId)?.count ?? 0;
-          await setDayLine(w, position, itemId, currentCount + 1, nowIso());
-        }}
-      />
-      <LineList
-        lines={lineViews(dayLines, itemsById)}
-        empty="Nothing to buy for this day"
-        onCount={(line, count) =>
-          void write((w) =>
-            setDayLine(w, position, line.itemId, count, nowIso()),
-          )
-        }
-        onRemove={(line) =>
-          void write((w) => setDayLine(w, position, line.itemId, 0, nowIso()))
-        }
+      <DayLines
+        position={position}
+        lines={dayLines}
+        itemsById={itemsById}
+        typeAheadLabel="Add an item for this day"
       />
     </>
   );

@@ -99,7 +99,8 @@ async function readJson<T>(response: Response): Promise<T> {
   throw new SyncError(response.status, problem.title, problem.detail);
 }
 
-async function readProblem(
+/** Reads the title and detail of a problem+json body, falling back to the status text. */
+export async function readProblem(
   response: Response,
 ): Promise<{ title: string; detail: string | null }> {
   const fallbackTitle = response.statusText || `HTTP ${response.status}`;

@@ -14,6 +14,8 @@ import { Route as MealsIndexRouteImport } from './routes/meals.index'
 import { Route as MoreIndexRouteImport } from './routes/more.index'
 import { Route as PlanIndexRouteImport } from './routes/plan.index'
 import { Route as ShopIndexRouteImport } from './routes/shop.index'
+import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
+import { Route as ShopBreakdownRouteImport } from './routes/shop.breakdown'
 import { Route as PlanDayPositionRouteImport } from './routes/plan.day.$position'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +43,16 @@ const ShopIndexRoute = ShopIndexRouteImport.update({
   path: '/shop/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopShopIdRoute = ShopShopIdRouteImport.update({
+  id: '/shop/$shopId',
+  path: '/shop/$shopId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopBreakdownRoute = ShopBreakdownRouteImport.update({
+  id: '/shop/breakdown',
+  path: '/shop/breakdown',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlanDayPositionRoute = PlanDayPositionRouteImport.update({
   id: '/plan/day/$position',
   path: '/plan/day/$position',
@@ -49,6 +61,8 @@ const PlanDayPositionRoute = PlanDayPositionRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/breakdown': typeof ShopBreakdownRoute
   '/meals/': typeof MealsIndexRoute
   '/more/': typeof MoreIndexRoute
   '/plan/': typeof PlanIndexRoute
@@ -57,6 +71,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/breakdown': typeof ShopBreakdownRoute
   '/meals': typeof MealsIndexRoute
   '/more': typeof MoreIndexRoute
   '/plan': typeof PlanIndexRoute
@@ -66,6 +82,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/breakdown': typeof ShopBreakdownRoute
   '/meals/': typeof MealsIndexRoute
   '/more/': typeof MoreIndexRoute
   '/plan/': typeof PlanIndexRoute
@@ -75,12 +93,29 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/meals/' | '/more/' | '/plan/' | '/shop/' | '/plan/day/$position'
+    | '/'
+    | '/shop/$shopId'
+    | '/shop/breakdown'
+    | '/meals/'
+    | '/more/'
+    | '/plan/'
+    | '/shop/'
+    | '/plan/day/$position'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/meals' | '/more' | '/plan' | '/shop' | '/plan/day/$position'
+  to:
+    | '/'
+    | '/shop/$shopId'
+    | '/shop/breakdown'
+    | '/meals'
+    | '/more'
+    | '/plan'
+    | '/shop'
+    | '/plan/day/$position'
   id:
     | '__root__'
     | '/'
+    | '/shop/$shopId'
+    | '/shop/breakdown'
     | '/meals/'
     | '/more/'
     | '/plan/'
@@ -90,6 +125,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ShopShopIdRoute: typeof ShopShopIdRoute
+  ShopBreakdownRoute: typeof ShopBreakdownRoute
   MealsIndexRoute: typeof MealsIndexRoute
   MoreIndexRoute: typeof MoreIndexRoute
   PlanIndexRoute: typeof PlanIndexRoute
@@ -134,6 +171,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/$shopId': {
+      id: '/shop/$shopId'
+      path: '/shop/$shopId'
+      fullPath: '/shop/$shopId'
+      preLoaderRoute: typeof ShopShopIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/breakdown': {
+      id: '/shop/breakdown'
+      path: '/shop/breakdown'
+      fullPath: '/shop/breakdown'
+      preLoaderRoute: typeof ShopBreakdownRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plan/day/$position': {
       id: '/plan/day/$position'
       path: '/plan/day/$position'
@@ -146,6 +197,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ShopShopIdRoute: ShopShopIdRoute,
+  ShopBreakdownRoute: ShopBreakdownRoute,
   MealsIndexRoute: MealsIndexRoute,
   MoreIndexRoute: MoreIndexRoute,
   PlanIndexRoute: PlanIndexRoute,

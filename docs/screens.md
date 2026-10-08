@@ -44,10 +44,12 @@ list.
 **Breakdown.** Reached by "Make from plan". Every day with its lines, then the
 wanted list, all editable with the same controls as the Day and Items screens,
 and every edit saved to the plan. "Generate the list" at the bottom, Cancel at
-the top.
+the top. The list is named after the plan's start date, "Shop Mon 1 Jun"; an
+empty one is "Quick shop" and today's date.
 
 **List.** A line of status (name, how many meals it came from, how many of
-the lines are in the trolley), the type-ahead to add a line, then the unticked
+the lines are in the trolley: "Shop Mon 1 Jun, from 5 meals. 3 of 12 in the
+trolley."), the type-ahead to add a line, then the unticked
 lines and under them the ticked ones. Each line: a 44px tick box, the name,
 the size and sources in small text, the count. Tapping the name opens the line
 editor: name, size, count, "Out of stock" (to wanted), Remove, Done. Swiping
@@ -55,7 +57,8 @@ left reveals To wanted and Remove. Under the list: Share, Download; Rest to
 wanted, Archive, Delete.
 
 Share opens the share sheet with the unticked lines as text; on a desktop it
-copies the text instead. Download saves the same as a text file.
+copies the text instead. Download saves the same as a text file. Archive
+needs the server, so it is disabled while offline.
 
 ## Meals
 
