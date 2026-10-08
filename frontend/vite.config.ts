@@ -4,6 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
+import { manifest } from "./src/pwa/manifest.ts";
 
 export default defineConfig({
   resolve: {
@@ -20,6 +22,7 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
+    VitePWA({ manifest, injectRegister: false }),
   ],
   server: {
     port: 5276,

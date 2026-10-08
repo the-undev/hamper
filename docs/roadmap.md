@@ -17,11 +17,6 @@ heading so a document can link to it.
 
 ## Open decisions
 
-### PWA tooling
-
-`vite-plugin-pwa` with Workbox, or a hand-written service worker. The shell
-precache and an image cache are small enough for either. `TBD`.
-
 ### Published port
 
 Chosen when the container is added, from what is free on the server.

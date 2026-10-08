@@ -12,7 +12,7 @@ PWA added.
 | Frontend | React 19, TypeScript strict, Vite, Tailwind CSS v4, shadcn, TanStack Router and Query, dnd-kit, pnpm, Biome, Vitest |
 | On-device store | Dexie (IndexedDB) |
 | Real time | Server-sent events |
-| PWA | Web app manifest and a service worker for the app shell and viewed images; tooling `TBD` |
+| PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode: the web app manifest, and a service worker for the app shell and viewed images |
 | Images | Cropped on the phone with a canvas, resized on the server with Magick.NET (`Magick.NET-Q8-AnyCPU`, Apache 2.0) |
 | Tests | Integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database; Vitest for the frontend |
 
@@ -339,7 +339,15 @@ work offline.
 
 ## PWA
 
-A manifest with the name, icons and `display: standalone`. The service worker
+The manifest, built by the plugin from `frontend/src/pwa/manifest.ts`, names
+the app `hamper`, opens `/` with `display: standalone`, and takes its theme
+and background colours from the light theme's `--accent` and `--background`.
+Its icons are `frontend/public/icon.svg` rasterised once to `icon-192.png`
+and `icon-512.png`, and to `icon-maskable-512.png` with the corners filled.
+`index.html` carries the same theme colour and `icon-192.png` as the Apple
+touch icon.
+
+The service worker
 precaches the app shell on install, so the app opens with no connection, and
 caches image responses as they are seen. API and sync requests are never
 cached by it; the data lives in Dexie.

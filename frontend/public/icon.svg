@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>hamper</title>
+  <rect width="512" height="512" rx="112" fill="#2f7d4a"/>
+  <path d="M172 216C172 124 340 124 340 216" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round"/>
+  <rect x="124" y="208" width="264" height="40" rx="14" fill="#fff"/>
+  <path d="M146 262H366L347 372Q344 388 328 388H184Q168 388 165 372Z" fill="#fff"/>
+  <path d="M206 282V366M256 282V366M306 282V366" stroke="#2f7d4a" stroke-width="14" stroke-linecap="round"/>
+</svg>
