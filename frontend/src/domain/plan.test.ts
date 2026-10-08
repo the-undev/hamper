@@ -22,6 +22,7 @@ import {
   copyMealsFromArchived,
   placeAdHoc,
   placeMeal,
+  renameDay,
   resetDay,
   saveDayAsMeal,
   setDayLine,
@@ -168,6 +169,28 @@ test("the_days_lines_are_edited_for_that_day_only", async () => {
   expect(mealLines.map((line) => [line.itemId, line.count]).sort()).toEqual(
     curryLines,
   );
+});
+
+test("renaming_a_day_changes_the_day_only", async () => {
+  await write(db, (w) => placeMeal(w, 0, curry.id, now));
+
+  await write(db, (w) => renameDay(w, 0, "  Curry with extra naan "));
+
+  expect(await dayAt(0)).toEqual({
+    name: "Curry with extra naan",
+    mealId: curry.id,
+    lines: curryLines,
+  });
+  expect((await db.meals.get(curry.id))?.name).toBe("Curry");
+});
+
+test("renaming_a_day_to_an_empty_name_is_refused", async () => {
+  await write(db, (w) => placeMeal(w, 0, curry.id, now));
+
+  await expect(write(db, (w) => renameDay(w, 0, "   "))).rejects.toThrow(
+    DomainError,
+  );
+  expect((await dayAt(0)).name).toBe("Curry");
 });
 
 test("reset_copies_the_linked_meals_current_lines_back_onto_the_day", async () => {

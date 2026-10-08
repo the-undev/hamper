@@ -70,6 +70,7 @@ own.
   bread". Lines can be added to it.
 - The day's lines are edited for that day only. The library meal never changes
   from the plan.
+- A day's name can be edited, for that day only.
 - Reset copies the linked meal's current lines back onto the day. If the meal
   has been deleted, the day keeps its copy and Reset is gone.
 - Save as a meal puts an ad-hoc day into the library and links the day to it.

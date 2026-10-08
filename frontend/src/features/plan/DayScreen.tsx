@@ -1,9 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
 import { EmptyState, WaitingForServer } from "@/components/EmptyState";
+import { SavedField } from "@/components/SavedField";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, secondaryButton, sectionLabel } from "@/components/styles";
 import { dayDate } from "@/domain/display";
-import { clearDay, resetDay, saveDayAsMeal } from "@/domain/plan";
+import { clearDay, renameDay, resetDay, saveDayAsMeal } from "@/domain/plan";
 import { useItemsById, usePlan } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
@@ -101,7 +102,13 @@ export function DayScreen({ position }: { position: number }) {
   return (
     <>
       <ScreenHeader title={title} back={back} />
-      <h2 className="m-0 text-[22px] font-bold">{day.name}</h2>
+      <SavedField
+        key={day.name}
+        label="Name"
+        value={day.name}
+        title
+        save={(w, name) => renameDay(w, position, name)}
+      />
       <p className={hint}>{originText(day.mealId, linkedMeal, changed)}</p>
       <div className="flex gap-2">
         {linkedMeal && (

@@ -25,9 +25,9 @@ Below it, one slot per day:
 Until the first sync brings the plan, the plan's screens say they are waiting
 for the server.
 
-**Day.** The date, the planned meal's name, and a line saying which library
-meal it came from and whether it has been changed for this day, or that it is
-not a library meal. Reset to the meal, or Save as a meal for an ad-hoc day,
+**Day.** The date, the planned meal's name, editable for this day, and a
+line saying which library meal it came from and whether it has been changed
+for this day, or that it is not a library meal. Reset to the meal, or Save as a meal for an ad-hoc day,
 and Clear day. Then the type-ahead and the day's lines, each with + and − and
 a swipe to remove.
 

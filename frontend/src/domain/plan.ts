@@ -135,6 +135,19 @@ export async function placeAdHoc(
   await fillDay(w, position, name, null, [], now);
 }
 
+/** Renames the day at a position for that day only; the library meal and the link stay as they are. */
+export async function renameDay(
+  w: Writer,
+  position: number,
+  name: string,
+): Promise<void> {
+  const day = await liveDay(w, position);
+  if (!day) {
+    throw new DomainError(`Day ${position} holds no planned meal`);
+  }
+  await w.put("days", { ...day, name: requireName(name, nameMaxLength) });
+}
+
 /** Sets the count of an item on a day for that day only, adding the line when missing and removing it at 0. */
 export async function setDayLine(
   w: Writer,

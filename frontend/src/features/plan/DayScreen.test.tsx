@@ -67,6 +67,21 @@ test("reset_restores_the_meals_lines_on_a_changed_day", async () => {
   );
 });
 
+test("the_days_name_is_edited_for_that_day_only", async () => {
+  await seed(db, { days: [curryDay] });
+  const { user } = renderApp("/plan/day/0", db, fakeLoop());
+
+  const nameBox = await screen.findByLabelText("Name");
+  await user.clear(nameBox);
+  await user.type(nameBox, "Curry and rice{Enter}");
+
+  await waitFor(async () =>
+    expect((await db.days.get(curryDay.id))?.name).toBe("Curry and rice"),
+  );
+  expect((await db.meals.get(curry.id))?.name).toBe("Curry");
+  expect(screen.getByText(/^From the meal Curry/)).toBeInTheDocument();
+});
+
 test("save_as_a_meal_puts_an_ad_hoc_day_in_the_library_and_links_it", async () => {
   const leftovers = aDay(1, "Leftovers");
   await seed(db, {

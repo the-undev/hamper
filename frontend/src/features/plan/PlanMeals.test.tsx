@@ -88,9 +88,7 @@ test("an_ad_hoc_name_makes_a_day_with_no_lines_and_opens_it", async () => {
   const picker = await screen.findByRole("dialog");
   await user.type(within(picker).getByLabelText("Meal"), "Takeaway{Enter}");
 
-  expect(
-    await screen.findByRole("heading", { name: "Takeaway" }),
-  ).toBeInTheDocument();
+  expect(await screen.findByLabelText("Name")).toHaveValue("Takeaway");
   expect(router.state.location.pathname).toBe("/plan/day/1");
   expect(screen.getByText("Not a meal in the library")).toBeInTheDocument();
   expect(screen.getByText("Nothing to buy for this day")).toBeInTheDocument();
