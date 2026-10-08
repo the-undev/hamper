@@ -100,6 +100,7 @@ export function DaySlot({
           <Link
             to="/plan/day/$position"
             params={{ position: String(position) }}
+            draggable={false}
             className="flex min-h-11 min-w-0 flex-1 flex-col justify-center"
           >
             <b className="truncate text-[15px] font-semibold">{day.name}</b>

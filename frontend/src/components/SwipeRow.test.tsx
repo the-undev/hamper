@@ -60,3 +60,11 @@ test("a_swipe_left_opens_the_row_and_does_not_count_as_a_tap", () => {
   expect(front?.style.transform).toBe("translateX(-96px)");
   expect(onOpen).not.toHaveBeenCalled();
 });
+
+test("the_sliding_element_does_not_select_text_under_a_mouse_swipe", () => {
+  renderRow();
+
+  expect(
+    screen.getByRole("button", { name: "Milk" }).parentElement,
+  ).toHaveClass("select-none");
+});

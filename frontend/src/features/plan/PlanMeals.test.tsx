@@ -289,3 +289,18 @@ test("a_day_from_a_library_meal_shows_the_meals_picture", async () => {
     ).toEqual(["/images/fajitas-image/thumb"]),
   );
 });
+
+test("a_filled_days_link_is_not_natively_draggable", async () => {
+  const { user } = renderApp("/plan", db, fakeLoop());
+
+  await user.click(
+    await screen.findByRole("button", { name: `Pick a meal for ${tuesday}` }),
+  );
+  const picker = await screen.findByRole("dialog");
+  await user.type(within(picker).getByLabelText("Meal"), "cur");
+  await user.click(within(picker).getByRole("button", { name: /^Curry/ }));
+
+  expect(
+    await screen.findByRole("link", { name: /Curry\s*Naan, Rice/ }),
+  ).toHaveAttribute("draggable", "false");
+});

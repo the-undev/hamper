@@ -112,7 +112,7 @@ export function SwipeRow({
     <div ref={rowRef} data-swipe-row className="relative overflow-hidden">
       <div
         className={cn(
-          "relative z-[1] touch-pan-y bg-surface",
+          "relative z-[1] touch-pan-y select-none bg-surface",
           start.current?.swiping ? "" : "transition-transform duration-150",
           className,
         )}
