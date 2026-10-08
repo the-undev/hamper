@@ -86,9 +86,7 @@ export function PlanScreen() {
     <div className="flex flex-1 flex-col gap-3.5">
       <ScreenHeader
         title="Plan"
-        actions={
-          view === "meals" && plan ? <PlanRange plan={plan} /> : undefined
-        }
+        actions={plan ? <PlanRange plan={plan} /> : undefined}
       />
       <Segmented
         label="Plan view"

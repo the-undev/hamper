@@ -187,6 +187,20 @@ test("the views slide and the wanted list is edited on Items", async ({
   await expect(track).not.toHaveAttribute("style", /translateX/);
 });
 
+test("the header keeps its height when the view switches", async ({ page }) => {
+  await openApp(page, "/plan");
+  await planView(page, "Meals");
+  const header = page.getByRole("banner");
+  const mealsBox = await header.boundingBox();
+
+  await planView(page, "Items");
+  await expect(header.getByLabel("Start date")).toBeVisible();
+  const itemsBox = await header.boundingBox();
+
+  expect(itemsBox?.height).toBe(mealsBox?.height);
+  await planView(page, "Meals");
+});
+
 test("Start new plan moves the start and clears Once lines, after a confirm", async ({
   page,
 }) => {

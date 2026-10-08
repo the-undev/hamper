@@ -159,3 +159,12 @@ test("the_frame_is_as_tall_as_the_view_on_show_and_animates_only_on_a_switch", a
   resizeTo(pane("meals"), 1000);
   expect(frame().style.height).toBe("300px");
 });
+
+test("the_start_date_and_length_stay_in_the_header_on_items", async () => {
+  const { user } = renderApp("/plan", db, fakeLoop());
+
+  await user.click(await screen.findByRole("radio", { name: "Items" }));
+
+  expect(screen.getByLabelText("Start date")).toHaveValue("2026-06-01");
+  expect(screen.getByText("7 days")).toBeInTheDocument();
+});
