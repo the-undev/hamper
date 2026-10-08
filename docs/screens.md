@@ -93,9 +93,11 @@ History needs the server, and says so while offline.
   apply.
 - Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
   press and hold on the handle, with the day under the finger highlighted.
-- The type-ahead is the same control wherever a line is added: type, pick an
-  existing item, or take the first row to create one. Enter picks the first
-  row.
+- The type-ahead is the same control wherever a line is added: type, then
+  pick an existing item or take the row that creates one. Matches come first,
+  the best at the top, and the create row comes last; when nothing matches it
+  is the only row. Enter takes the first row. The meal picker's "Use as it
+  is" row follows the same order.
 - Until images arrive, a picture is a coloured block with the name's first
   letter.
 - On a desktop the same screens render in a centred column; nothing is

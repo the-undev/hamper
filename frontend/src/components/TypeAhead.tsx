@@ -44,7 +44,7 @@ export function rankOptions<O extends TypeAheadOption>(
 
 type Row<O> = { kind: "pick"; option: O } | { kind: "create"; name: string };
 
-/** The one control for adding a line: type, pick a match, or take the first row to create; Enter takes the first row. */
+/** The one control for adding a line: type, then pick a match or take the create row under them; Enter takes the first row, the best match when there is one. */
 export function TypeAhead<O extends TypeAheadOption>({
   label,
   placeholder,
@@ -69,12 +69,12 @@ export function TypeAhead<O extends TypeAheadOption>({
   const exactMatch = matches.some(
     (option) => option.name.toLowerCase() === typedName.toLowerCase(),
   );
-  if (create && typedName !== "" && !exactMatch) {
-    rows.push({ kind: "create", name: typedName });
-  }
   if (typedName !== "" || listWhenEmpty) {
     const shown = typedName === "" ? matches : matches.slice(0, matchLimit);
     rows.push(...shown.map((option) => ({ kind: "pick" as const, option })));
+  }
+  if (create && typedName !== "" && !exactMatch) {
+    rows.push({ kind: "create", name: typedName });
   }
 
   const take = (row: Row<O>): void => {

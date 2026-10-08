@@ -39,7 +39,7 @@ test("ranking_puts_the_exact_name_then_prefixes_then_substrings_ignoring_case", 
   ]);
 });
 
-test("a_prefix_match_is_offered_before_a_substring_match", async () => {
+test("matches_come_first_prefixes_before_substrings_and_the_create_row_last", async () => {
   const user = userEvent.setup();
   const { input } = renderTypeAhead();
 
@@ -48,7 +48,7 @@ test("a_prefix_match_is_offered_before_a_substring_match", async () => {
   const rowNames = screen
     .getAllByRole("button")
     .map((row) => row.textContent?.trim());
-  expect(rowNames).toEqual(["Add “mil”", "Milk chocolate", "Milk", "Oat milk"]);
+  expect(rowNames).toEqual(["Milk chocolate", "Milk", "Oat milk", "Add “mil”"]);
 });
 
 test("enter_picks_the_first_row_which_is_the_exact_match_when_there_is_one", async () => {
@@ -62,12 +62,27 @@ test("enter_picks_the_first_row_which_is_the_exact_match_when_there_is_one", asy
   expect(input).toHaveValue("");
 });
 
-test("enter_on_a_name_matching_nothing_exactly_creates_it", async () => {
+test("enter_picks_the_best_match_when_one_exists", async () => {
   const user = userEvent.setup();
   const { input, onPick, onCreate } = renderTypeAhead();
 
-  await user.type(input, "  Bread {Enter}");
+  await user.type(input, "ric{Enter}");
 
+  expect(onPick).toHaveBeenCalledWith(options[3]);
+  expect(onCreate).not.toHaveBeenCalled();
+});
+
+test("enter_creates_when_nothing_matches", async () => {
+  const user = userEvent.setup();
+  const { input, onPick, onCreate } = renderTypeAhead();
+
+  await user.type(input, "  Bread ");
+  const rowNames = screen
+    .getAllByRole("button")
+    .map((row) => row.textContent?.trim());
+  await user.keyboard("{Enter}");
+
+  expect(rowNames).toEqual(["Add “Bread”"]);
   expect(onCreate).toHaveBeenCalledWith("Bread");
   expect(onPick).not.toHaveBeenCalled();
 });
