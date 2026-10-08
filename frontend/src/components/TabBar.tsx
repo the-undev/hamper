@@ -13,7 +13,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Tabs"
-      className="sticky bottom-0 z-10 flex border-line border-t bg-surface px-2 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom,0px))]"
+      className="flex border-line border-t bg-surface px-2 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom,0px))]"
     >
       {tabs.map((tab) => (
         <Link

@@ -147,11 +147,13 @@ test("delete_removes_the_item_and_its_lines_after_a_confirm_and_open_lists_keep_
   expect(await live(db, "shopLines")).toHaveLength(1);
 });
 
-test("done_goes_back_to_the_items_list", async () => {
+test("done_in_the_footer_goes_back_to_the_items_list", async () => {
   const { user, router } = renderApp("/more/items", db, fakeLoop());
   await user.click(await screen.findByRole("link", { name: /^Potatoes/ }));
+  // The footer above the tab bar is a fieldset, so a group named Screen actions rather than a contentinfo landmark.
+  const footer = await screen.findByRole("group", { name: "Screen actions" });
 
-  await user.click(await screen.findByRole("button", { name: "Done" }));
+  await user.click(within(footer).getByRole("button", { name: "Done" }));
 
   await waitFor(() =>
     expect(router.state.location.pathname).toBe("/more/items"),

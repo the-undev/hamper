@@ -29,9 +29,9 @@ for the server.
 
 **Day.** The date, the planned meal's name, editable for this day, and a
 line saying which library meal it came from and whether it has been changed
-for this day, or that it is not a library meal. Reset to the meal, or Save as a meal for an ad-hoc day,
-and Clear day. Then the type-ahead and the day's lines, each with + and − and
-a swipe to remove.
+for this day, or that it is not a library meal. Reset to the meal, or Save as
+a meal for an ad-hoc day. Then the type-ahead and the day's lines, each with +
+and − and a swipe to remove.
 
 **Items.** The type-ahead at the top, then the wanted list: each line with its
 usual size under the name, a Once / Weekly toggle, + and −, and a swipe to
@@ -95,8 +95,9 @@ History needs the server, and says so while offline.
   sent: "Offline. Changes are kept on this phone." or "3 changes to send".
   The count is of rows waiting to be sent, and offline is shown when both
   apply.
-- Every edit is saved as it is made. Editing screens end with Done, which
-  goes back.
+- Every edit is saved as it is made. Day, Meal and the item editor have a
+  footer that stays above the tabs, holding Done, which goes back, and on a
+  Day, Clear day.
 - Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
   press and hold on the handle on a phone, a plain drag with a mouse, with the
   day under the finger highlighted.

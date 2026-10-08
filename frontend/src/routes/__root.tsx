@@ -1,5 +1,6 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { useState } from "react";
+import { FooterSlotContext } from "@/components/ScreenFooter";
 import { HeaderSlotContext } from "@/components/ScreenHeader";
 import { StatusBar } from "@/components/StatusBar";
 import { TabBar } from "@/components/TabBar";
@@ -14,9 +15,10 @@ export const Route = createRootRoute({
   ),
 });
 
-/** The header, the status bar, the screen and the tab bar, in a column a phone wide. */
+/** The header, the status bar, the screen, its footer and the tab bar, in a column a phone wide. */
 function Shell() {
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
+  const [footerSlot, setFooterSlot] = useState<HTMLElement | null>(null);
   const status = useSyncStatus(useSyncLoop());
   const appUpdate = useAppUpdate();
   return (
@@ -34,10 +36,15 @@ function Shell() {
       </div>
       <main className="flex flex-1 flex-col gap-3.5 px-4 pt-3 pb-6">
         <HeaderSlotContext value={headerSlot}>
-          <Outlet />
+          <FooterSlotContext value={footerSlot}>
+            <Outlet />
+          </FooterSlotContext>
         </HeaderSlotContext>
       </main>
-      <TabBar />
+      <div className="sticky bottom-0 z-10">
+        <div ref={setFooterSlot} />
+        <TabBar />
+      </div>
     </div>
   );
 }

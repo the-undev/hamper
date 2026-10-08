@@ -7,6 +7,7 @@ import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
 import { Picture } from "@/components/Picture";
 import { SavedField } from "@/components/SavedField";
+import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, secondaryButton, sectionLabel } from "@/components/styles";
 import { liveWhere } from "@/domain/checks";
@@ -140,7 +141,9 @@ export function MealScreen({ mealId }: { mealId: string }) {
           Delete
         </button>
       </div>
-      <DoneButton parent="/meals" />
+      <ScreenFooter>
+        <DoneButton parent="/meals" />
+      </ScreenFooter>
       <ConfirmDialog
         open={confirmingDelete}
         onOpenChange={setConfirmingDelete}

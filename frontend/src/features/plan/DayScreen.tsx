@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { DoneButton } from "@/components/DoneButton";
 import { EmptyState, WaitingForServer } from "@/components/EmptyState";
 import { SavedField } from "@/components/SavedField";
+import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, secondaryButton, sectionLabel } from "@/components/styles";
 import { dayDate } from "@/domain/display";
@@ -9,6 +10,7 @@ import { clearDay, renameDay, resetDay, saveDayAsMeal } from "@/domain/plan";
 import { useItemsById, usePlan } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 import { dayIdFor } from "@/store/ids";
 import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
@@ -94,7 +96,9 @@ export function DayScreen({ position }: { position: number }) {
         <ScreenHeader title={title} back={back} />
         <EmptyState>Nothing planned for this day. Pick a meal.</EmptyState>
         <MealPicker position={position} onPlaced={() => {}} />
-        <DoneButton parent="/plan" />
+        <ScreenFooter>
+          <DoneButton parent="/plan" />
+        </ScreenFooter>
       </>
     );
   }
@@ -112,37 +116,25 @@ export function DayScreen({ position }: { position: number }) {
         save={(w, name) => renameDay(w, position, name)}
       />
       <p className={hint}>{originText(day.mealId, linkedMeal, changed)}</p>
-      <div className="flex gap-2">
-        {linkedMeal && (
-          <button
-            type="button"
-            className={secondaryButton}
-            disabled={!changed}
-            onClick={() => void write((w) => resetDay(w, position, nowIso()))}
-          >
-            Reset to the meal
-          </button>
-        )}
-        {!day.mealId && (
-          <button
-            type="button"
-            className={secondaryButton}
-            onClick={() => void write((w) => saveDayAsMeal(w, position))}
-          >
-            Save as a meal
-          </button>
-        )}
+      {linkedMeal && (
         <button
           type="button"
-          className={`${secondaryButton} text-danger`}
-          onClick={async () => {
-            await write((w) => clearDay(w, position, nowIso()));
-            await navigate({ to: "/plan" });
-          }}
+          className={cn(secondaryButton, "flex-none")}
+          disabled={!changed}
+          onClick={() => void write((w) => resetDay(w, position, nowIso()))}
         >
-          Clear day
+          Reset to the meal
         </button>
-      </div>
+      )}
+      {!day.mealId && (
+        <button
+          type="button"
+          className={cn(secondaryButton, "flex-none")}
+          onClick={() => void write((w) => saveDayAsMeal(w, position))}
+        >
+          Save as a meal
+        </button>
+      )}
       <h3 className={sectionLabel}>
         Items{" "}
         <span className="font-medium normal-case tracking-normal">
@@ -155,7 +147,19 @@ export function DayScreen({ position }: { position: number }) {
         itemsById={itemsById}
         typeAheadLabel="Add an item for this day"
       />
-      <DoneButton parent="/plan" />
+      <ScreenFooter>
+        <button
+          type="button"
+          className={`${secondaryButton} text-danger`}
+          onClick={async () => {
+            await write((w) => clearDay(w, position, nowIso()));
+            await navigate({ to: "/plan" });
+          }}
+        >
+          Clear day
+        </button>
+        <DoneButton parent="/plan" />
+      </ScreenFooter>
     </>
   );
 }

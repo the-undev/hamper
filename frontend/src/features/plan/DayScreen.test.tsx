@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import type { HamperDb } from "@/store/db";
 import { dayIdFor } from "@/store/ids";
@@ -175,6 +175,19 @@ test("an_empty_day_offers_the_meal_picker", async () => {
       [naan.id, 2],
     ]),
   );
+});
+
+test("the_footer_holds_clear_day_then_done", async () => {
+  await seed(db, { days: [curryDay] });
+  renderApp("/plan/day/0", db, fakeLoop());
+  // The footer above the tab bar is a fieldset, so a group named Screen actions rather than a contentinfo landmark.
+  const footer = await screen.findByRole("group", { name: "Screen actions" });
+
+  expect(
+    within(footer)
+      .getAllByRole("button")
+      .map((button) => button.textContent),
+  ).toEqual(["Clear day", "Done"]);
 });
 
 test("done_goes_back_to_the_screen_the_day_was_opened_from", async () => {

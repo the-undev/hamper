@@ -5,6 +5,7 @@ import { DoneButton } from "@/components/DoneButton";
 import { EmptyState } from "@/components/EmptyState";
 import { Picture } from "@/components/Picture";
 import { SavedField } from "@/components/SavedField";
+import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { secondaryButton, sectionLabel } from "@/components/styles";
 import { TypeAhead, type TypeAheadOption } from "@/components/TypeAhead";
@@ -78,7 +79,9 @@ export function ItemEditor({ itemId }: { itemId: string }) {
       >
         Delete
       </button>
-      <DoneButton parent="/more/items" />
+      <ScreenFooter>
+        <DoneButton parent="/more/items" />
+      </ScreenFooter>
       <ConfirmDialog
         open={mergeTarget !== null}
         onOpenChange={(open) => {

@@ -59,6 +59,42 @@ test("a meal placed on a day can be renamed, reset and cleared there", async ({
   ).toBeVisible();
 });
 
+test("Done stays above the tabs on a long day and goes back", async ({
+  page,
+}) => {
+  test.skip(!test.info().project.use.hasTouch, "a phone's screen is short");
+  const meal = uniqueName("Feast");
+  await openApp(page, "/meals");
+  await addMeal(page, meal, []);
+  const day = await placeOnFirstEmptyDay(page, meal);
+  await page.getByRole("link", { name: meal }).click();
+  for (let count = 0; count < 12; count += 1) {
+    await addLine(page, "Add an item for this day", uniqueName("Spice"));
+  }
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollHeight > window.innerHeight,
+    ),
+  ).toBe(true);
+  const done = page
+    .getByRole("group", { name: "Screen actions" })
+    .getByRole("button", { name: "Done" });
+  await expect(done).toBeInViewport({ ratio: 1 });
+  const doneBox = await done.boundingBox();
+  const tabsBox = await page
+    .getByRole("navigation", { name: "Tabs" })
+    .boundingBox();
+  expect((doneBox?.y ?? 0) + (doneBox?.height ?? 0)).toBeLessThanOrEqual(
+    tabsBox?.y ?? 0,
+  );
+
+  await done.tap();
+  await expect(dayHandle(page, meal, day)).toBeVisible();
+  await clearDay(page, day);
+});
+
 test("a day drags onto another to swap", async ({ page }) => {
   const first = uniqueName("Soup");
   const second = uniqueName("Stew");
