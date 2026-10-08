@@ -223,6 +223,8 @@ its place and moves `dirtiedAt`. `meta` holds the sync cursor under `cursor`.
 Every edit runs as one Dexie transaction over every synced table and the
 outbox, so a row and its outbox entry are written together or not at all.
 The rules in [domain](domain.md) are operations inside such a transaction.
+The server makes the plan row, so an operation on the plan refuses until the
+first pull has brought it.
 
 Screens read the store through Dexie live queries, so a screen re-renders
 when the store changes, whether from the user or from a pull. TanStack Query
