@@ -2,6 +2,9 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Hamper.Api.Features.Plans;
 using Hamper.Api.Features.Shops;
+using Hamper.Api.Features.Sync;
+using Hamper.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 
@@ -67,14 +70,15 @@ public sealed class ExportDataTests
         Assert.Equal(HttpStatusCode.OK, archiveResponse.StatusCode);
         var exportedItem = Assert.Single(data["items"]!.AsArray())!.AsObject();
         Assert.Equal(milk.Id.ToString(), (string?)exportedItem["id"]);
-        Assert.Equal(["id", "name", "size"], exportedItem.Select(property => property.Key));
+        Assert.Equal(["id", "name", "size", "deletedAt"], exportedItem.Select(property => property.Key));
+        Assert.Null(exportedItem["deletedAt"]);
         Assert.Empty(data["shops"]!.AsArray());
         Assert.Empty(data["shopLines"]!.AsArray());
         Assert.Single(data["archivedShops"]!.AsArray());
     }
 
     [Fact]
-    public async Task Export_keeps_deleted_items_that_open_shop_lines_point_at()
+    public async Task Export_keeps_referenced_deleted_items_as_tombstones()
     {
         using var source = new HamperApiFactory();
         using var target = new HamperApiFactory();
@@ -95,7 +99,48 @@ public sealed class ExportDataTests
 
         var exportedItem = Assert.Single(TransferZip.ReadDataJson(sourceZip)["items"]!.AsArray());
         Assert.Equal(deletedItem.Id.ToString(), (string?)exportedItem!["id"]);
+        Assert.NotNull(exportedItem["deletedAt"]);
         Assert.Equal(HttpStatusCode.NoContent, importResponse.StatusCode);
+        var importedItem = await ReadAsync(target, db => db.Items.AsNoTracking().SingleAsync(item => item.Id == deletedItem.Id, ct));
+        var liveItemCount = await ReadAsync(target, db => db.Items.AsNoTracking().Live().CountAsync(ct));
+        Assert.NotNull(importedItem.DeletedAt);
+        Assert.Equal(0, liveItemCount);
+    }
+
+    [Fact]
+    public async Task Export_keeps_deleted_meals_that_days_link_to()
+    {
+        using var source = new HamperApiFactory();
+        using var target = new HamperApiFactory();
+        using var sourceClient = source.CreateClient();
+        using var targetClient = target.CreateClient();
+        var ct = TestContext.Current.CancellationToken;
+        var deletedMeal = (await TestData.AddMealAsync(source, "Old stew", [], ct)).Meal;
+        await TestData.AddDayAsync(source, 0, "Old stew", deletedMeal.Id, [], ct);
+        await TestData.WriteAsync(source, (db, now) =>
+        {
+            db.Meals.Attach(deletedMeal);
+            deletedMeal.DeletedAt = now;
+            return deletedMeal;
+        }, ct);
+
+        var sourceZip = await TransferZip.ExportAsync(sourceClient, ct);
+        var importResponse = await TransferZip.ImportAsync(targetClient, sourceZip, ct);
+
+        var exportedMeal = Assert.Single(TransferZip.ReadDataJson(sourceZip)["meals"]!.AsArray());
+        Assert.Equal(deletedMeal.Id.ToString(), (string?)exportedMeal!["id"]);
+        Assert.NotNull(exportedMeal["deletedAt"]);
+        Assert.Equal(HttpStatusCode.NoContent, importResponse.StatusCode);
+        var importedDay = await ReadAsync(target, db => db.Days.AsNoTracking().SingleAsync(ct));
+        var importedMeal = await ReadAsync(target, db => db.Meals.AsNoTracking().SingleAsync(meal => meal.Id == deletedMeal.Id, ct));
+        Assert.Equal(deletedMeal.Id, importedDay.MealId);
+        Assert.NotNull(importedMeal.DeletedAt);
+    }
+
+    private static async Task<T> ReadAsync<T>(HamperApiFactory factory, Func<HamperDbContext, Task<T>> read)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        return await read(scope.ServiceProvider.GetRequiredService<HamperDbContext>());
     }
 
     /// <summary>Puts a row in every exported table: items, a meal, two days, wanted lines, an open shop, an archived shop, and a moved plan.</summary>

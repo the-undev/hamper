@@ -85,11 +85,12 @@ wanted lines, and open shops with their lines. History and images are not.
 
 ### Revisions and tombstones
 
-Every synced table has `revision`, a server-assigned integer from one
-sequence shared by all tables, and `deleted_at`. A write sets a new revision;
-a delete sets `deleted_at` and a new revision and the row stays. A client
-asks for everything after the last revision it saw, so one cursor covers
-every table.
+Every synced table has a revision and a deleted-at column (`Revision` and
+`DeletedAt` in the database, `revision` and `deletedAt` on the wire). The
+revision is a server-assigned integer from one sequence shared by all tables.
+A write sets a new revision; a delete sets `deletedAt` and a new revision and
+the row stays. A client asks for everything after the last revision it saw,
+so one cursor covers every table.
 
 Revisions come from one counter in `sync_state`, assigned on save. Writes are
 serialised in the process, so revisions commit in the order they were
@@ -153,17 +154,18 @@ long cache headers, and the service worker caches responses it has seen.
 
 `GET /api/export` returns a zip named `hamper-<yyyyMMdd-HHmmss>.zip` holding
 `data.json`: format 1, the plan's start date and length, every live row of
-the synced tables without revisions or tombstones, and all of history. A
-deleted item that a live line still points at is exported with it, so every
-reference resolves on import, where it arrives undeleted. Images join the zip
-in their phase of the [build order](roadmap.md#build-order).
+the synced tables without revisions, and all of history. Each row carries
+`deletedAt`, null for a live row. A deleted item or meal that an exported row
+still points at is exported as a tombstone, so every reference resolves on
+import, where it stays deleted. Images join the zip in their phase of the
+[build order](roadmap.md#build-order).
 
 `POST /api/import` takes the same zip as the raw request body
-(`application/zip`) and writes it in one transaction: every row, with new
-revisions, and the plan's start date and length. It refuses with 409 when any
-item, meal, day, wanted line, shop or archived shop exists, deleted ones
-included, and with 400 when the zip has no `data.json`, the format is not 1,
-or the JSON does not fit the schema.
+(`application/zip`) and writes it in one transaction: every row as it
+comes, `deletedAt` included, with new revisions, and the plan's start date and
+length. It refuses with 409 when any item, meal, day, wanted line, shop or
+archived shop exists, deleted ones included, and with 400 when the zip has no
+`data.json`, the format is not 1, or the JSON does not fit the schema.
 
 ## Share and download
 

@@ -7,7 +7,7 @@ using Hamper.Api.Features.Shops;
 
 namespace Hamper.Api.Features.Transfer;
 
-/// <summary>The data.json inside an export: every live row, without revisions or tombstones, and all of history.</summary>
+/// <summary>The data.json inside an export: every live row of the synced tables, the deleted items and meals that exported rows still point at, and all of history; rows carry no revisions.</summary>
 public sealed record TransferDocument(
     int Format,
     DateTimeOffset ExportedAt,
@@ -39,46 +39,46 @@ public sealed record TransferDocument(
 
 public sealed record TransferPlan(DateOnly StartDate, int LengthDays);
 
-public sealed record TransferItem(Guid Id, string Name, string? Size)
+public sealed record TransferItem(Guid Id, string Name, string? Size, DateTimeOffset? DeletedAt)
 {
-    public static TransferItem From(Item item) => new(item.Id, item.Name, item.Size);
+    public static TransferItem From(Item item) => new(item.Id, item.Name, item.Size, item.DeletedAt);
 
-    public Item ToEntity() => new() { Id = Id, Name = Name, Size = Size };
+    public Item ToEntity() => new() { Id = Id, Name = Name, Size = Size, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferMeal(Guid Id, string Name)
+public sealed record TransferMeal(Guid Id, string Name, DateTimeOffset? DeletedAt)
 {
-    public static TransferMeal From(Meal meal) => new(meal.Id, meal.Name);
+    public static TransferMeal From(Meal meal) => new(meal.Id, meal.Name, meal.DeletedAt);
 
-    public Meal ToEntity() => new() { Id = Id, Name = Name };
+    public Meal ToEntity() => new() { Id = Id, Name = Name, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferMealLine(Guid Id, Guid MealId, Guid ItemId, int Count)
+public sealed record TransferMealLine(Guid Id, Guid MealId, Guid ItemId, int Count, DateTimeOffset? DeletedAt)
 {
-    public static TransferMealLine From(MealLine line) => new(line.Id, line.MealId, line.ItemId, line.Count);
+    public static TransferMealLine From(MealLine line) => new(line.Id, line.MealId, line.ItemId, line.Count, line.DeletedAt);
 
-    public MealLine ToEntity() => new() { Id = Id, MealId = MealId, ItemId = ItemId, Count = Count };
+    public MealLine ToEntity() => new() { Id = Id, MealId = MealId, ItemId = ItemId, Count = Count, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferDay(Guid Id, int Position, string Name, Guid? MealId)
+public sealed record TransferDay(Guid Id, int Position, string Name, Guid? MealId, DateTimeOffset? DeletedAt)
 {
-    public static TransferDay From(Day day) => new(day.Id, day.Position, day.Name, day.MealId);
+    public static TransferDay From(Day day) => new(day.Id, day.Position, day.Name, day.MealId, day.DeletedAt);
 
-    public Day ToEntity() => new() { Id = Id, Position = Position, Name = Name, MealId = MealId };
+    public Day ToEntity() => new() { Id = Id, Position = Position, Name = Name, MealId = MealId, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferDayLine(Guid Id, Guid DayId, Guid ItemId, int Count)
+public sealed record TransferDayLine(Guid Id, Guid DayId, Guid ItemId, int Count, DateTimeOffset? DeletedAt)
 {
-    public static TransferDayLine From(DayLine line) => new(line.Id, line.DayId, line.ItemId, line.Count);
+    public static TransferDayLine From(DayLine line) => new(line.Id, line.DayId, line.ItemId, line.Count, line.DeletedAt);
 
-    public DayLine ToEntity() => new() { Id = Id, DayId = DayId, ItemId = ItemId, Count = Count };
+    public DayLine ToEntity() => new() { Id = Id, DayId = DayId, ItemId = ItemId, Count = Count, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferWantedLine(Guid Id, Guid ItemId, int Count, bool Weekly)
+public sealed record TransferWantedLine(Guid Id, Guid ItemId, int Count, bool Weekly, DateTimeOffset? DeletedAt)
 {
-    public static TransferWantedLine From(WantedLine line) => new(line.Id, line.ItemId, line.Count, line.Weekly);
+    public static TransferWantedLine From(WantedLine line) => new(line.Id, line.ItemId, line.Count, line.Weekly, line.DeletedAt);
 
-    public WantedLine ToEntity() => new() { Id = Id, ItemId = ItemId, Count = Count, Weekly = Weekly };
+    public WantedLine ToEntity() => new() { Id = Id, ItemId = ItemId, Count = Count, Weekly = Weekly, DeletedAt = DeletedAt };
 }
 
 public sealed record TransferShop(
@@ -88,10 +88,11 @@ public sealed record TransferShop(
     bool FromPlan,
     DateOnly? PlanStartDate,
     int? PlanLengthDays,
-    IReadOnlyList<ShopMeal> Meals)
+    IReadOnlyList<ShopMeal> Meals,
+    DateTimeOffset? DeletedAt)
 {
     public static TransferShop From(Shop shop) =>
-        new(shop.Id, shop.Name, shop.CreatedAt, shop.FromPlan, shop.PlanStartDate, shop.PlanLengthDays, shop.Meals);
+        new(shop.Id, shop.Name, shop.CreatedAt, shop.FromPlan, shop.PlanStartDate, shop.PlanLengthDays, shop.Meals, shop.DeletedAt);
 
     public Shop ToEntity() => new()
     {
@@ -102,6 +103,7 @@ public sealed record TransferShop(
         PlanStartDate = PlanStartDate,
         PlanLengthDays = PlanLengthDays,
         Meals = Meals,
+        DeletedAt = DeletedAt,
     };
 }
 
@@ -114,10 +116,11 @@ public sealed record TransferShopLine(
     string? SizeOverride,
     IReadOnlyList<string> Sources,
     bool Ticked,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? DeletedAt)
 {
     public static TransferShopLine From(ShopLine line) =>
-        new(line.Id, line.ShopId, line.ItemId, line.Count, line.NameOverride, line.SizeOverride, line.Sources, line.Ticked, line.CreatedAt);
+        new(line.Id, line.ShopId, line.ItemId, line.Count, line.NameOverride, line.SizeOverride, line.Sources, line.Ticked, line.CreatedAt, line.DeletedAt);
 
     public ShopLine ToEntity() => new()
     {
@@ -130,6 +133,7 @@ public sealed record TransferShopLine(
         Sources = Sources,
         Ticked = Ticked,
         CreatedAt = CreatedAt,
+        DeletedAt = DeletedAt,
     };
 }
 

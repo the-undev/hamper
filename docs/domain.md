@@ -80,8 +80,8 @@ A shopping list. Any number can be open at once.
   the wanted list, editable, with every change saved to the plan. Generate
   then produces the shop.
 - Generating sums counts per item across the days and the wanted list. A shop
-  line is one item: its name and size as text copied from the item, the summed
-  count, the names of the days and "wanted" it came from, and a ticked flag.
+  line is one item: a link to the item, the summed count, the names of the
+  days and "wanted" it came from, and a ticked flag.
 - A shop line's name, size and count are edited on the shop only. The plan
   and the item do not change.
 - A shop line points at its item and shows the item's name and size until
