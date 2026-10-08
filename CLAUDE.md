@@ -1,8 +1,7 @@
 # CLAUDE.md
 
 hamper: a household's meal plan and shopping list, served from the home server
-to phones. Specification only so far; the code follows the docs, never the other
-way round.
+to phones. The code follows the docs, never the other way round.
 
 ## Read first
 
@@ -15,11 +14,63 @@ way round.
 
 ## Layout
 
-- `docs/` is all documentation; [docs/README.md](docs/README.md) is the index.
-- `docs/prototype.html` is a clickable sketch of the screens. It is for seeing
-  the flow, and it is replaced by the real frontend, never grown into it.
-- `backend/` and `frontend/` arrive with the first code, in the shape set out
-  in [docs/architecture.md](docs/architecture.md).
+- `backend/`: .NET 10 solution `Hamper.slnx`, with `src/Hamper.Api` (every
+  feature) and `tests/Hamper.Api.Tests`.
+- `frontend/`: Vite, React, TypeScript strict, Tailwind v4, TanStack Router
+  and Query, pnpm.
+- `docs/`: all documentation; [docs/README.md](docs/README.md) is the index.
+  `docs/prototype.html` is a clickable sketch of the screens. It is replaced by
+  the real frontend, never grown into it.
+
+## Commands
+
+| What | Command |
+| --- | --- |
+| Every gate | `make check` |
+| Run the API and Vite | `make dev` |
+| Isolated API for live checks (own database and data dir) | `make live-test` |
+| Build the production image | `make image` (optional `VERSION=x.y.z`) |
+| Backend build and test | `cd backend && dotnet build && dotnet test` |
+| Backend format check | `cd backend && dotnet format Hamper.slnx --verify-no-changes` |
+| Add an EF migration | `cd backend && dotnet ef migrations add <Name> --project src/Hamper.Api -o Infrastructure/Persistence/Migrations` |
+| Frontend gates | `cd frontend && pnpm lint && pnpm typecheck && pnpm test && pnpm build` |
+
+### Ports
+
+| What | Port |
+| --- | --- |
+| API, dev | 8776 |
+| Vite dev server, proxies `/api` and `/sync` to 8776 | 5276 |
+| Vite preview | 4276 |
+| API, live test | 8777 |
+| Container | 8080 |
+
+Never use skarrow's ports (8766, 8767, 8768, 5273, 4273) or the legacy app's
+(8765, 5173). Both run on the same machine.
+
+## Never touch the dev database
+
+`backend/src/Hamper.Api/hamper.db` and `hamper-data/` belong to the developer.
+Never delete them, never reset them, and treat anything listening on 8776 as
+the developer's own session. Every live check goes through `make live-test`,
+which runs the API on 8777 with its own database and data directory.
+
+## Hard conventions
+
+[docs/architecture.md](docs/architecture.md) is the authority. The headlines:
+
+- Vertical slices: one folder per feature under `Features/`, one file per
+  operation. `Infrastructure/` is cross-cutting plumbing only.
+- Every behaviour change ships with a test in the same commit, an integration
+  test through `HamperApiFactory` by default. Never mock the database.
+- Dependencies are required parameters, never optional with a null guard.
+- No infrastructure without a consumer.
+- API errors are always problem+json.
+- File IO only through the storage seam (`IFileStorage`), time only through
+  `TimeProvider`. Both are enforced by the analyzer through
+  `BannedSymbols.txt`.
+- Warnings are errors. Fix the cause; a suppression carries a one-line
+  comment saying why.
 
 ## Workflow
 
