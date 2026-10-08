@@ -62,18 +62,18 @@ export function PlanMeals() {
           {formatDay(dayDate(plan, plan.lengthDays - 1))}
         </b>
       </p>
-      <DayList
-        plan={plan}
-        days={days}
-        linesByDay={linesByDay}
-        itemsById={itemsById}
-        mealsById={mealsById}
-        onPick={setPickingPosition}
-      />
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-2">
+        <DayList
+          plan={plan}
+          days={days}
+          linesByDay={linesByDay}
+          itemsById={itemsById}
+          mealsById={mealsById}
+          onPick={setPickingPosition}
+        />
         <button
           type="button"
-          className="min-h-11 rounded-[14px] border border-line px-4 text-sm font-semibold"
+          className="min-h-[62px] w-full rounded-[14px] border border-line bg-surface px-4 text-[15px] font-bold text-accent"
           onClick={() => setConfirmingNewPlan(true)}
         >
           Start new plan from {nextStart}

@@ -21,7 +21,8 @@ slot per day:
 - A filled day shows the meal's picture, its name and its lines in one line
   underneath. Tapping the name opens the day. A ≡ handle on the right drags
   the meal onto another day to swap. Swiping left reveals Clear.
-- "Start new plan from <date>" at the bottom, which asks for a confirm.
+- "Start new plan from <date>", a row under the last day, which asks for a
+  confirm.
 
 Until the first sync brings the plan, the plan's screens say they are waiting
 for the server.
