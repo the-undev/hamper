@@ -1,4 +1,10 @@
-import { createContext, useContext, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
+import { useToast } from "@/components/Toast";
 
 /** Whether a new service worker is waiting, and the way to switch to it. */
 export interface AppUpdate {
@@ -10,7 +16,7 @@ export interface AppUpdate {
   reload(): Promise<void>;
 }
 
-/** Carries the app update from the app's start to the status bar. */
+/** Carries the app update from the app's start to the shell. */
 export const AppUpdateContext = createContext<AppUpdate | null>(null);
 
 /** Reads the app update and re-renders when it becomes ready. */
@@ -24,4 +30,19 @@ export function useAppUpdate(): {
   }
   const ready = useSyncExternalStore(update.subscribe, update.isReady);
   return { ready, reload: update.reload };
+}
+
+/** Shows Update ready with a Reload action once, when a new version starts to wait. */
+export function useUpdateToast(): void {
+  const { ready, reload } = useAppUpdate();
+  const showToast = useToast();
+  useEffect(() => {
+    if (!ready) {
+      return;
+    }
+    showToast("Update ready", {
+      label: "Reload",
+      onAction: () => void reload(),
+    });
+  }, [ready, reload, showToast]);
 }

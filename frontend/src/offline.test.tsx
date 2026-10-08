@@ -58,12 +58,12 @@ afterEach(async () => {
   await db.delete();
 });
 
-test("with_no_server_the_plan_and_the_shop_render_from_the_store_and_the_bar_says_offline", async () => {
+test("with_no_server_the_plan_and_the_shop_render_from_the_store_and_the_header_says_offline", async () => {
   const { router } = renderApp("/plan", db, loop);
   await act(() => loop.syncNow());
 
   expect((await screen.findAllByText("Curry")).length).toBeGreaterThan(0);
-  expect(screen.getByText(offline)).toBeInTheDocument();
+  expect(screen.getByRole("status", { name: offline })).toBeInTheDocument();
 
   await act(() =>
     router.navigate({ to: "/shop/$shopId", params: { shopId: shop.id } }),
@@ -72,13 +72,15 @@ test("with_no_server_the_plan_and_the_shop_render_from_the_store_and_the_bar_say
   expect(
     await screen.findByRole("checkbox", { name: "Milk in the trolley" }),
   ).toBeInTheDocument();
-  expect(screen.getByText(offline)).toBeInTheDocument();
+  expect(screen.getByRole("status", { name: offline })).toBeInTheDocument();
 });
 
 test("an_edit_made_with_no_server_waits_in_the_outbox_and_is_pushed_when_the_server_answers", async () => {
   const { user } = renderApp(`/shop/${shop.id}`, db, loop);
   await act(() => loop.syncNow());
-  expect(await screen.findByText(offline)).toBeInTheDocument();
+  expect(
+    await screen.findByRole("status", { name: offline }),
+  ).toBeInTheDocument();
 
   await user.click(
     await screen.findByRole("checkbox", { name: "Milk in the trolley" }),
@@ -111,6 +113,8 @@ test("an_edit_made_with_no_server_waits_in_the_outbox_and_is_pushed_when_the_ser
   });
   expect(await db.outbox.count()).toBe(0);
   await waitFor(() =>
-    expect(screen.queryByText(offline)).not.toBeInTheDocument(),
+    expect(
+      screen.queryByRole("status", { name: offline }),
+    ).not.toBeInTheDocument(),
   );
 });

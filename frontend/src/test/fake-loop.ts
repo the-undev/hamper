@@ -4,6 +4,7 @@ import type { SyncLoop, SyncStatus } from "@/sync/loop";
 /** The status of a loop that is online with nothing to send. */
 export const quietStatus: SyncStatus = {
   online: true,
+  syncing: false,
   pending: 0,
   lastSyncAt: null,
   lastError: null,

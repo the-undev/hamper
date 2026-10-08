@@ -268,7 +268,8 @@ into focus or view, and 300 ms after a local write while online.
 Offline is `navigator.onLine` false, or the last push, pull or event stream
 failing to reach the server. The loop's status holds that, the size of the
 outbox, when the last sync finished and the last problem the server
-reported, for the status bar to show.
+reported, and whether a push and pull are running. The header's sync slot
+shows offline, sending, or the count waiting; the More screen shows the rest.
 
 ## Images
 
@@ -367,8 +368,9 @@ only by `vite build`; `make dev` runs without one.
 
 `frontend/src/pwa/register.ts` registers the worker through
 `virtual:pwa-register` with the prompt register type. When a new version has
-installed and waits, the status bar shows Update ready with a Reload button,
-which activates the new worker and reloads the page.
+installed and waits, a toast shows Update ready with a Reload action, which
+activates the new worker and reloads the page. The toast stays until it is
+tapped or another toast replaces it.
 
 The service worker, install and `navigator.share` need a secure context, so
 they are present on the HTTPS address and absent on the plain HTTP one. The

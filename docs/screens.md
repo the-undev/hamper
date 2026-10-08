@@ -91,10 +91,15 @@ History needs the server, and says so while offline.
 
 ## Everywhere
 
-- A bar under the header, shown only when offline or with changes not yet
-  sent: "Offline. Changes are kept on this phone." or "3 changes to send".
-  The count is of rows waiting to be sent, and offline is shown when both
-  apply.
+- A sync slot at the right end of the header, 36 by 44px, after the screen's
+  own actions. It is always there, so nothing moves when the state changes.
+  Its state is its accessible name and tooltip. Synced shows nothing.
+  Sending shows a small spinner, "Syncing". Waiting shows a badge with the
+  count of rows not yet sent, "3 changes to send". Offline shows a crossed
+  cloud, "Offline. Changes are kept on this phone.", and wins over the
+  others.
+- When a new version is ready, a toast says "Update ready" with Reload, once
+  per update.
 - Every edit is saved as it is made. Day, Meal and the item editor have a
   footer that stays above the tabs, holding Done, which goes back, and on a
   Day, Clear day.

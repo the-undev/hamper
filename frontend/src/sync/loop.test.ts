@@ -274,6 +274,23 @@ test("syncNow_while_running_queues_one_rerun", async () => {
   expect(api.pulls).toHaveLength(2);
 });
 
+test("status_syncing_is_true_while_a_sync_runs", async () => {
+  let releasePull = (): void => {};
+  api.onPull = (since) =>
+    new Promise((resolve) => {
+      releasePull = () => resolve({ ...noRows(), revision: since });
+    });
+  expect(loop.status.get().syncing).toBe(false);
+
+  const run = loop.syncNow();
+  await vi.waitFor(() => expect(api.pulls).toHaveLength(1));
+  expect(loop.status.get().syncing).toBe(true);
+  releasePull();
+  await run;
+
+  expect(loop.status.get().syncing).toBe(false);
+});
+
 test("status_pending_tracks_the_outbox_count", async () => {
   loop.start();
 

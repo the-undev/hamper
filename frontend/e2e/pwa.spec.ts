@@ -1,4 +1,4 @@
-import { expect, openApp, statusBar, test } from "./helpers.ts";
+import { expect, openApp, syncState, test } from "./helpers.ts";
 
 test("the worker installs, the manifest names the app, and the Plan opens offline", async ({
   page,
@@ -24,9 +24,9 @@ test("the worker installs, the manifest names the app, and the Plan opens offlin
     page.getByRole("main").getByRole("list").first().getByRole("listitem"),
   ).toHaveCount(7);
   await expect
-    .poll(() => statusBar(page))
+    .poll(() => syncState(page))
     .toBe("Offline. Changes are kept on this phone.");
 
   await context.setOffline(false);
-  await expect.poll(() => statusBar(page)).toBeNull();
+  await expect.poll(() => syncState(page)).toBeNull();
 });

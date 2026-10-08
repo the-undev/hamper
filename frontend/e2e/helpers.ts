@@ -16,7 +16,7 @@ export const test = base.extend<{ sentEverything: undefined }>({
     async ({ page }, use) => {
       await use(undefined);
       // A closed context loses its outbox, so an edit not yet sent would never reach the server.
-      await expect.poll(() => statusBar(page)).toBeNull();
+      await expect.poll(() => syncState(page)).toBeNull();
     },
     { auto: true },
   ],
@@ -160,14 +160,13 @@ export async function clearDay(page: Page, dayLabel: string): Promise<void> {
   ).toBeVisible();
 }
 
-/** The sync bar's text under the header, or null when it is not showing. */
-export async function statusBar(page: Page): Promise<string | null> {
-  const bar = page
+/** The name of the header's sync indicator: "Syncing", "N changes to send" or the offline sentence, or null once everything is sent. */
+export async function syncState(page: Page): Promise<string | null> {
+  // evaluateAll does not wait, so a page without the app, a skipped test's blank one, reads as null.
+  return page
+    .getByRole("banner")
     .getByRole("status")
-    .filter({ hasText: /^(Offline\.|\d+ changes? to send)/ });
-  // allTextContents does not wait, so a bar that clears between polls reads as null.
-  const texts = await bar.allTextContents();
-  return texts[0] ?? null;
+    .evaluateAll((slots) => slots[0]?.getAttribute("aria-label") ?? null);
 }
 
 /** A point on the page, in CSS pixels. */
@@ -232,9 +231,8 @@ export async function drag(
   await page.mouse.up();
 }
 
-/** Where an element sits once the page has stopped moving: no sync bar shifting it, and the same box twice running. */
+/** Where an element sits once the page has stopped moving: the same box twice running. */
 async function settledBox(locator: Locator): Promise<Box> {
-  await expect.poll(() => statusBar(locator.page())).toBeNull();
   // Playwright's own actions can scroll the Plan's clipped track sideways; bring the element back into view first.
   await locator.scrollIntoViewIfNeeded();
   let lastBox: Box | null = null;

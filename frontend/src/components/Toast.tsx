@@ -7,24 +7,40 @@ import {
   useRef,
   useState,
 } from "react";
+import { cn } from "@/lib/utils";
 
-type ShowToast = (message: string) => void;
+/** A button on a toast, which runs and closes the toast. */
+export interface ToastAction {
+  label: string;
+  onAction: () => void;
+}
+
+type ShowToast = (message: string, action?: ToastAction) => void;
+
+interface ToastMessage {
+  message: string;
+  action: ToastAction | undefined;
+}
 
 const ToastContext = createContext<ShowToast | null>(null);
 
 const toastMilliseconds = 2500;
 
-/** Shows one short message at a time near the bottom of the screen. */
+/** Shows one short message at a time near the bottom of the screen; a message with an action stays until it is taken or replaced. */
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const show = useCallback((nextMessage: string) => {
+  const show = useCallback((message: string, action?: ToastAction) => {
     if (timer.current) {
       clearTimeout(timer.current);
+      timer.current = null;
     }
-    setMessage(nextMessage);
-    timer.current = setTimeout(() => setMessage(null), toastMilliseconds);
+    setToast({ message, action });
+    if (action) {
+      return;
+    }
+    timer.current = setTimeout(() => setToast(null), toastMilliseconds);
   }, []);
 
   useEffect(
@@ -44,9 +60,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         aria-live="polite"
         className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4"
       >
-        {message && (
-          <span className="rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg">
-            {message}
+        {toast && (
+          <span
+            className={cn(
+              "flex items-center gap-3 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg",
+              toast.action && "pointer-events-auto",
+            )}
+          >
+            {toast.message}
+            {toast.action && (
+              <button
+                type="button"
+                onClick={() => {
+                  setToast(null);
+                  toast.action?.onAction();
+                }}
+                className="-my-2.5 -mr-2 min-h-11 rounded-full px-3 underline underline-offset-2"
+              >
+                {toast.action.label}
+              </button>
+            )}
           </span>
         )}
       </div>

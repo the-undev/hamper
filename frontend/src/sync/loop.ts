@@ -15,10 +15,12 @@ import {
   SyncUnreachableError,
 } from "./api";
 
-/** What the status bar shows about sync. */
+/** What the header's sync indicator and the More screen show about sync. */
 export interface SyncStatus {
   /** The browser is online and the last push or pull reached the server. */
   online: boolean;
+  /** True while a push and pull run. */
+  syncing: boolean;
   /** The number of rows waiting in the outbox. */
   pending: number;
   lastSyncAt: string | null;
@@ -75,6 +77,7 @@ export function createSyncLoop({
   let reachable = true;
   let status: SyncStatus = {
     online: online(),
+    syncing: false,
     pending: 0,
     lastSyncAt: null,
     lastError: null,
@@ -182,6 +185,7 @@ export function createSyncLoop({
   };
 
   const syncOnce = async (): Promise<void> => {
+    update({ syncing: true });
     try {
       const pushProblem = await pushOutbox();
       await pullChanges();
@@ -196,6 +200,8 @@ export function createSyncLoop({
       update({
         lastError: error instanceof SyncError ? error.title : String(error),
       });
+    } finally {
+      update({ syncing: false });
     }
   };
 
