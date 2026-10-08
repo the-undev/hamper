@@ -176,13 +176,17 @@ export async function removeShopLine(
   await w.tombstone("shopLines", lineId, now);
 }
 
-/** Adds the line's count to its item on the wanted list and takes the line off the shop. */
+/** Adds the line's count to its item on the wanted list, bringing a deleted item back, and takes the line off the shop. */
 export async function lineToWanted(
   w: Writer,
   lineId: string,
   now: string,
 ): Promise<void> {
   const line = await requireLive(w, "shopLines", lineId);
+  const item = await w.get("items", line.itemId);
+  if (item && item.deletedAt !== null) {
+    await w.put("items", { ...item, deletedAt: null });
+  }
   await addWanted(w, line.itemId, line.count);
   await w.tombstone("shopLines", lineId, now);
 }

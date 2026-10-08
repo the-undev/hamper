@@ -103,7 +103,9 @@ A shopping list. Any number can be open at once.
   bottom.
 - "To wanted" on a line puts its item on the plan's wanted list as Once with
   the line's count, adding the count to a wanted line already there (which
-  keeps its Once or Weekly mark), and removes the line from the shop. "Rest to wanted" does that for every unticked line.
+  keeps its Once or Weekly mark), and removes the line from the shop. "Rest
+  to wanted" does that for every unticked line. An item deleted since the
+  shop was made comes back.
 - Archive moves the shop to history. Delete discards it. Neither touches the
   plan.
 - Share produces the unticked lines as text for the phone's share sheet.

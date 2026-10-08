@@ -261,6 +261,34 @@ test("to_wanted_adds_the_lines_count_to_a_wanted_line_already_there", async () =
   ]);
 });
 
+test("to_wanted_brings_a_deleted_item_back", async () => {
+  const shop = aShop("Corner shop");
+  const deletedMilk = { ...milk, deletedAt: now };
+  const deletedRice = { ...rice, deletedAt: now };
+  const milkLine = aShopLine(shop, deletedMilk, 2);
+  const riceLine = aShopLine(shop, deletedRice, 1);
+  await seed(db, {
+    items: [deletedMilk, deletedRice],
+    shops: [shop],
+    shopLines: [milkLine, riceLine],
+  });
+
+  await write(db, (w) => lineToWanted(w, milkLine.id, now));
+  await write(db, (w) => restToWanted(w, shop.id, now));
+
+  expect(await db.items.get(milk.id)).toMatchObject({ deletedAt: null });
+  expect(await db.items.get(rice.id)).toMatchObject({ deletedAt: null });
+  const countsByItem = new Map(
+    (await live(db, "wantedLines")).map((line) => [line.itemId, line.count]),
+  );
+  expect(countsByItem).toEqual(
+    new Map([
+      [milk.id, 2],
+      [rice.id, 1],
+    ]),
+  );
+});
+
 test("rest_to_wanted_moves_every_unticked_line", async () => {
   const shop = aShop("Corner shop");
   const tickedLine = { ...aShopLine(shop, rice, 1), ticked: true };
