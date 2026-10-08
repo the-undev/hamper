@@ -68,7 +68,8 @@ name matching nothing offers "Add as a new meal".
 **Meal.** The picture with a Change photo button (take or choose, crop,
 upload), the name, when it was last shopped for, "Add to <next empty day>" or
 "On the plan", then the type-ahead and the meal's lines with + and − and
-swipe to remove. Duplicate and Delete.
+swipe to remove. Duplicate and Delete. When it was last shopped for comes
+from history, so it is left out while offline.
 
 ## More
 
