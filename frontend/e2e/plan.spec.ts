@@ -237,6 +237,30 @@ test("the views slide and the wanted list is edited on Items", async ({
   await expect(track).not.toHaveAttribute("style", /translateX/);
 });
 
+test("Enter adds what was typed beside a longer name it is a prefix of", async ({
+  page,
+}) => {
+  test.skip(!!test.info().project.use.hasTouch, "a keyboard is a desktop's");
+  const longer = uniqueName("Banana");
+  const typed = longer.slice(0, -1);
+  await openApp(page, "/plan");
+  await planView(page, "Items");
+  await addLine(page, "Add an item", longer);
+
+  await page.getByRole("textbox", { name: "Add an item" }).fill(typed);
+  await page.keyboard.press("Enter");
+
+  await expect(line(page, typed)).toBeVisible();
+  await expect(line(page, longer)).toBeVisible();
+  for (const name of [typed, longer]) {
+    await swipeLeft(page, line(page, name).getByText(name, { exact: true }));
+    await page
+      .getByRole("button", { name: `Remove ${name}`, exact: true })
+      .click();
+    await expect(line(page, name)).toHaveCount(0);
+  }
+});
+
 test("the header keeps its height when the view switches", async ({ page }) => {
   await openApp(page, "/plan");
   await planView(page, "Meals");

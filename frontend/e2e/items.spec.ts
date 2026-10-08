@@ -77,7 +77,7 @@ test("merging an item moves its lines onto the other and combines counts", async
 
   await openItem(page, source);
   await page.getByRole("textbox", { name: "Merge into" }).fill(target);
-  await page.getByRole("button", { name: target, exact: true }).click();
+  await page.getByRole("option", { name: target, exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Merge" }).click();
   await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue(target);
 

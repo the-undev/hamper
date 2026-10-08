@@ -40,7 +40,7 @@ test("the pending count shows after an edit and clears once sent", async ({
   await openApp(page, "/plan");
   await planView(page, "Items");
   await page.getByRole("textbox", { name: "Add an item" }).fill(item);
-  await page.getByRole("button", { name: `Add “${item}”` }).click();
+  await page.getByRole("option", { name: `Add “${item}”` }).click();
 
   await expect
     .poll(() => syncState(page), { intervals: [20] })
@@ -72,7 +72,7 @@ test("the header and the column stay put while changes wait and once they are se
   expect(before.state).toBeNull();
 
   await page.getByRole("textbox", { name: "Add an item" }).fill(item);
-  await page.getByRole("button", { name: `Add “${item}”` }).click();
+  await page.getByRole("option", { name: `Add “${item}”` }).click();
   let waiting = before;
   await expect
     .poll(

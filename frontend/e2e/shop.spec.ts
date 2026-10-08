@@ -111,7 +111,7 @@ test("a list's lines tick, count, edit, go to wanted, and a second list opens be
   await startEmptyList(page);
   for (const name of [ticked, counted, swiped, rest]) {
     await page.getByRole("textbox", { name: "Add to this list" }).fill(name);
-    await page.getByRole("button", { name: `Add “${name}”` }).click();
+    await page.getByRole("option", { name: `Add “${name}”` }).click();
     await expect(shopLine(page, name)).toBeVisible();
   }
 
@@ -244,7 +244,7 @@ test("Download saves the unticked lines as a text file", async ({ page }) => {
   await startEmptyList(page);
   for (const name of [wanted, got]) {
     await page.getByRole("textbox", { name: "Add to this list" }).fill(name);
-    await page.getByRole("button", { name: `Add “${name}”` }).click();
+    await page.getByRole("option", { name: `Add “${name}”` }).click();
   }
   await page.getByRole("checkbox", { name: `${got} in the trolley` }).click();
   await expect(

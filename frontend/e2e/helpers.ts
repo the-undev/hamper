@@ -86,7 +86,7 @@ export async function addLine(
   itemName: string,
 ): Promise<void> {
   await page.getByRole("textbox", { name: typeAheadLabel }).fill(itemName);
-  await page.getByRole("button", { name: `Add “${itemName}”` }).click();
+  await page.getByRole("option", { name: `Add “${itemName}”` }).click();
   await expect(line(page, itemName)).toBeVisible();
 }
 
@@ -116,7 +116,7 @@ export async function placeOnFirstEmptyDay(
   await page.getByRole("textbox", { name: "Meal" }).fill(mealName);
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: mealName })
+    .getByRole("option", { name: mealName })
     .first()
     .click();
   await expect(dayHandle(page, mealName, dayLabel)).toBeVisible();

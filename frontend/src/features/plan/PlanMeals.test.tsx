@@ -56,7 +56,7 @@ test("placing_a_library_meal_fills_the_day_and_copies_its_lines", async () => {
   );
   const picker = await screen.findByRole("dialog");
   await user.type(within(picker).getByLabelText("Meal"), "cur");
-  await user.click(within(picker).getByRole("button", { name: /^Curry/ }));
+  await user.click(within(picker).getByRole("option", { name: /^Curry/ }));
 
   expect(
     await screen.findByRole("link", { name: /Curry\s*Naan, Rice/ }),
@@ -286,7 +286,7 @@ test("a_filled_days_link_is_not_natively_draggable", async () => {
   );
   const picker = await screen.findByRole("dialog");
   await user.type(within(picker).getByLabelText("Meal"), "cur");
-  await user.click(within(picker).getByRole("button", { name: /^Curry/ }));
+  await user.click(within(picker).getByRole("option", { name: /^Curry/ }));
 
   expect(
     await screen.findByRole("link", { name: /Curry\s*Naan, Rice/ }),

@@ -111,8 +111,13 @@ History needs the server, and says so while offline.
 - The type-ahead is the same control wherever a line is added: type, then
   pick an existing item or take the row that creates one. Matches come first,
   the best at the top, and the create row comes last; when nothing matches it
-  is the only row. Enter takes the first row. The meal picker's "Use as it
-  is" row follows the same order.
+  is the only row. Enter takes what was typed: a name that equals it,
+  ignoring case and spaces at the ends, picks that item, and otherwise the
+  create row runs. The arrow keys highlight a suggestion, wrapping at the
+  ends, and Enter then takes it. Escape clears the highlight first and the
+  text second. Tab leaves without taking anything. The meal picker's "Use as
+  it is" row follows the same rules. Merge into has no create row, so Enter
+  there takes only an exact name or the highlighted row.
 - A picture with no image, or one that cannot load, offline for example, is
   a coloured block with the name's first letter.
 - On a desktop the same screens render in a centred column; nothing is

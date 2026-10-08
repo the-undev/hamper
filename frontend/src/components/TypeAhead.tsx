@@ -1,4 +1,5 @@
-import { type KeyboardEvent, useState } from "react";
+import { type KeyboardEvent, useId, useState } from "react";
+import { cn } from "@/lib/utils";
 import { textInput } from "./styles";
 
 /** Something the type-ahead can offer: a name, and small text beside it. */
@@ -44,7 +45,12 @@ export function rankOptions<O extends TypeAheadOption>(
 
 type Row<O> = { kind: "pick"; option: O } | { kind: "create"; name: string };
 
-/** The one control for adding a line: type, then pick a match or take the create row under them; Enter takes the first row, the best match when there is one. */
+/** Whether an option's name is the typed name, ignoring case and surrounding spaces. */
+function namesMatch(option: TypeAheadOption, typedName: string): boolean {
+  return option.name.trim().toLowerCase() === typedName.toLowerCase();
+}
+
+/** The one control for adding a line: type, then pick a match or take the create row under them; Enter takes what was typed, or the row the arrows highlight. */
 export function TypeAhead<O extends TypeAheadOption>({
   label,
   placeholder,
@@ -62,13 +68,13 @@ export function TypeAhead<O extends TypeAheadOption>({
   listWhenEmpty?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+  const listId = useId();
   const typedName = query.trim();
 
   const rows: Row<O>[] = [];
   const matches = rankOptions(options, typedName);
-  const exactMatch = matches.some(
-    (option) => option.name.toLowerCase() === typedName.toLowerCase(),
-  );
+  const exactMatch = options.find((option) => namesMatch(option, typedName));
   if (typedName !== "" || listWhenEmpty) {
     const shown = typedName === "" ? matches : matches.slice(0, matchLimit);
     rows.push(...shown.map((option) => ({ kind: "pick" as const, option })));
@@ -76,9 +82,17 @@ export function TypeAhead<O extends TypeAheadOption>({
   if (create && typedName !== "" && !exactMatch) {
     rows.push({ kind: "create", name: typedName });
   }
+  const highlightedRow =
+    highlightIndex === null ? undefined : rows[highlightIndex];
+  const optionId = (index: number): string => `${listId}-${index}`;
+
+  const changeQuery = (nextQuery: string): void => {
+    setQuery(nextQuery);
+    setHighlightIndex(null);
+  };
 
   const take = (row: Row<O>): void => {
-    setQuery("");
+    changeQuery("");
     if (row.kind === "create") {
       create?.onCreate(row.name);
       return;
@@ -86,19 +100,50 @@ export function TypeAhead<O extends TypeAheadOption>({
     onPick(row.option);
   };
 
+  const takeTyped = (): void => {
+    if (exactMatch) {
+      take({ kind: "pick", option: exactMatch });
+      return;
+    }
+    if (create && typedName !== "") {
+      take({ kind: "create", name: typedName });
+    }
+  };
+
+  const moveHighlight = (step: 1 | -1): void => {
+    if (rows.length === 0) {
+      return;
+    }
+    if (!highlightedRow || highlightIndex === null) {
+      setHighlightIndex(step === 1 ? 0 : rows.length - 1);
+      return;
+    }
+    setHighlightIndex((highlightIndex + step + rows.length) % rows.length);
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      moveHighlight(event.key === "ArrowDown" ? 1 : -1);
+      return;
+    }
     if (event.key === "Escape") {
-      setQuery("");
+      if (highlightedRow) {
+        setHighlightIndex(null);
+        return;
+      }
+      changeQuery("");
       return;
     }
     if (event.key !== "Enter") {
       return;
     }
     event.preventDefault();
-    const firstRow = rows[0];
-    if (firstRow && typedName !== "") {
-      take(firstRow);
+    if (highlightedRow) {
+      take(highlightedRow);
+      return;
     }
+    takeTyped();
   };
 
   return (
@@ -106,43 +151,57 @@ export function TypeAhead<O extends TypeAheadOption>({
       <input
         type="text"
         aria-label={label}
+        aria-controls={rows.length > 0 ? listId : undefined}
+        aria-activedescendant={
+          highlightedRow && highlightIndex !== null
+            ? optionId(highlightIndex)
+            : undefined
+        }
         placeholder={placeholder}
         autoComplete="off"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => changeQuery(event.target.value)}
         onKeyDown={onKeyDown}
         className={textInput}
       />
       {rows.length > 0 && (
-        <ul className="m-0 flex list-none flex-col overflow-hidden rounded-[14px] border border-line bg-surface p-0 shadow-sm">
-          {rows.map((row) => (
-            <li
+        <div
+          id={listId}
+          role="listbox"
+          aria-label="Suggestions"
+          className="flex flex-col overflow-hidden rounded-[14px] border border-line bg-surface shadow-sm"
+        >
+          {rows.map((row, index) => (
+            // biome-ignore lint/a11y/useKeyWithClickEvents: the input handles the keys for every option
+            <div
               key={row.kind === "create" ? "create" : row.option.id}
-              className="border-line border-t first:border-t-0"
+              id={optionId(index)}
+              role="option"
+              tabIndex={-1}
+              aria-selected={highlightedRow === row}
+              onClick={() => take(row)}
+              className={cn(
+                "flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 border-line border-t px-3.5 py-2 text-left text-[15px] first:border-t-0 hover:bg-soft",
+                highlightedRow === row && "bg-soft",
+              )}
             >
-              <button
-                type="button"
-                onClick={() => take(row)}
-                className="flex min-h-11 w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-[15px] hover:bg-soft"
-              >
-                {row.kind === "create" ? (
-                  <span className="font-semibold text-accent">
-                    {create?.label(row.name)}
-                  </span>
-                ) : (
-                  <>
-                    <span className="truncate">{row.option.name}</span>{" "}
-                    {row.option.detail && (
-                      <small className="truncate text-xs text-muted">
-                        {row.option.detail}
-                      </small>
-                    )}
-                  </>
-                )}
-              </button>
-            </li>
+              {row.kind === "create" ? (
+                <span className="font-semibold text-accent">
+                  {create?.label(row.name)}
+                </span>
+              ) : (
+                <>
+                  <span className="truncate">{row.option.name}</span>{" "}
+                  {row.option.detail && (
+                    <small className="truncate text-xs text-muted">
+                      {row.option.detail}
+                    </small>
+                  )}
+                </>
+              )}
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

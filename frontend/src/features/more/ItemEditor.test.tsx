@@ -97,7 +97,7 @@ test("merge_repoints_and_combines_after_a_confirm", async () => {
   const { user, router } = renderApp(`/more/items/${spuds.id}`, db, fakeLoop());
 
   await user.type(await screen.findByLabelText("Merge into"), "pot");
-  await user.click(screen.getByRole("button", { name: /^Potatoes/ }));
+  await user.click(screen.getByRole("option", { name: /^Potatoes/ }));
   await user.click(
     within(await screen.findByRole("dialog")).getByRole("button", {
       name: "Merge",
