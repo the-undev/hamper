@@ -28,6 +28,12 @@ export interface Writer {
   all<T extends SyncTable>(table: T): Promise<TableRows[T][]>;
   /** Upserts the row and records it in the outbox once, keeping its first place. */
   put<T extends SyncTable>(table: T, row: TableRows[T]): Promise<void>;
+  /** Sets fields the server already holds on the row and leaves the outbox alone; a missing row is left alone. */
+  patchFromServer<T extends SyncTable>(
+    table: T,
+    id: string,
+    fields: Partial<Omit<TableRows[T], "id">>,
+  ): Promise<void>;
   /** Sets the row's deletedAt through put; a row already tombstoned is left alone. */
   tombstone<T extends SyncTable>(
     table: T,
@@ -76,6 +82,13 @@ function createWriter(db: HamperDb): Writer {
       tableOf(table).where(key).equals(value).toArray(),
     all: (table) => tableOf(table).toArray(),
     put,
+    patchFromServer: async (table, id, fields) => {
+      const row = await tableOf(table).get(id);
+      if (!row) {
+        return;
+      }
+      await tableOf(table).put({ ...row, ...fields });
+    },
     tombstone: async (table, id, now) => {
       const row = await tableOf(table).get(id);
       if (!row) {

@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { createSyncLoop } from "@/sync/loop";
 import { freshDb } from "@/test/db";
+import { FakeEventSource } from "@/test/fake-event-source";
+import { fakeSyncApi } from "@/test/fake-sync-api";
+import { now } from "@/test/rows";
 import type { HamperDb } from "./db";
 import type { Item } from "./types";
 import { write } from "./write";
@@ -110,4 +114,44 @@ test("where reads rows by foreign key and all reads the whole table", async () =
 
   expect(byMeal.map((line) => line.id)).toEqual(["l2"]);
   expect(everyLine).toHaveLength(2);
+});
+
+test("patchFromServer_does_not_touch_the_outbox", async () => {
+  await db.items.put(milk);
+
+  await write(db, (w) =>
+    w.patchFromServer("items", "a1", { imageId: "new-image" }),
+  );
+
+  expect(await db.items.get("a1")).toEqual({ ...milk, imageId: "new-image" });
+  expect(await db.outbox.count()).toBe(0);
+});
+
+test("patchFromServer_is_carried_by_a_pending_push", async () => {
+  await write(db, (w) => w.put("items", { ...milk, name: "Whole milk" }));
+  const [entryBefore] = await db.outbox.toArray();
+
+  await write(db, (w) =>
+    w.patchFromServer("items", "a1", { imageId: "new-image" }),
+  );
+
+  expect(await db.outbox.toArray()).toEqual([entryBefore]);
+  const api = fakeSyncApi();
+  const loop = createSyncLoop({
+    db,
+    api,
+    events: () => new FakeEventSource("/sync/events"),
+    now: () => now,
+    online: () => true,
+  });
+  await loop.syncNow();
+  expect(api.pushes[0]?.map((change) => change.row)).toEqual([
+    {
+      id: "a1",
+      deletedAt: null,
+      name: "Whole milk",
+      size: null,
+      imageId: "new-image",
+    },
+  ]);
 });

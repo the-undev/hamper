@@ -225,6 +225,8 @@ its place and moves `dirtiedAt`. `meta` holds the sync cursor under `cursor`.
 
 Every edit runs as one Dexie transaction over every synced table and the
 outbox, so a row and its outbox entry are written together or not at all.
+A fact the server already holds, such as a new `imageId`, is patched into the
+row without the outbox.
 The rules in [domain](domain.md) are operations inside such a transaction.
 The server makes the plan row, so an operation on the plan refuses until the
 first pull has brought it.

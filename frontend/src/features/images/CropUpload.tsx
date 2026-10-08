@@ -98,15 +98,9 @@ export function CropUpload({
   const showRestError = (error: Error): void =>
     showToast(error instanceof RestError ? error.title : error.message);
 
-  // A pending change to the row then carries the new id instead of putting the old one back.
+  // The server already holds the id, so the row is not pushed for it; a pending change to the row carries it.
   const storeImageId = (imageId: string | null): Promise<void> =>
-    write(db, async (w) => {
-      const row = await w.get(table, rowId);
-      if (!row) {
-        return;
-      }
-      await w.put(table, { ...row, imageId });
-    });
+    write(db, (w) => w.patchFromServer(table, rowId, { imageId }));
 
   const upload = useMutation({
     mutationFn: async (jpeg: Blob) => {
