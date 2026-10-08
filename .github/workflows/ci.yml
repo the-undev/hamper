@@ -1,0 +1,53 @@
+# Mirrors `make check`; the Makefile is the source of truth for the gates.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  # A release workflow runs these gates against the commit it releases.
+  workflow_call:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('backend/**/packages.lock.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # --locked-mode fails rather than resolving a different graph from the committed lock.
+      - run: dotnet restore backend/Hamper.slnx --locked-mode
+      - run: dotnet build backend/Hamper.slnx --no-restore -warnaserror
+      - run: dotnet format backend/Hamper.slnx --verify-no-changes
+      - run: dotnet test backend/Hamper.slnx --no-build
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Before setup-node, whose pnpm cache needs pnpm on PATH; the version comes from packageManager.
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - run: pnpm -C frontend install --frozen-lockfile
+      - run: pnpm -C frontend lint
+      - run: pnpm -C frontend typecheck
+      - run: pnpm -C frontend test
+      - run: pnpm -C frontend build
