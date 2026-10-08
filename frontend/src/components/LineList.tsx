@@ -46,13 +46,15 @@ export function LineList<L extends LineView>({
             ]}
           >
             <div className="flex min-w-0 items-center gap-2.5 py-1 pr-1 pl-3">
-              <span className="flex min-w-0 flex-1 flex-col">
+              <span className="flex min-w-0 flex-1 flex-col justify-center">
                 <b className="truncate text-[15px] font-semibold">
                   {line.name}
                 </b>
-                <small className="truncate text-xs text-muted">
-                  {line.size ?? " "}
-                </small>
+                {line.size && (
+                  <small className="truncate text-xs text-muted">
+                    {line.size}
+                  </small>
+                )}
               </span>
               {extra?.(line)}
               <Counter
