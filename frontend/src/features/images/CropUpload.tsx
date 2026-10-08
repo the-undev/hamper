@@ -21,7 +21,8 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useSyncLoop } from "@/store/provider";
+import { useDb, useSyncLoop } from "@/store/provider";
+import { write } from "@/store/write";
 import { useSyncStatus } from "@/sync/loop";
 import {
   type Crop,
@@ -87,6 +88,7 @@ export function CropUpload({
   rowId: string;
   hasImage: boolean;
 }) {
+  const db = useDb();
   const loop = useSyncLoop();
   const { online } = useSyncStatus(loop);
   const showToast = useToast();
@@ -96,11 +98,21 @@ export function CropUpload({
   const showRestError = (error: Error): void =>
     showToast(error instanceof RestError ? error.title : error.message);
 
+  // A pending change to the row then carries the new id instead of putting the old one back.
+  const storeImageId = (imageId: string | null): Promise<void> =>
+    write(db, async (w) => {
+      const row = await w.get(table, rowId);
+      if (!row) {
+        return;
+      }
+      await w.put(table, { ...row, imageId });
+    });
+
   const upload = useMutation({
     mutationFn: async (jpeg: Blob) => {
       // The server can only take a picture for a row it has; the push sends one made offline.
       await loop.syncNow();
-      return uploadImage(table, rowId, jpeg);
+      await storeImageId(await uploadImage(table, rowId, jpeg));
     },
     onSuccess: async () => {
       closeCrop();
@@ -109,7 +121,10 @@ export function CropUpload({
     onError: showRestError,
   });
   const remove = useMutation({
-    mutationFn: () => deleteImage(table, rowId),
+    mutationFn: async () => {
+      await deleteImage(table, rowId);
+      await storeImageId(null);
+    },
     onSuccess: () => loop.syncNow(),
     onError: showRestError,
   });

@@ -1,11 +1,15 @@
 import { screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { HamperDb } from "@/store/db";
+import { write } from "@/store/write";
+import { createSyncLoop } from "@/sync/loop";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
+import { FakeEventSource } from "@/test/fake-event-source";
 import { fakeFetch } from "@/test/fake-fetch";
 import { fakeLoop } from "@/test/fake-loop";
-import { anItem, seed } from "@/test/rows";
+import { fakeSyncApi } from "@/test/fake-sync-api";
+import { anItem, now, seed } from "@/test/rows";
 
 let db: HamperDb;
 const jpeg = new Blob(["cropped"], { type: "image/jpeg" });
@@ -62,6 +66,49 @@ test("use_photo_posts_the_cropped_jpeg_to_the_items_image_endpoint_and_syncs", a
   expect(bitmap.close).toHaveBeenCalled();
 });
 
+test("a_pending_edit_keeps_the_new_image_id", async () => {
+  const milk = { ...anItem("Milk"), imageId: "old-image" };
+  await seed(db, { items: [milk] });
+  await write(db, (w) => w.put("items", { ...milk, name: "Whole milk" }));
+  fakeFetch({
+    [`POST /api/items/${milk.id}/image`]: () =>
+      Response.json({ imageId: "new-image" }),
+  });
+  const { user } = renderApp(`/more/items/${milk.id}`, db, fakeLoop());
+
+  await user.upload(
+    await screen.findByLabelText("Photo file"),
+    new File(["raw"], "photo.jpg", { type: "image/jpeg" }),
+  );
+  await user.click(await screen.findByRole("button", { name: "Use photo" }));
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
+
+  expect(await db.items.get(milk.id)).toMatchObject({
+    name: "Whole milk",
+    imageId: "new-image",
+  });
+  const api = fakeSyncApi();
+  const loop = createSyncLoop({
+    db,
+    api,
+    events: () => new FakeEventSource("/sync/events"),
+    now: () => now,
+    online: () => true,
+  });
+  await loop.syncNow();
+  expect(api.pushes[0]?.map((change) => change.row)).toEqual([
+    {
+      id: milk.id,
+      deletedAt: null,
+      name: "Whole milk",
+      size: null,
+      imageId: "new-image",
+    },
+  ]);
+});
+
 test("remove_photo_deletes_the_image_and_syncs", async () => {
   const milk = { ...anItem("Milk"), imageId: "old-image" };
   await seed(db, { items: [milk] });
@@ -78,6 +125,7 @@ test("remove_photo_deletes_the_image_and_syncs", async () => {
   expect(calls.map((call) => `${call.method} ${call.path}`)).toContain(
     `DELETE /api/items/${milk.id}/image`,
   );
+  expect((await db.items.get(milk.id))?.imageId).toBeNull();
 });
 
 test("a_refused_upload_shows_the_servers_reason", async () => {

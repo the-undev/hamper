@@ -297,9 +297,11 @@ phone offers the camera or the library. The picture is drawn on a canvas in a
 square crop box: dragging pans it, and a slider zooms from the size that just
 covers the box to three times that. Use photo draws the crop at 1200 by 1200
 and sends it as a JPEG through a TanStack Query mutation. The device syncs
-before the upload, so the server has a row made offline, and after it, so
-the new `imageId` arrives with the pull. Remove photo calls the delete. Both
-need the server and are disabled while offline.
+before the upload, so the server has a row made offline. It then writes the
+returned `imageId` to its own copy of the row and syncs again, so a change to
+the row still waiting to be sent carries the new id. Remove photo calls the
+delete and writes a null `imageId` the same way. Both need the server and are
+disabled while offline.
 
 A picture shows the `thumb` in lists, on meal cards and on the plan, and the
 `large` on the meal screen. A day shows the picture of the library meal it
