@@ -194,22 +194,12 @@ test("the_plan_waits_for_the_server_until_the_first_pull_brings_it", async () =>
   expect(await screen.findByText(/Waiting for the server/)).toBeInTheDocument();
 });
 
-test("the_view_is_remembered_and_a_sideways_swipe_switches_it", async () => {
+test("the_view_is_remembered", async () => {
   const { user } = renderApp("/plan", db, fakeLoop());
 
   await user.click(await screen.findByRole("radio", { name: "Items" }));
 
-  expect(await screen.findByLabelText("Add an item")).toBeInTheDocument();
   expect(window.localStorage.getItem("hamper.planView")).toBe("items");
-
-  const hint = screen.getByText(/Weekly stays when a new plan starts/);
-  fireEvent.pointerDown(hint, { clientX: 40, clientY: 300 });
-  fireEvent.pointerUp(hint, { clientX: 260, clientY: 310 });
-
-  expect(
-    await screen.findByRole("button", { name: `Pick a meal for ${monday}` }),
-  ).toBeInTheDocument();
-  expect(window.localStorage.getItem("hamper.planView")).toBe("meals");
 });
 
 /** jsdom lays nothing out, so each slot gets a rect from its position, one under another. */

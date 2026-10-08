@@ -1,4 +1,3 @@
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, sectionLabel } from "@/components/styles";
 import { useItemsById } from "@/hooks/data";
 import { WantedLines } from "./WantedLines";
@@ -8,7 +7,6 @@ export function PlanItems() {
   const itemsById = useItemsById();
   return (
     <>
-      <ScreenHeader title="Plan" />
       <h2 className={sectionLabel}>
         Wanted{" "}
         <span className="font-medium normal-case tracking-normal">

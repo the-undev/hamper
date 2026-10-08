@@ -3,7 +3,6 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Counter } from "@/components/Counter";
 import { WaitingForServer } from "@/components/EmptyState";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import {
   Sheet,
   SheetContent,
@@ -31,7 +30,7 @@ import type { Plan } from "@/store/types";
 import { DayList } from "./DayList";
 import { MealPicker } from "./MealPicker";
 
-/** The plan's days: the start date and length in the header, a slot per day, and Start new plan. */
+/** The plan's days: when they start and end, a slot per day, and Start new plan. */
 export function PlanMeals() {
   const plan = usePlan();
   const days = usePlannedDays();
@@ -44,15 +43,10 @@ export function PlanMeals() {
   const [confirmingNewPlan, setConfirmingNewPlan] = useState(false);
 
   if (plan === null) {
-    return (
-      <>
-        <ScreenHeader title="Plan" />
-        <WaitingForServer />
-      </>
-    );
+    return <WaitingForServer />;
   }
   if (!plan || !days || !linesByDay || !itemsById || !mealsById) {
-    return <ScreenHeader title="Plan" />;
+    return null;
   }
 
   const nextStart = formatDay(dayDate(plan, plan.lengthDays));
@@ -61,7 +55,6 @@ export function PlanMeals() {
 
   return (
     <>
-      <ScreenHeader title="Plan" actions={<PlanRange plan={plan} />} />
       <p className="m-0 text-[13px] text-muted">
         Starts <b className="text-foreground">{formatDay(plan.startDate)}</b>,
         ends{" "}
@@ -134,8 +127,8 @@ export function PlanMeals() {
   );
 }
 
-/** The start date, which opens the phone's date picker, and − N days +. */
-function PlanRange({ plan }: { plan: Plan }) {
+/** The start date, which opens the phone's date picker, and − N days +, for the header. */
+export function PlanRange({ plan }: { plan: Plan }) {
   const write = useWrite();
   return (
     <>

@@ -7,7 +7,8 @@ data; open it in a browser, on a phone as well as a desktop.
 ## Plan
 
 Opens here. A segmented control at the top switches between two views, and a
-swipe does the same. The view last used is remembered.
+swipe does the same. The views slide, and during a swipe they follow the
+finger. The view last used is remembered.
 
 **Meals.** The header holds the start date, which opens the phone's date
 picker, and − N days +. A read-only line says when the plan starts and ends:
