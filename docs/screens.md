@@ -74,7 +74,8 @@ from history, so it is left out while offline.
 ## More
 
 A menu: Items, History, Export, Import, and the sync status with the time of
-the last sync.
+the last sync. Import says "Imported", or the reason the server refused the
+file.
 
 **Items.** A search, then every item with its usual size. Tapping one opens
 the editor: name, usual size, picture, Merge into another item (a type-ahead
@@ -82,6 +83,7 @@ over the rest), Delete.
 
 **History.** Archived shops by date, each with its meals and a count of lines.
 Tapping one opens it read only. "Copy these meals to the plan" on each.
+History needs the server, and says so while offline.
 
 ## Everywhere
 

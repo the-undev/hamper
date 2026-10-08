@@ -17,6 +17,10 @@ import { Route as PlanIndexRouteImport } from './routes/plan.index'
 import { Route as ShopIndexRouteImport } from './routes/shop.index'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
 import { Route as ShopBreakdownRouteImport } from './routes/shop.breakdown'
+import { Route as MoreHistoryIndexRouteImport } from './routes/more.history.index'
+import { Route as MoreHistoryArchivedIdRouteImport } from './routes/more.history.$archivedId'
+import { Route as MoreItemsIndexRouteImport } from './routes/more.items.index'
+import { Route as MoreItemsItemIdRouteImport } from './routes/more.items.$itemId'
 import { Route as PlanDayPositionRouteImport } from './routes/plan.day.$position'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +63,26 @@ const ShopBreakdownRoute = ShopBreakdownRouteImport.update({
   path: '/shop/breakdown',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MoreHistoryIndexRoute = MoreHistoryIndexRouteImport.update({
+  id: '/more/history/',
+  path: '/more/history/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoreHistoryArchivedIdRoute = MoreHistoryArchivedIdRouteImport.update({
+  id: '/more/history/$archivedId',
+  path: '/more/history/$archivedId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoreItemsIndexRoute = MoreItemsIndexRouteImport.update({
+  id: '/more/items/',
+  path: '/more/items/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoreItemsItemIdRoute = MoreItemsItemIdRouteImport.update({
+  id: '/more/items/$itemId',
+  path: '/more/items/$itemId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlanDayPositionRoute = PlanDayPositionRouteImport.update({
   id: '/plan/day/$position',
   path: '/plan/day/$position',
@@ -74,7 +98,11 @@ export interface FileRoutesByFullPath {
   '/more/': typeof MoreIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
+  '/more/items/$itemId': typeof MoreItemsItemIdRoute
   '/plan/day/$position': typeof PlanDayPositionRoute
+  '/more/history/': typeof MoreHistoryIndexRoute
+  '/more/items/': typeof MoreItemsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,7 +113,11 @@ export interface FileRoutesByTo {
   '/more': typeof MoreIndexRoute
   '/plan': typeof PlanIndexRoute
   '/shop': typeof ShopIndexRoute
+  '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
+  '/more/items/$itemId': typeof MoreItemsItemIdRoute
   '/plan/day/$position': typeof PlanDayPositionRoute
+  '/more/history': typeof MoreHistoryIndexRoute
+  '/more/items': typeof MoreItemsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,7 +129,11 @@ export interface FileRoutesById {
   '/more/': typeof MoreIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
+  '/more/items/$itemId': typeof MoreItemsItemIdRoute
   '/plan/day/$position': typeof PlanDayPositionRoute
+  '/more/history/': typeof MoreHistoryIndexRoute
+  '/more/items/': typeof MoreItemsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -110,7 +146,11 @@ export interface FileRouteTypes {
     | '/more/'
     | '/plan/'
     | '/shop/'
+    | '/more/history/$archivedId'
+    | '/more/items/$itemId'
     | '/plan/day/$position'
+    | '/more/history/'
+    | '/more/items/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -121,7 +161,11 @@ export interface FileRouteTypes {
     | '/more'
     | '/plan'
     | '/shop'
+    | '/more/history/$archivedId'
+    | '/more/items/$itemId'
     | '/plan/day/$position'
+    | '/more/history'
+    | '/more/items'
   id:
     | '__root__'
     | '/'
@@ -132,7 +176,11 @@ export interface FileRouteTypes {
     | '/more/'
     | '/plan/'
     | '/shop/'
+    | '/more/history/$archivedId'
+    | '/more/items/$itemId'
     | '/plan/day/$position'
+    | '/more/history/'
+    | '/more/items/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,7 +192,11 @@ export interface RootRouteChildren {
   MoreIndexRoute: typeof MoreIndexRoute
   PlanIndexRoute: typeof PlanIndexRoute
   ShopIndexRoute: typeof ShopIndexRoute
+  MoreHistoryArchivedIdRoute: typeof MoreHistoryArchivedIdRoute
+  MoreItemsItemIdRoute: typeof MoreItemsItemIdRoute
   PlanDayPositionRoute: typeof PlanDayPositionRoute
+  MoreHistoryIndexRoute: typeof MoreHistoryIndexRoute
+  MoreItemsIndexRoute: typeof MoreItemsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -205,6 +257,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopBreakdownRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/more/history/': {
+      id: '/more/history/'
+      path: '/more/history'
+      fullPath: '/more/history/'
+      preLoaderRoute: typeof MoreHistoryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/more/history/$archivedId': {
+      id: '/more/history/$archivedId'
+      path: '/more/history/$archivedId'
+      fullPath: '/more/history/$archivedId'
+      preLoaderRoute: typeof MoreHistoryArchivedIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/more/items/': {
+      id: '/more/items/'
+      path: '/more/items'
+      fullPath: '/more/items/'
+      preLoaderRoute: typeof MoreItemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/more/items/$itemId': {
+      id: '/more/items/$itemId'
+      path: '/more/items/$itemId'
+      fullPath: '/more/items/$itemId'
+      preLoaderRoute: typeof MoreItemsItemIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plan/day/$position': {
       id: '/plan/day/$position'
       path: '/plan/day/$position'
@@ -224,7 +304,11 @@ const rootRouteChildren: RootRouteChildren = {
   MoreIndexRoute: MoreIndexRoute,
   PlanIndexRoute: PlanIndexRoute,
   ShopIndexRoute: ShopIndexRoute,
+  MoreHistoryArchivedIdRoute: MoreHistoryArchivedIdRoute,
+  MoreItemsItemIdRoute: MoreItemsItemIdRoute,
   PlanDayPositionRoute: PlanDayPositionRoute,
+  MoreHistoryIndexRoute: MoreHistoryIndexRoute,
+  MoreItemsIndexRoute: MoreItemsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

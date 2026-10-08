@@ -4,6 +4,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
+import { SavedField } from "@/components/SavedField";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, secondaryButton, sectionLabel } from "@/components/styles";
 import { Thumb } from "@/components/Thumb";
@@ -19,7 +20,6 @@ import { useWrite } from "@/hooks/useWrite";
 import { formatTimestampDay, nowIso } from "@/lib/dates";
 import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
-import type { Meal } from "@/store/types";
 import { useLastShopped } from "./lastShopped";
 import { MealPlacement } from "./MealPlacement";
 
@@ -70,7 +70,13 @@ export function MealScreen({ mealId }: { mealId: string }) {
           Change photo
         </button>
       </div>
-      <MealName key={meal.name} meal={meal} />
+      <SavedField
+        key={meal.name}
+        label="Name"
+        value={meal.name}
+        title
+        save={(w, name) => renameMeal(w, meal.id, name)}
+      />
       {lastShopped !== undefined && (
         <p className={hint}>
           {lastShopped === null
@@ -149,37 +155,5 @@ export function MealScreen({ mealId }: { mealId: string }) {
         }}
       />
     </>
-  );
-}
-
-/** The meal's name as a text box, saved when it loses focus or on Enter. */
-function MealName({ meal }: { meal: Meal }) {
-  const write = useWrite();
-  const [name, setName] = useState(meal.name);
-  const save = async (): Promise<void> => {
-    if (name.trim() === meal.name) {
-      return;
-    }
-    const renamed = await write(async (w) => {
-      await renameMeal(w, meal.id, name);
-      return true;
-    });
-    if (!renamed) {
-      setName(meal.name);
-    }
-  };
-  return (
-    <input
-      aria-label="Name"
-      value={name}
-      onChange={(event) => setName(event.target.value)}
-      onBlur={() => void save()}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          event.currentTarget.blur();
-        }
-      }}
-      className="min-h-11 w-full rounded-[10px] border border-transparent bg-transparent px-1 text-[22px] font-bold hover:border-line focus:border-line"
-    />
   );
 }
