@@ -64,6 +64,8 @@ path gets the app shell.
 - `POST /api/import`: takes an export zip into an empty database.
 - `GET /sync?since=<revision>`: every synced row written after the cursor,
   and the current revision. See [Pull](#pull).
+- `POST /sync`: applies a batch of row changes and returns the rows as they
+  now stand. See [Push](#push).
 
 The rest of the sync endpoints and the image endpoints are added in their
 phases of the [build order](roadmap.md#build-order).
@@ -107,6 +109,10 @@ row is a JSON object holding every column in camelCase, `revision` and
 `yyyy-MM-dd` and timestamps ISO 8601 with an offset. A shop's `meals` and a
 shop line's `sources` are JSON arrays.
 
+The plan row's id is fixed at `5e1f0a3c-9b2d-4c47-8a61-2f3d4b5c6a70`. A
+day's id is `da7e0000-0000-4000-8000-` followed by its position as twelve
+hex digits, so every device names the same day the same way.
+
 ### Pull
 
 `GET /sync?since=<revision>` returns the server's current revision and every
@@ -128,11 +134,49 @@ for this to be one request.
 
 ### Push
 
-`POST /sync` takes a batch of row changes from the outbox, each with the
-table, the row id, the fields, and the client's own change id. The server
-applies them in order, assigns revisions, and returns the rows as they now
-stand plus the new current revision. The client clears the acknowledged
-outbox entries and upserts the returned rows.
+`POST /sync` takes a batch of changes from the outbox, each with the
+client's own change id:
+
+```json
+{ "changes": [ { "id": "c1", "table": "items", "row": { "id": "...", "deletedAt": null, "name": "Milk", "size": null } } ] }
+```
+
+A change carries the whole row as the client holds it: every column except
+`revision`, with `deletedAt` set for a delete. The server applies the batch
+in order as one transaction. Each row is inserted, or replaces every column
+but the revision of the stored row with its id, and a changed row takes a
+new revision. Foreign keys are checked at commit, so a row may point at one
+that arrives later in the same batch.
+
+Every change is validated before anything is written. The first failure
+rejects the whole batch with a 400 problem whose detail names the change and
+the reason:
+
+- an unknown table;
+- a missing or malformed row id;
+- a row that does not fit its table: a column missing or of the wrong type,
+  or a property the table does not have;
+- a name empty after trimming, or longer than its maximum (items and meals
+  200, an item's size 100);
+- a count below 1;
+- a plan `lengthDays` outside 1 to 31, or a plan row with another id;
+- a day whose id does not match its position, or a negative position;
+- a foreign key that points at no row once the batch is applied.
+
+The response holds the current revision after the batch, the applied change
+ids, and the pushed rows as they now stand under every table key:
+
+```json
+{ "revision": 57, "applied": ["c1"], "rows": { "items": [], "meals": [], ...,
+  "shopLines": [] } }
+```
+
+An empty batch returns the current revision and empty lists.
+
+The client clears the applied outbox entries and upserts the returned rows.
+The push does not move its cursor, because other writes may have taken
+revisions between the cursor and the batch. The client pulls after a push;
+the live update's revision is above its cursor, which prompts the pull.
 
 Conflicts: last writer wins per row, by order of arrival at the server. The
 cases that matter here (two people ticking, renaming, adding) are all fine

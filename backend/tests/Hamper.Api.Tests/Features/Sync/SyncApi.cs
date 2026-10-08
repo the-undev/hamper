@@ -18,7 +18,21 @@ internal static class SyncApi
         return (await response.Content.ReadFromJsonAsync<JsonObject>(ct))!;
     }
 
+    public static Task<HttpResponseMessage> PushAsync(HttpClient client, IEnumerable<SyncChange> changes, CancellationToken ct) =>
+        client.PostAsJsonAsync(new Uri("/sync", UriKind.Relative), new { changes }, ct);
+
+    /// <summary>Pushes the changes, asserts they were accepted, and returns the response body.</summary>
+    public static async Task<JsonObject> PushAcceptedAsync(HttpClient client, IEnumerable<SyncChange> changes, CancellationToken ct)
+    {
+        var response = await PushAsync(client, changes, ct);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<JsonObject>(ct))!;
+    }
+
     /// <summary>Every row of every table in a pull or push body, as one flat list.</summary>
     public static IEnumerable<JsonObject> AllRows(JsonObject tables) =>
         TableNames.SelectMany(table => tables[table]!.AsArray().Select(row => row!.AsObject()));
 }
+
+/// <summary>One change in a push batch.</summary>
+internal sealed record SyncChange(string Id, string Table, JsonObject Row);
