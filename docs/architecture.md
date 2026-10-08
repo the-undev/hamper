@@ -66,9 +66,11 @@ path gets the app shell.
   and the current revision. See [Pull](#pull).
 - `POST /sync`: applies a batch of row changes and returns the rows as they
   now stand. See [Push](#push).
+- `GET /sync/events`: a server-sent event stream of the current revision.
+  See [Live updates](#live-updates).
 
-The rest of the sync endpoints and the image endpoints are added in their
-phases of the [build order](roadmap.md#build-order).
+The image endpoints are added in their phase of the
+[build order](roadmap.md#build-order).
 
 ## Sync
 
@@ -189,10 +191,23 @@ before the server sees it.
 
 ### Live updates
 
-`GET /sync/events` is an SSE stream. The server sends the new current
-revision after every write. A client that receives a revision above its
-cursor pulls. Reconnection is the browser's; on reconnect the client pulls
-once, which covers anything missed.
+`GET /sync/events` is a server-sent event stream: `text/event-stream`,
+`Cache-Control: no-cache`, unbuffered. It sends a `revision` event with the
+current revision on connect, and again after every unit of work through the
+write gate has finished:
+
+```
+event: revision
+data: 57
+```
+
+A unit of work that wrote nothing sends the unchanged revision, which the
+client ignores. A client that falls behind receives only the newest
+revision. A comment line, `: keepalive`, goes out every 15 seconds so an idle
+connection stays open.
+
+A client that receives a revision above its cursor pulls. Reconnection is the
+browser's; on reconnect the client pulls once, which covers anything missed.
 
 ### On the device
 

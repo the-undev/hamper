@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<RevisionBroadcaster>();
 builder.Services.AddSingleton<WriteGate>();
 builder.Services.AddSingleton<RevisionStamper>();
 builder.Services.AddDbContext<HamperDbContext>((services, options) =>
