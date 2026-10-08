@@ -47,7 +47,7 @@ export function SavedField({
         }}
         className={
           title
-            ? "min-h-11 w-full rounded-[10px] border border-transparent bg-transparent px-1 text-[22px] font-bold text-foreground hover:border-line focus:border-line"
+            ? "min-h-11 w-full rounded-[10px] border border-line bg-transparent px-2 text-[22px] font-bold text-foreground hover:border-muted focus:border-muted"
             : textInput
         }
       />
