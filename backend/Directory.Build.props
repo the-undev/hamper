@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <!-- Unversioned builds stay 0.0.0-dev; `make image VERSION=x.y.z` stamps a release. -->
+    <Version>0.0.0-dev</Version>
+    <!-- The build stamps the informational version itself, so the SDK must not append a commit hash. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <!-- Distro-packaged SDKs (Arch) ship without AspNetCore prune data (NETSDK1226); a no-op elsewhere. -->
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+    <!-- Each project commits packages.lock.json and CI restores against it. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>

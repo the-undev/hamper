@@ -1,0 +1,7 @@
+T:System.IO.File; All file IO goes through IFileStorage (LocalFileStorage is the one sanctioned call site)
+T:System.IO.Directory; All file IO goes through IFileStorage (LocalFileStorage is the one sanctioned call site)
+T:System.IO.FileInfo; Use IFileStorage
+T:System.IO.DirectoryInfo; Use IFileStorage
+T:System.IO.FileStream; Use IFileStorage.OpenRead
+P:System.DateTime.Now; Use the injected TimeProvider
+P:System.DateTime.UtcNow; Use the injected TimeProvider

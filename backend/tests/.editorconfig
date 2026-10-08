@@ -1,0 +1,5 @@
+# Test-project overrides layered on the root .editorconfig.
+
+[*.cs]
+# Test names are snake_case sentences; CA1707 is for shipped API surface.
+dotnet_diagnostic.CA1707.severity = none
