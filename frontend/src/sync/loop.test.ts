@@ -308,6 +308,35 @@ test("a_burst_of_writes_pushes_once", async () => {
   expect(api.pushes[0]).toHaveLength(2);
 });
 
+test("an_edit_to_a_row_already_waiting_pushes_again", async () => {
+  const defaultPush = api.onPush;
+  let releasePush = (): void => {};
+  let firstPushStarted = false;
+  api.onPush = async (changes) => {
+    if (firstPushStarted) {
+      return defaultPush(changes);
+    }
+    firstPushStarted = true;
+    await new Promise<void>((resolve) => {
+      releasePush = resolve;
+    });
+    return defaultPush(changes);
+  };
+  loop.start();
+
+  await putItems(milk);
+  await vi.waitFor(() => expect(api.pushes).toHaveLength(1));
+  await putItems({ ...milk, name: "Oat milk" });
+  await settle();
+  releasePush();
+
+  await vi.waitFor(() => expect(api.pushes).toHaveLength(2));
+  expect(api.pushes[1]?.[0]?.row).toMatchObject({
+    id: milk.id,
+    name: "Oat milk",
+  });
+});
+
 test("a_write_while_offline_waits_for_the_online_event", async () => {
   api.onPush = async () => {
     throw new SyncUnreachableError("Could not reach /sync");

@@ -85,6 +85,7 @@ export function createSyncLoop({
   let stopListening: (() => void) | null = null;
   let pushTimer: ReturnType<typeof setTimeout> | null = null;
   let lastOutboxCount = 0;
+  let lastOutboxNewestDirtiedAt = 0;
 
   const update = (changes: Partial<SyncStatus>): void => {
     status = { ...status, ...changes };
@@ -244,11 +245,20 @@ export function createSyncLoop({
     window.addEventListener("focus", syncOnWake);
     document.addEventListener("visibilitychange", syncWhenVisible);
 
-    const pendingSubscription = liveQuery(() => db.outbox.count()).subscribe({
-      next: (pending) => {
+    const pendingSubscription = liveQuery(async () => {
+      const entries = await db.outbox.toArray();
+      return {
+        pending: entries.length,
+        newestDirtiedAt: Math.max(0, ...entries.map((e) => e.dirtiedAt)),
+      };
+    }).subscribe({
+      next: ({ pending, newestDirtiedAt }) => {
         update({ pending });
-        const outboxChanged = pending !== lastOutboxCount;
+        const outboxChanged =
+          pending !== lastOutboxCount ||
+          newestDirtiedAt !== lastOutboxNewestDirtiedAt;
         lastOutboxCount = pending;
+        lastOutboxNewestDirtiedAt = newestDirtiedAt;
         if (!outboxChanged || pending === 0 || !status.online) {
           return;
         }
@@ -275,6 +285,7 @@ export function createSyncLoop({
         pushTimer = null;
       }
       lastOutboxCount = 0;
+      lastOutboxNewestDirtiedAt = 0;
     };
   };
 
