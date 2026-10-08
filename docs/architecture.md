@@ -230,7 +230,10 @@ Screens read the store through Dexie live queries, so a screen re-renders
 when the store changes, whether from the user or from a pull. TanStack Query
 serves only the REST endpoints, such as history and export.
 
-A sync loop pushes and then pulls, one run at a time. A request to sync
+The app opens the store and makes one sync loop at start, and provides both
+to every screen; the loop runs while the app is mounted.
+
+The loop pushes and then pulls, one run at a time. A request to sync
 while a run is going queues one more run.
 
 The push reads the outbox in `seq` order and sends one change per entry: the
