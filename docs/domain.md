@@ -41,6 +41,7 @@ over from week to week and nothing changes it except a person.
 - A start date and a length in days, both editable at any time. Days are
   positions; each takes its date from the start date and its position, so
   moving the start relabels every day and moves nothing.
+- The first plan starts today with seven days.
 - One day holds at most one planned meal. A day can be empty.
 - A wanted list: lines for things beyond what the days need, milk, loo roll,
   a cereal someone fancies. Each wanted line is marked Once or Weekly.
@@ -67,6 +68,8 @@ own.
 - Days swap by dragging one onto another. A day is cleared by swiping it.
 - One meal placed on two days is two independent copies, and a shop counts it
   twice.
+- Days are identified by position, so two devices placing a meal on the same
+  day edit the same day.
 
 ## Shop
 
@@ -81,6 +84,10 @@ A shopping list. Any number can be open at once.
   count, the names of the days and "wanted" it came from, and a ticked flag.
 - A shop line's name, size and count are edited on the shop only. The plan
   and the item do not change.
+- A shop line points at its item and shows the item's name and size until
+  they are edited on the line, after which the line's own text is shown.
+  Deleting an item leaves its lines on open shops, showing the name the item
+  last had.
 - Lines can be added by typing, removed, and ticked. Ticked lines sink to the
   bottom.
 - "To wanted" on a line puts its item on the plan's wanted list as Once,

@@ -1,3 +1,4 @@
+using Hamper.Api.Features.Plans;
 using Hamper.Api.Infrastructure.Endpoints;
 using Hamper.Api.Infrastructure.Hosting;
 using Hamper.Api.Infrastructure.Persistence;
@@ -26,7 +27,9 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<HamperDbContext>().Database.Migrate();
+    var db = scope.ServiceProvider.GetRequiredService<HamperDbContext>();
+    await db.Database.MigrateAsync();
+    await SeedPlan.EnsureAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>(), CancellationToken.None);
 }
 
 // Unhandled exceptions return problem+json; binding failures keep their client-error status.
