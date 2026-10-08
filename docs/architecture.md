@@ -62,9 +62,11 @@ path gets the app shell.
 - `GET /api/history/{id}`: one archived shop with its lines.
 - `GET /api/export`: the export zip.
 - `POST /api/import`: takes an export zip into an empty database.
+- `GET /sync?since=<revision>`: every synced row written after the cursor,
+  and the current revision. See [Pull](#pull).
 
-The sync and image endpoints are added in their phases of the
-[build order](roadmap.md#build-order).
+The rest of the sync endpoints and the image endpoints are added in their
+phases of the [build order](roadmap.md#build-order).
 
 ## Sync
 
@@ -96,13 +98,33 @@ Revisions come from one counter in `sync_state`, assigned on save. Writes are
 serialised in the process, so revisions commit in the order they were
 assigned.
 
+### On the wire
+
+The tables are `items`, `meals`, `mealLines`, `plan`, `days`, `dayLines`,
+`wantedLines`, `shops` and `shopLines`, the database tables in camelCase. A
+row is a JSON object holding every column in camelCase, `revision` and
+`deletedAt` included; `deletedAt` is null on a live row. Dates are
+`yyyy-MM-dd` and timestamps ISO 8601 with an offset. A shop's `meals` and a
+shop line's `sources` are JSON arrays.
+
 ### Pull
 
-`GET /sync?since=<revision>` returns every row of every synced table with a
-revision above `since`, deleted rows included, and the server's current
-revision. The client upserts them into Dexie and stores the cursor. With
-`since=0` it is the initial load; the dataset is small enough for this to be
-one request.
+`GET /sync?since=<revision>` returns the server's current revision and every
+row of every synced table with a revision above `since`, deleted rows
+included. `since` defaults to 0, and a negative one is a 400 problem.
+
+```json
+{ "revision": 42, "items": [], "meals": [], "mealLines": [], "plan": [],
+  "days": [], "dayLines": [], "wantedLines": [], "shops": [], "shopLines": [] }
+```
+
+Every table key is present, empty or not, and `plan` holds zero or one row.
+The read runs in one transaction, so the response is one snapshot and no row
+in it has a revision above the one it reports.
+
+The client upserts the rows into Dexie and stores the revision as its
+cursor. With `since=0` it is the initial load; the dataset is small enough
+for this to be one request.
 
 ### Push
 
