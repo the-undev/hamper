@@ -30,6 +30,7 @@ to phones. The code follows the docs, never the other way round.
 | Run the API and Vite | `make dev` |
 | Isolated API for live checks (own database and data dir) | `make live-test` |
 | Build the production image | `make image` (optional `VERSION=x.y.z`) |
+| Cut a release | Push a `v*` tag; the Release workflow runs the gates and publishes the image |
 | Backend build and test | `cd backend && dotnet build && dotnet test` |
 | Backend format check | `cd backend && dotnet format Hamper.slnx --verify-no-changes` |
 | Add an EF migration | `cd backend && dotnet ef migrations add <Name> --project src/Hamper.Api -o Infrastructure/Persistence/Migrations` |
@@ -40,7 +41,7 @@ to phones. The code follows the docs, never the other way round.
 | What | Port |
 | --- | --- |
 | API, dev | 8776 |
-| Vite dev server, proxies `/api` and `/sync` to 8776 | 5276 |
+| Vite dev server, proxies `/api`, `/sync` and `/images` to 8776 | 5276 |
 | Vite preview | 4276 |
 | API, live test | 8777 |
 | Container | 8080 |

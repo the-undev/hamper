@@ -8,19 +8,22 @@ PWA added.
 | Part | Choice |
 | --- | --- |
 | API | C# / .NET 10, ASP.NET Core minimal APIs, vertical slices, problem+json errors |
-| Database | SQLite through EF Core, migrations in the repo |
-| Frontend | React 19, TypeScript strict, Vite, Tailwind CSS v4, shadcn, TanStack Router and Query, dnd-kit, pnpm, Biome, Vitest |
-| On-device store | Dexie (IndexedDB) |
+| Database | SQLite through EF Core (`Microsoft.EntityFrameworkCore.Sqlite`), migrations in the repo |
+| Frontend | React 19, TypeScript strict, Vite, Tailwind CSS v4, TanStack Router and Query, pnpm, Biome |
+| Components | shadcn's Button, Dialog and Sheet, on Radix UI, with lucide-react icons |
+| Drag and drop | dnd-kit (`@dnd-kit/core`, `@dnd-kit/sortable`) |
+| On-device store | Dexie (IndexedDB), read through `dexie-react-hooks` live queries |
 | Real time | Server-sent events |
-| PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode: the web app manifest, and a service worker for the app shell and viewed images |
+| PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode, and `workbox-window` under its register module: the web app manifest, and a service worker for the app shell and viewed images |
 | Images | Cropped on the phone with a canvas, resized on the server with Magick.NET (`Magick.NET-Q8-AnyCPU`, Apache 2.0) |
-| Tests | Integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database; Vitest for the frontend |
+| Tests | Backend: xUnit v3, integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database, with `FakeTimeProvider`. Frontend: Vitest, Testing Library, jsdom and `fake-indexeddb` |
 
 One process: the API serves the built frontend from `wwwroot`. One `/data`
 volume holds `hamper.db` and `images/`.
 
-Time goes through `TimeProvider` and file IO through one storage seam, both
-analyzer-enforced, as in skarrow.
+Time goes through `TimeProvider` and file IO through one storage seam,
+`IFileStorage`, both enforced by `Microsoft.CodeAnalysis.BannedApiAnalyzers`,
+as in skarrow.
 
 ## Layout
 
@@ -30,6 +33,7 @@ frontend/  Vite + React, pnpm
 docs/
 Dockerfile
 Makefile   setup, dev, live-test, check, image
+.github/workflows/   ci.yml (the gates), release.yml (the image on a v* tag)
 ```
 
 `make check` runs build, format, backend tests, lint, typecheck, frontend
@@ -234,8 +238,8 @@ first pull has brought it.
 Screens read the store through Dexie live queries, so a screen re-renders
 when the store changes, whether from the user or from a pull. A screen writes
 by running domain operations inside one `write` transaction; a refused
-operation shows its reason and changes nothing. TanStack Query serves only the
-REST endpoints, such as history and export.
+operation shows its reason and changes nothing. TanStack Query serves only REST
+calls, such as history and the image upload.
 
 The app opens the store and makes one sync loop at start, and provides both
 to every screen; the loop runs while the app is mounted.
@@ -300,10 +304,10 @@ phone offers the camera or the library. The picture is drawn on a canvas in a
 square crop box: dragging pans it, and a slider zooms from the size that just
 covers the box to three times that. Use photo draws the crop at 1200 by 1200
 and sends it as a JPEG through a TanStack Query mutation. The device syncs
-before the upload, so the server has a row made offline. It then writes the
-returned `imageId` to its own copy of the row and syncs again, so a change to
+before the upload, so the server has a row made offline. It then patches the
+returned `imageId` into its own copy of the row and syncs again, so a change to
 the row still waiting to be sent carries the new id. Remove photo calls the
-delete and writes a null `imageId` the same way. Both need the server and are
+delete and patches in a null `imageId` the same way. Both need the server and are
 disabled while offline.
 
 A picture shows the `thumb` in lists, on meal cards and on the plan, and the
@@ -327,8 +331,9 @@ exported item and meal with an image whose files exist.
 (`application/zip`) and writes it in one transaction: every row as it
 comes, `deletedAt` included, with new revisions, and the plan's start date and
 length. It refuses with 409 when any item, meal, day, wanted line, shop or
-archived shop exists, deleted ones included, and with 400 when the zip has no
-`data.json`, the format is not 1, or the JSON does not fit the schema.
+archived shop exists, deleted ones included, and with 400 when the body is not
+a zip, the zip has no `data.json`, the format is not 1, or the JSON does not
+fit the schema.
 Import writes each image's two files from the zip into the data directory. A
 row whose `imageId` lacks either file in the zip is imported with `imageId`
 cleared.

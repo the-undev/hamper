@@ -3,18 +3,6 @@
 Work identified and not done, and decisions still open. Each has its own
 heading so a document can link to it.
 
-## Build order
-
-1. Repo skeleton: backend, frontend, Makefile, Dockerfile, `make check` green
-   on an empty app.
-2. Domain and API: items, meals, plan, shops, history, export and import, with
-   integration tests.
-3. Sync: revisions, pull, push, SSE, the Dexie store and the outbox.
-4. Screens: Plan, Shop, Meals, More, against the synced store.
-5. Images: crop, upload, resize, serve.
-6. PWA: manifest, service worker, share, download.
-7. Release workflow, image on ghcr, the container on the server.
-
 ## Open decisions
 
 ### Published port
@@ -33,6 +21,11 @@ to reach one over the LAN, or through a dev tunnel, to exercise offline and
 install before a release.
 
 ## Parked
+
+### Sweep orphaned images
+
+When an item or meal is deleted through sync, its image files stay under
+`/data/images`. Nothing removes them yet.
 
 ### Presets
 
