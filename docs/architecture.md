@@ -211,12 +211,25 @@ browser's; on reconnect the client pulls once, which covers anything missed.
 
 ### On the device
 
-Dexie holds one table per synced table plus `outbox` and `meta` (the cursor).
-Reads go through TanStack Query backed by Dexie live queries, so a screen
-re-renders when the store changes, whether from the user or from a pull.
-Writes go to Dexie and to the outbox in one transaction, then a sync loop
-drains the outbox when online and pulls on every SSE revision, on reconnect,
-and on app focus.
+Dexie holds a database named `hamper` with one table per synced table, keyed
+on `id` and indexed on the foreign keys `mealId`, `dayId`, `shopId` and
+`itemId`, plus `outbox` and `meta`. A row the server has not yet seen has
+revision 0.
+
+The outbox holds one entry per changed row: `seq` (its place in the queue),
+`table`, `rowId` and `dirtiedAt`. Changing a row already in the outbox keeps
+its place and moves `dirtiedAt`. `meta` holds the sync cursor under `cursor`.
+
+Every edit runs as one Dexie transaction over every synced table and the
+outbox, so a row and its outbox entry are written together or not at all.
+The rules in [domain](domain.md) are operations inside such a transaction.
+
+Screens read the store through Dexie live queries, so a screen re-renders
+when the store changes, whether from the user or from a pull. TanStack Query
+serves only the REST endpoints, such as history and export.
+
+A sync loop drains the outbox when online and pulls on every SSE revision,
+on reconnect, and on app focus.
 
 Offline is `navigator.onLine` plus the last push or pull failing. The status
 bar shows it, and the size of the outbox.
