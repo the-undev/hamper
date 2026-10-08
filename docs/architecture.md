@@ -228,12 +228,11 @@ The outbox holds one entry per changed row: `seq` (its place in the queue),
 its place and moves `dirtiedAt`. `meta` holds the sync cursor under `cursor`.
 
 Every edit runs as one Dexie transaction over every synced table and the
-outbox, so a row and its outbox entry are written together or not at all.
-A fact the server already holds, such as a new `imageId`, is patched into the
-row without the outbox.
-The rules in [domain](domain.md) are operations inside such a transaction.
-The server makes the plan row, so an operation on the plan refuses until the
-first pull has brought it.
+outbox, so a row and its outbox entry are written together or not at all. A
+fact the server already holds, such as a new `imageId`, is patched into the
+row without the outbox. The rules in [domain](domain.md) are operations inside
+such a transaction. The server makes the plan row, so an operation on the plan
+refuses until the first pull has brought it.
 
 Screens read the store through Dexie live queries, so a screen re-renders
 when the store changes, whether from the user or from a pull. A screen writes
@@ -328,15 +327,14 @@ import, where it stays deleted. Beside `data.json`, the zip holds
 exported item and meal with an image whose files exist.
 
 `POST /api/import` takes the same zip as the raw request body
-(`application/zip`) and writes it in one transaction: every row as it
-comes, `deletedAt` included, with new revisions, and the plan's start date and
+(`application/zip`) and writes it in one transaction: every row as it comes,
+`deletedAt` included, with new revisions, and the plan's start date and
 length. It refuses with 409 when any item, meal, day, wanted line, shop or
 archived shop exists, deleted ones included, and with 400 when the body is not
 a zip, the zip has no `data.json`, the format is not 1, or the JSON does not
-fit the schema.
-Import writes each image's two files from the zip into the data directory. A
-row whose `imageId` lacks either file in the zip is imported with `imageId`
-cleared.
+fit the schema. Import writes each image's two files from the zip into the
+data directory. A row whose `imageId` lacks either file in the zip is imported
+with `imageId` cleared.
 
 ## Share and download
 

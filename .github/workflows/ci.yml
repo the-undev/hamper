@@ -3,6 +3,8 @@ name: CI
 
 on:
   push:
+    branches: ["**"]
+    tags-ignore: ["v*"]
   pull_request:
   workflow_dispatch:
   # A release workflow runs these gates against the commit it releases.
