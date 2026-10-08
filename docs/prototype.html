@@ -1,0 +1,546 @@
+<title>Hamper prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone frame, centred; on wide screens a notes column sits beside it. */
+:root{
+  --bg:#f3f4ef; --surface:#ffffff; --fg:#1d221c; --muted:#6b7266; --line:#dfe3d9;
+  --accent:#2f7d4a; --accent-fg:#ffffff; --soft:#e6f1e9; --warn:#b4621a; --warn-soft:#fbeedd;
+  --tick:#8d948a; --shadow:0 10px 30px rgba(30,40,30,.12);
+  --display:"Figtree",system-ui,sans-serif; --body:"Figtree",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15181a; --surface:#1f2326; --fg:#e8ebe5; --muted:#9aa196; --line:#30363a;
+  --accent:#5fb57c; --accent-fg:#10211a; --soft:#1f3328; --warn:#e2954a; --warn-soft:#3a2a18;
+  --tick:#6d746b; --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15181a; --surface:#1f2326; --fg:#e8ebe5; --muted:#9aa196; --line:#30363a;
+  --accent:#5fb57c; --accent-fg:#10211a; --soft:#1f3328; --warn:#e2954a; --warn-soft:#3a2a18;
+  --tick:#6d746b; --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);margin:0;padding-block:24px;padding-inline:16px;
+  display:flex;justify-content:center;align-items:flex-start;gap:40px;flex-wrap:wrap}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input{font:inherit;color:inherit}
+
+/* Phone frame */
+.phone{width:min(100%,400px);height:780px;max-height:calc(100vh - 48px);background:var(--surface);border:1px solid var(--line);
+  border-radius:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;flex:0 0 auto}
+@media (max-width:440px){.phone{height:calc(100vh - 48px);border-radius:16px}}
+.top{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px}
+.top h1{font-size:20px;font-weight:700}
+.top .actions{display:flex;gap:6px}
+.icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--accent);font-weight:700;font-size:14px}
+.icon:hover{background:var(--soft)}
+.status{background:var(--warn-soft);color:var(--warn);font-size:12px;padding:6px 16px;display:flex;justify-content:space-between}
+.status button{font-weight:600;text-decoration:underline}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.tabs{display:flex;border-top:1px solid var(--line);padding:6px 8px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+.tabs button{flex:1;padding:8px 4px;font-size:11px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;border-radius:12px}
+.tabs button .g{width:26px;height:26px;border-radius:8px;background:var(--line);display:grid;place-items:center;font-size:13px;color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--accent)}
+.tabs button[aria-selected="true"] .g{background:var(--soft);color:var(--accent)}
+
+/* Shared pieces */
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px}
+.seg button{flex:1;padding:8px;border-radius:10px;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.typeahead{position:relative}
+.typeahead input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--bg);font-size:16px}
+.typeahead input::placeholder{color:var(--muted)}
+.suggest{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);z-index:5;overflow:hidden}
+.suggest button{display:flex;justify-content:space-between;width:100%;padding:11px 14px;text-align:left;font-size:15px}
+.suggest button:hover{background:var(--soft)}
+.suggest .new{color:var(--accent);font-weight:600}
+.suggest small{color:var(--muted)}
+.label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline}
+.label span{letter-spacing:0;text-transform:none;font-weight:500}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line);min-width:0}
+.row:first-child{border-top:0}
+.row .name{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.row .name b{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .name small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .name input{border:0;border-bottom:1px solid var(--accent);background:none;font-size:15px;font-weight:600;padding:0}
+.stepper{display:flex;align-items:center;gap:2px;background:var(--bg);border-radius:10px}
+.stepper button{width:30px;height:30px;font-size:18px;color:var(--accent);font-weight:600;border-radius:10px}
+.stepper button:hover{background:var(--soft)}
+.stepper span{min-width:22px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.x{color:var(--muted);width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:16px}
+.x:hover{background:var(--line)}
+.pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--accent);white-space:nowrap}
+.pill.week{background:var(--warn-soft);color:var(--warn)}
+.primary{background:var(--accent);color:var(--accent-fg);font-weight:700;padding:13px;border-radius:14px;font-size:15px;text-align:center}
+.secondary{border:1px solid var(--line);font-weight:600;padding:11px;border-radius:14px;font-size:14px;text-align:center}
+.empty{color:var(--muted);font-size:14px;padding:14px;text-align:center;border:1px dashed var(--line);border-radius:14px}
+.thumb{width:44px;height:44px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;font-weight:700;font-size:16px;color:#fff}
+.hint{font-size:12px;color:var(--muted)}
+
+/* Plan: day slots */
+.days{display:flex;flex-direction:column;gap:8px}
+.slot{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:14px;min-height:62px}
+.slot.empty{border-style:dashed}
+.slot .day{width:44px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.slot .day b{font-size:13px}
+.slot .day small{font-size:11px;color:var(--muted)}
+.slot .name{flex:1;min-width:0}
+.slot .name b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .name small{color:var(--muted);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .pick{color:var(--accent);font-weight:600;font-size:14px;flex:1;text-align:left;min-height:44px}
+.slot .handle{width:44px;height:44px;display:grid;place-items:center;color:var(--muted);font-size:22px;cursor:grab;touch-action:none;user-select:none;border-radius:10px;flex:0 0 auto}
+.slot .handle:hover{background:var(--line)}
+.slot.dragover{background:var(--soft);border-color:var(--accent)}
+.slot.lifted{opacity:.4}
+.ghost{position:fixed;pointer-events:none;z-index:50;background:var(--surface);border:1px solid var(--accent);border-radius:14px;box-shadow:var(--shadow);padding:8px 12px;font-weight:600;font-size:15px}
+.weekbar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.weekbar b{color:var(--fg);font-weight:600}
+.weekbar .back{min-height:44px;padding:0 8px}
+
+/* Swipe left on a line to reveal Remove. The row slides over a button behind it. */
+.swipe{position:relative;overflow:hidden;border-top:1px solid var(--line)}
+.swipe:first-child{border-top:0}
+.swipe .row{border-top:0;background:var(--surface);position:relative;touch-action:pan-y;will-change:transform}
+.swipe .behind{position:absolute;inset:0;display:flex;justify-content:flex-end}
+.swipe .behind button{background:#c4423a;color:#fff;font-weight:600;font-size:13px;padding:0 14px;min-width:80px}
+.swipe .behind .towanted{background:var(--accent);color:var(--accent-fg)}
+.secondary button[disabled]{opacity:.4}
+.days .swipe{border-top:0;border-radius:14px}
+.days .swipe .slot{background:var(--surface);position:relative;touch-action:pan-y;will-change:transform}
+.days .swipe .behind button{border-radius:14px}
+.datebtn{font-weight:600;font-size:13px;color:var(--accent);padding:0 8px;height:36px;border-radius:10px;position:relative}
+.datebtn:hover{background:var(--soft)}
+.datebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;pointer-events:none}
+.top .stepper button{width:32px;height:32px}
+.top .stepper span{font-size:13px;min-width:48px}
+.stepper button{width:40px;height:40px}
+.tick{width:44px !important;height:44px !important}
+
+/* Shop */
+.shoprow .tick{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;flex:0 0 auto;color:var(--accent-fg);font-size:14px}
+.shoprow.done .tick{background:var(--tick);border-color:var(--tick);color:#fff}
+.shoprow.done .name b,.shoprow.done .name small{text-decoration:line-through;color:var(--muted)}
+.shoprow .qty{font-weight:700;font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+.editor{background:var(--bg);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.editor .fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.editor input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:14px;min-width:0}
+.editor .fields label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);font-weight:600;min-width:0}
+.editor .btns{display:flex;gap:8px}
+.editor .btns button{flex:1;padding:9px;border-radius:10px;font-weight:600;font-size:13px}
+.editor .out{border:1px solid var(--warn);color:var(--warn)}
+.editor .rm{border:1px solid var(--line);color:var(--muted)}
+.editor .ok{background:var(--accent);color:var(--accent-fg)}
+.sharebox{background:var(--bg);border-radius:14px;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5}
+
+/* Meals */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{border:1px solid var(--line);border-radius:14px;overflow:hidden;text-align:left;display:flex;flex-direction:column}
+.card .img{height:84px;display:grid;place-items:center;font-size:30px;font-weight:700;color:#fff}
+.card .t{padding:8px 10px;font-weight:600;font-size:14px}
+.card .t small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.hero{height:150px;border-radius:16px;display:grid;place-items:center;font-size:48px;font-weight:700;color:#fff;position:relative}
+.hero button{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.45);color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px}
+.back{color:var(--accent);font-weight:600;font-size:14px}
+
+/* More */
+.menu{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.menu button{display:flex;justify-content:space-between;padding:14px;border-top:1px solid var(--line);text-align:left;font-size:15px;font-weight:500}
+.menu button:first-child{border-top:0}
+.menu button:hover{background:var(--soft)}
+.menu small{color:var(--muted)}
+.hist{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.hist b{font-size:15px}
+.hist small{color:var(--muted);font-size:12px}
+
+/* Notes column beside the phone */
+.notes{width:min(100%,460px);font-size:14px;line-height:1.5;display:flex;flex-direction:column;gap:14px;min-width:0}
+.notes h2{font-size:22px}
+.notes h3{font-size:14px;margin-top:4px}
+.notes p{margin:0;max-width:60ch}
+.notes ul{margin:0;padding-left:18px;max-width:60ch}
+.notes li{margin:3px 0}
+.notes .tag{display:inline-block;background:var(--soft);color:var(--accent);font-weight:600;font-size:12px;padding:1px 7px;border-radius:999px}
+.notes .theme{align-self:flex-start;border:1px solid var(--line);padding:6px 10px;border-radius:10px;font-size:12px;font-weight:600}
+@media (prefers-reduced-motion:no-preference){.row,.slot{transition:background .15s}}
+</style>
+
+<div class="phone" id="phone">
+  <div class="top" id="top"></div>
+  <div class="status" id="status" hidden><span>Offline. Changes are kept on this phone.</span><button id="goOnline">Go online</button></div>
+  <div class="screen" id="screen"></div>
+  <nav class="tabs" id="tabs"></nav>
+</div>
+
+<aside class="notes">
+  <h2>Hamper</h2>
+  <p>A clickable sketch of the four screens. Everything you tap works on the sample data and resets on reload. Nothing here is final design; it is for checking the flow.</p>
+  <button class="theme" id="themeBtn">Toggle dark</button>
+  <h3>Plan</h3>
+  <ul>
+    <li><span class="tag">Meals</span> one slot per day from the start date. Tap an empty slot and pick a meal, or type anything ("Takeaway", "Leftovers and garlic bread") for a day that is not a library meal. Placing a meal copies its lines onto the day.</li>
+    <li><span class="tag">Day</span> tap a planned meal's name to open the day: change its items for that day only, Reset to the library meal, or Save as a meal for an ad-hoc day. The library meal never changes from here.</li>
+    <li> Press the ≡ handle and drag onto another day to swap, finger or mouse. Swipe a meal left to clear the day. The date in the header opens a date picker for the start; − + beside it sets the number of days. The slots relabel and the meals stay put. "Start new plan" at the bottom moves the date on and clears Once items, after a confirm; nothing happens to the plan on its own.</li>
+    <li><span class="tag">Items</span> type in the bar: matches come from items used before, the first row creates a new one. Each line has a count. "Weekly" marks an item that stays on the plan after a shop is archived; the rest clear. Swipe a line left to remove it.</li>
+  </ul>
+  <h3>Shop</h3>
+  <ul>
+    <li>"Make from plan" first shows the breakdown: every day's lines and the wanted list, editable, saved to the plan. Generate then sums counts per item, each line saying where it came from. "Start empty" is for a mid-week trip; type the lines in.</li>
+    <li>More than one list can be open. The row at the top switches between them.</li>
+    <li>Tap a line to change its name, size or count, put it on wanted as Once ("Out of stock"), or remove it. The plan does not change.</li>
+    <li>Tick as you go. Ticked lines drop to the bottom.</li>
+    <li>Swipe a line left for "To wanted" (puts it on the plan as Once) or "Remove". "Rest to wanted" does that for every unticked line at once.</li>
+    <li>Share shows the text that would go to WhatsApp. Archive moves the list to History, Delete drops it. Neither touches the plan.</li>
+  </ul>
+  <h3>Meals</h3>
+  <p>The library. Open a meal to change its lines or add it to the next empty slot. The camera button stands in for photo, crop, upload.</p>
+  <h3>More</h3>
+  <p>Items (rename, merge, usual size), History with "copy meals to plan", export and import, and the offline switch, which here just shows the bar.</p>
+</aside>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const colours=['#8c6a4a','#4a6f8c','#8c4a5c','#5c8c4a','#8c7f4a','#4a8c7f','#6f4a8c'];
+const colourFor=n=>colours[[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%colours.length];
+
+// Sample data. Items have a usual size; lines are item + count.
+let nextId=100;
+const items={};
+function item(name,size){const id=nextId++;items[id]={id,name,size:size||''};return id;}
+const I={
+  potatoes:item('Potatoes','1kg bag'), beans:item('Baked beans','tin'), milk:item('Milk','4 pints'),
+  chicken:item('Chicken thighs','pack of 8'), carrots:item('Carrots','bag'), onions:item('Onions','3 pack'),
+  mince:item('Beef mince','500g'), peas:item('Frozen peas','bag'), wraps:item('Tortilla wraps','8 pack'),
+  peppers:item('Peppers','3 pack'), fajita:item('Fajita spice mix',''), cheese:item('Cheddar','400g'),
+  pasta:item('Pasta','500g'), passata:item('Passata','jar'), fish:item('Breaded cod','pack of 4'),
+  bread:item('Bread',''), loo:item('Loo roll','9 pack'), rice:item('Rice','1kg'), curry:item('Curry paste','jar'),
+  stock:item('Chicken stock cubes',''), bananas:item('Bananas','bunch'), yoghurt:item('Yoghurt','big pot'),
+};
+const meals=[
+  {id:1,name:'Roast chicken',lines:[[I.chicken,1],[I.potatoes,1],[I.carrots,1],[I.stock,1]]},
+  {id:2,name:"Shepherd's pie",lines:[[I.mince,1],[I.potatoes,1],[I.onions,1],[I.peas,1],[I.carrots,1]]},
+  {id:3,name:'Fajitas',lines:[[I.chicken,1],[I.wraps,1],[I.peppers,1],[I.fajita,1],[I.cheese,1]]},
+  {id:4,name:'Pasta bake',lines:[[I.pasta,1],[I.passata,1],[I.cheese,1],[I.onions,1]]},
+  {id:5,name:'Fish and chips',lines:[[I.fish,1],[I.potatoes,1],[I.peas,1]]},
+  {id:6,name:'Chicken curry',lines:[[I.chicken,1],[I.rice,1],[I.curry,1],[I.onions,1]]},
+  {id:7,name:'Beans on toast',lines:[[I.beans,2],[I.bread,1],[I.cheese,1]]},
+];
+const mealById=id=>meals.find(m=>m.id===id);
+// Placing a meal on a day copies its lines; the day keeps the link for Reset.
+const place=id=>{const m=mealById(id);return {name:m.name,mealId:id,lines:m.lines.map(l=>[...l])};};
+const plan={
+  start:new Date(2026,9,13), // Tuesday 13 October 2026
+  days:7,
+  slots:[place(1),place(3),null,place(2),null,place(4),place(7)],
+  wanted:[{item:I.milk,count:2,weekly:true},{item:I.bread,count:1,weekly:true},{item:I.bananas,count:1,weekly:true},{item:I.loo,count:1,weekly:false}],
+};
+const shops=[];
+const curShop=()=>shops.find(s=>s.id===state.shopId)||shops[0]||null;
+const history=[
+  {date:new Date(2026,9,6),meals:['Chicken curry','Fajitas','Pasta bake','Roast chicken'],lines:14},
+  {date:new Date(2026,8,29),meals:['Roast chicken',"Shepherd's pie",'Fish and chips','Beans on toast','Fajitas'],lines:19},
+];
+const state={tab:'plan',planView:'meals',query:'',pickSlot:null,dayOpen:null,breakdown:false,mealOpen:null,shopId:null,shopEdit:null,share:false,offline:false,more:'menu',itemEdit:null};
+
+const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const fmt=d=>`${dayNames[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+const sizeOf=id=>items[id].size;
+const nameOf=id=>items[id].name;
+
+function render(){
+  renderTop();renderTabs();
+  $('#status').hidden=!state.offline;
+  const s=$('#screen');
+  s.innerHTML={plan:renderPlan,shop:renderShop,meals:renderMeals,more:renderMore}[state.tab]();
+  bind(s);
+}
+function renderTop(){
+  const titles={plan:'Plan',shop:'Shop',meals:'Meals',more:'More'};
+  let actions='';
+  if(state.tab==='shop'&&curShop()) actions=`<button class="icon" data-act="share" title="Share">⇪</button><button class="icon" data-act="archive" title="Archive">▣</button>`;
+  if(state.tab==='plan'&&state.planView==='meals'&&state.pickSlot===null&&state.dayOpen===null){
+    const iso=`${plan.start.getFullYear()}-${String(plan.start.getMonth()+1).padStart(2,'0')}-${String(plan.start.getDate()).padStart(2,'0')}`;
+    actions=`<button class="datebtn" data-act="pickdate" title="Change the start date">${fmt(plan.start)}<input type="date" id="w-start" value="${iso}" tabindex="-1"></button><span class="stepper"><button data-act="dayminus" title="Fewer days">−</button><span>${plan.days} days</span><button data-act="dayplus" title="More days">+</button></span>`;
+  }
+  $('#top').innerHTML=`<h1>${titles[state.tab]}</h1><div class="actions">${actions}</div>`;
+  bind($('#top'));
+}
+function renderTabs(){
+  const t=[['plan','Plan','▤'],['shop','Shop','✓'],['meals','Meals','◍'],['more','More','⋯']];
+  $('#tabs').innerHTML=t.map(([k,l,g])=>`<button role="tab" aria-selected="${state.tab===k}" data-tab="${k}"><span class="g">${g}</span>${l}</button>`).join('');
+  bind($('#tabs'));
+}
+
+// ---------- Plan ----------
+function typeahead(placeholder){
+  const q=state.query.trim();
+  let sug='';
+  if(q){
+    const matches=Object.values(items).filter(i=>i.name.toLowerCase().includes(q.toLowerCase())).slice(0,5);
+    const exact=matches.some(i=>i.name.toLowerCase()===q.toLowerCase());
+    sug=`<div class="suggest">${exact?'':`<button class="new" data-add-new="${esc(q)}">Add “${esc(q)}”<small>new item</small></button>`}${matches.map(i=>`<button data-add-item="${i.id}">${esc(i.name)}<small>${esc(i.size)}</small></button>`).join('')}</div>`;
+  }
+  return `<div class="typeahead"><input id="ta" placeholder="${placeholder}" value="${esc(state.query)}" autocomplete="off">${sug}</div>`;
+}
+function renderPlan(){
+  const seg=`<div class="seg"><button aria-selected="${state.planView==='meals'}" data-view="meals">Meals</button><button aria-selected="${state.planView==='items'}" data-view="items">Items</button></div>`;
+  return seg+(state.planView==='meals'?renderPlanMeals():renderPlanItems());
+}
+function renderPlanMeals(){
+  if(state.pickSlot!==null){
+    const q=state.query.trim(),ql=q.toLowerCase();
+    const list=meals.filter(m=>!ql||m.name.toLowerCase().includes(ql));
+    const adhoc=q&&!meals.some(m=>m.name.toLowerCase()===ql)?`<button class="secondary" data-adhoc="${esc(q)}">Use “${esc(q)}” as it is, no meal</button>`:'';
+    return `<button class="back" data-act="cancelpick">‹ Back</button><div class="label">${fmt(addDays(plan.start,state.pickSlot))}</div>
+      <div class="typeahead"><input id="ta" placeholder="A meal, or anything: Takeaway, Leftovers…" value="${esc(state.query)}" autocomplete="off"></div>${adhoc}
+      <div class="list">${list.map(m=>`<button class="row" data-pick="${m.id}"><span class="thumb" style="background:${colourFor(m.name)}">${esc(m.name[0])}</span><span class="name"><b>${esc(m.name)}</b><small>${m.lines.map(l=>nameOf(l[0])).join(', ')}</small></span></button>`).join('')}</div>`;
+  }
+  if(state.dayOpen!==null) return renderDay(state.dayOpen);
+  const end=addDays(plan.start,plan.days-1);
+  const bar=`<div class="weekbar"><span>Starts <b>${fmt(plan.start)}</b>, ends <b>${fmt(end)}</b></span></div>`;
+  while(plan.slots.length<plan.days)plan.slots.push(null);
+  const slots=[];
+  for(let i=0;i<plan.days;i++){
+    const d=addDays(plan.start,i);const m=plan.slots[i];
+    const day=`<span class="day"><b>${dayNames[d.getDay()]}</b><small>${d.getDate()} ${months[d.getMonth()]}</small></span>`;
+    if(m) slots.push(`<div class="swipe"><div class="behind"><button data-clear="${i}">Clear</button></div><div class="slot" data-slot="${i}">${day}<span class="thumb" style="background:${colourFor(m.name)}">${esc(m.name[0])}</span><button class="name" data-day="${i}" style="text-align:left"><b>${esc(m.name)}</b><small>${m.lines.length?m.lines.map(l=>nameOf(l[0])).join(', '):'nothing to buy'}</small></button><span class="handle" data-handle="${i}" title="Drag to move">≡</span></div></div>`);
+    else slots.push(`<div class="slot empty" data-slot="${i}">${day}<button class="pick" data-pickslot="${i}">+ Pick a meal</button></div>`);
+  }
+  const next=addDays(plan.start,plan.days);
+  const newplan=state.newPlan
+    ?`<div class="editor"><b>Start a new plan from ${fmt(next)}?</b><div class="hint">The start date moves on ${plan.days} days and Once items are cleared. Meals and Weekly items stay as they are, ready to change.</div><div class="btns"><button class="rm" data-act="newplancancel">Cancel</button><button class="ok" data-act="newplango">Start new plan</button></div></div>`
+    :`<button class="secondary" data-act="newplan">Start new plan from ${fmt(next)}</button>`;
+  return bar+`<div class="days">${slots.join('')}</div>`+newplan;
+}
+function dayLines(i){
+  const d=plan.slots[i];
+  if(!d.lines.length) return `<div class="empty">Nothing to buy for this day</div>`;
+  return `<div class="list">${d.lines.map(([it,c],j)=>`<div class="swipe"><div class="behind"><button data-drm="${i}:${j}">Remove</button></div><div class="row"><span class="name"><b>${esc(nameOf(it))}</b><small>${esc(sizeOf(it))||'&nbsp;'}</small></span><span class="stepper"><button data-ddec="${i}:${j}">−</button><span>${c}</span><button data-dinc="${i}:${j}">+</button></span></div></div>`).join('')}</div>`;
+}
+function renderDay(i){
+  const d=plan.slots[i];const linked=d.mealId&&mealById(d.mealId);
+  const changed=linked&&JSON.stringify(linked.lines)!==JSON.stringify(d.lines);
+  const from=linked?`From the meal <b>${esc(linked.name)}</b>${changed?', changed for this day':''}`:d.mealId?'The meal it came from has been deleted':'Not a meal in the library';
+  const btns=`<div class="secondary" style="display:flex;gap:8px">${linked?`<button style="flex:1" data-reset="${i}" ${changed?'':'disabled'}>Reset to the meal</button>`:`<button style="flex:1" data-saveas="${i}">Save as a meal</button>`}<button style="flex:1;color:#c4423a" data-clear="${i}">Clear day</button></div>`;
+  return `<button class="back" data-act="closeday">‹ Plan</button><div class="label">${fmt(addDays(plan.start,i))}</div><h2 style="font-size:22px">${esc(d.name)}</h2><div class="hint">${from}</div>${btns}
+    <div class="label">Items <span>this day only</span></div>${typeahead('Add an item for this day…')}${dayLines(i)}`;
+}
+function renderBreakdown(){
+  const days=[];
+  for(let i=0;i<plan.days;i++){const d=plan.slots[i];if(!d)continue;days.push(`<div class="label">${fmt(addDays(plan.start,i))} <span>${esc(d.name)}</span></div>${dayLines(i)}`);}
+  const wanted=plan.wanted.length?`<div class="list">${plan.wanted.map((l,i)=>itemRow(l,'wanted',i)).join('')}</div>`:`<div class="empty">Nothing wanted beyond the meals</div>`;
+  return `<button class="back" data-act="closebreakdown">‹ Cancel</button><div class="hint">Everything the list will be made from. Changes here are saved to the plan.</div>${days.join('')}<div class="label">Wanted</div>${wanted}<button class="primary" data-act="generate">Generate the list</button>`;
+}
+function itemRow(l,list,idx){
+  const it=items[l.item];
+  const weekly=list==='wanted'?`<button class="pill ${l.weekly?'week':''}" data-weekly="${idx}" title="Stays on the plan after a shop">${l.weekly?'Weekly':'Once'}</button>`:'';
+  return `<div class="swipe"><div class="behind"><button data-rm="${list}:${idx}">Remove</button></div><div class="row"><span class="name"><b>${esc(it.name)}</b><small>${esc(it.size)||'&nbsp;'}</small></span>${weekly}<span class="stepper"><button data-dec="${list}:${idx}">−</button><span>${l.count}</span><button data-inc="${list}:${idx}">+</button></span></div></div>`;
+}
+function renderPlanItems(){
+  const wanted=plan.wanted.length?`<div class="list">${plan.wanted.map((l,i)=>itemRow(l,'wanted',i)).join('')}</div>`:`<div class="empty">Nothing wanted beyond the meals</div>`;
+  return typeahead('Add an item…')+`<div class="label">Wanted <span>beyond what the meals need</span></div>`+wanted+`<div class="hint">Weekly stays on the plan after a shop is archived. Once is cleared by it.</div>`;
+}
+
+// ---------- Shop ----------
+function makeShop(){
+  const lines=new Map();
+  const add=(itemId,count,source)=>{
+    const key=itemId;
+    if(!lines.has(key))lines.set(key,{id:nextId++,name:nameOf(itemId),size:sizeOf(itemId),count:0,sources:[],done:false,itemId});
+    const l=lines.get(key);l.count+=count;l.sources.push(source);
+  };
+  plan.slots.slice(0,plan.days).forEach(d=>{if(!d)return;d.lines.forEach(([it,c])=>add(it,c,d.name));});
+  plan.wanted.forEach(l=>add(l.item,l.count,'wanted'));
+  const s={id:nextId++,name:'Shop for '+fmt(plan.start),made:new Date(),fromPlan:true,start:new Date(plan.start),days:plan.days,meals:plan.slots.slice(0,plan.days).filter(Boolean).map(d=>d.name),lines:[...lines.values()]};
+  shops.unshift(s);state.shopId=s.id;
+}
+function makeEmptyShop(){
+  const s={id:nextId++,name:'Quick shop '+fmt(new Date()),made:new Date(),fromPlan:false,start:new Date(),days:0,meals:[],lines:[]};
+  shops.unshift(s);state.shopId=s.id;
+}
+function renderShop(){
+  if(state.breakdown) return renderBreakdown();
+  const shop=curShop();
+  const starters=`<div class="secondary" style="display:flex;gap:8px"><button style="flex:1" data-act="make">Make from plan</button><button style="flex:1" data-act="makeempty">Start empty</button></div>`;
+  if(!shop) return `<div class="empty">No shopping list open.<br>Make one from the plan when the week is sorted, or start an empty one for a quick trip.</div>`+starters;
+  const switcher=`<div class="seg">${shops.map(s=>`<button aria-selected="${s.id===shop.id}" data-shop="${s.id}">${esc(s.fromPlan?'Plan':'Quick')}<small style="display:block;font-weight:500;font-size:11px">${s.lines.filter(l=>!l.done).length} to get</small></button>`).join('')}<button data-act="makeempty" title="Start another list" style="flex:0 0 44px">+</button></div>`;
+  const open=shop.lines.filter(l=>!l.done),done=shop.lines.filter(l=>l.done);
+  const head=`<div class="hint">${esc(shop.name)}${shop.fromPlan?', from '+shop.meals.length+' meals':''}. ${done.length} of ${shop.lines.length} in the trolley.</div>`;
+  let share='';
+  if(state.share){
+    const text=[shop.name,'',...shop.lines.filter(l=>!l.done).map(l=>`[ ] ${l.name}${l.size?' ('+l.size+')':''} ×${l.count}`)].join('\n');
+    share=`<div class="label">Share text <span><button data-act="closeshare" style="color:var(--accent);font-weight:600">Close</button></span></div><div class="sharebox">${esc(text)}</div><div class="hint">On a phone this opens the share sheet. On a PC it copies to the clipboard. Download gives the same as a text file.</div>`;
+  }
+  const row=l=>{
+    if(state.shopEdit===l.id) return editor(l);
+    return `<div class="swipe"><div class="behind"><button class="towanted" data-outofstock="${l.id}">To wanted</button><button data-srm="${l.id}">Remove</button></div><div class="row shoprow ${l.done?'done':''}"><button class="tick" data-tick="${l.id}">${l.done?'✓':''}</button><button class="name" data-edit="${l.id}" style="text-align:left"><b>${esc(l.name)}</b><small>${esc(l.size)}${l.size?' · ':''}${esc(l.sources.join(', '))}</small></button><span class="qty">×${l.count}</span></div></div>`;
+  };
+  const list=open.length?`<div class="list">${open.map(row).join('')}</div>`:`<div class="empty">Everything is in the trolley</div>`;
+  const doneList=done.length?`<div class="label">In the trolley</div><div class="list">${done.map(row).join('')}</div>`:'';
+  const after=state.share?'':`<div class="secondary" style="display:flex;gap:8px"><button style="flex:1" data-act="share">Share</button><button style="flex:1" data-act="share">Download</button></div>
+    <div class="secondary" style="display:flex;gap:8px"><button style="flex:1" data-act="resttowanted" ${open.length?'':'disabled'}>Rest to wanted</button><button style="flex:1" data-act="archive">Archive</button><button style="flex:1;color:#c4423a" data-act="deletelist">Delete</button></div>`;
+  return switcher+head+share+typeahead('Add something to this shop…')+list+doneList+after;
+}
+function editor(l){
+  return `<div class="editor"><div class="fields"><label>Name<input id="e-name" value="${esc(l.name)}"></label><label>Size<input id="e-size" value="${esc(l.size)}" placeholder="e.g. small bag"></label></div>
+    <div style="display:flex;align-items:center;justify-content:space-between"><span class="hint">From: ${esc(l.sources.join(', '))}</span><span class="stepper"><button data-sdec="${l.id}">−</button><span>${l.count}</span><button data-sinc="${l.id}">+</button></span></div>
+    <div class="btns"><button class="out" data-outofstock="${l.id}">Out of stock</button><button class="rm" data-srm="${l.id}">Remove</button><button class="ok" data-save="${l.id}">Done</button></div></div>`;
+}
+function archive(){
+  const shop=curShop();
+  history.unshift({date:new Date(),meals:shop.meals,lines:shop.lines.length,name:shop.name});
+  shops.splice(shops.indexOf(shop),1);state.shopId=null;state.share=false;state.tab='more';state.more='history';
+}
+
+// ---------- Meals ----------
+function renderMeals(){
+  if(state.mealOpen){
+    const m=mealById(state.mealOpen);
+    const nextSlot=plan.slots.slice(0,plan.days).indexOf(null);
+    const planned=plan.slots.slice(0,plan.days).some(d=>d&&d.mealId===m.id);
+    return `<button class="back" data-act="closemeal">‹ Meals</button>
+      <div class="hero" style="background:${colourFor(m.name)}">${esc(m.name[0])}<button data-act="photo">Change photo</button></div>
+      <h2 style="font-size:22px">${esc(m.name)}</h2>
+      <div class="hint">Last shopped ${m.id===6||m.id===3||m.id===4?'6 Oct':m.id===5?'29 Sep':'never'}</div>
+      <button class="primary" data-addmeal="${m.id}">${planned?'On the plan':nextSlot<0?'No empty day on the plan':'Add to '+fmt(addDays(plan.start,nextSlot))}</button>
+      <div class="label">Items <span>count is meals’ worth</span></div>
+      ${typeahead('Add an item to this meal…')}
+      <div class="list">${m.lines.map(([it,c],i)=>`<div class="swipe"><div class="behind"><button data-mrm="${i}">Remove</button></div><div class="row"><span class="name"><b>${esc(nameOf(it))}</b><small>${esc(sizeOf(it))||'&nbsp;'}</small></span><span class="stepper"><button data-mdec="${i}">−</button><span>${c}</span><button data-minc="${i}">+</button></span></div></div>`).join('')}</div>`;
+  }
+  const q=state.query.trim().toLowerCase();
+  const list=meals.filter(m=>!q||m.name.toLowerCase().includes(q));
+  return `<div class="typeahead"><input id="ta" placeholder="Search or add a meal…" value="${esc(state.query)}" autocomplete="off"></div>
+    ${q&&!meals.some(m=>m.name.toLowerCase()===q)?`<button class="secondary" data-newmeal="${esc(state.query.trim())}">Add “${esc(state.query.trim())}” as a new meal</button>`:''}
+    <div class="grid">${list.map(m=>`<button class="card" data-open="${m.id}"><span class="img" style="background:${colourFor(m.name)}">${esc(m.name[0])}</span><span class="t">${esc(m.name)}<small>${m.lines.length} items</small></span></button>`).join('')}</div>`;
+}
+
+// ---------- More ----------
+function renderMore(){
+  if(state.more==='history') return `<button class="back" data-act="moremenu">‹ More</button><div class="label">Archived shops</div>`+history.map((h,i)=>`<div class="hist"><b>${fmt(h.date)}</b><small>${h.lines} items · ${h.meals.join(', ')}</small><button class="secondary" data-copy="${i}">Copy these meals to the plan</button></div>`).join('');
+  if(state.more==='items'){
+    const q=state.query.trim().toLowerCase();
+    const list=Object.values(items).filter(i=>!q||i.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+    return `<button class="back" data-act="moremenu">‹ More</button><div class="typeahead"><input id="ta" placeholder="Find an item…" value="${esc(state.query)}" autocomplete="off"></div>
+      <div class="list">${list.map(i=>state.itemEdit===i.id?`<div class="editor"><div class="fields"><label>Name<input id="i-name" value="${esc(i.name)}"></label><label>Usual size<input id="i-size" value="${esc(i.size)}"></label></div><div class="btns"><button class="rm" data-merge="${i.id}">Merge into…</button><button class="rm" data-delitem="${i.id}">Delete</button><button class="ok" data-isave="${i.id}">Done</button></div><div class="hint">Renaming changes every meal and plan line. Archived shops keep the old name.</div></div>`
+        :`<button class="row" data-iedit="${i.id}" style="text-align:left"><span class="name"><b>${esc(i.name)}</b><small>${esc(i.size)||'no usual size'}</small></span><span class="hint">edit</span></button>`).join('')}</div>`;
+  }
+  return `<div class="menu">
+    <button data-act="moreitems">Items <small>${Object.keys(items).length} known</small></button>
+    <button data-act="morehistory">History <small>${history.length} shops</small></button>
+    <button data-act="export">Export everything <small>JSON</small></button>
+    <button data-act="export">Import <small>restore from an export</small></button>
+    <button data-act="offline">${state.offline?'Pretend we are back online':'Pretend we are offline'} <small>demo</small></button>
+  </div>
+  <div class="hint">Plan: starts ${fmt(plan.start)}, ${plan.days} days. Synced a moment ago.</div>`;
+}
+
+// ---------- Events ----------
+function addItemLine(itemId){
+  if(state.tab==='plan'&&state.dayOpen!==null){const L=plan.slots[state.dayOpen].lines;const ex=L.find(l=>l[0]===itemId);if(ex)ex[1]++;else L.push([itemId,1]);}
+  else if(state.tab==='plan'){const ex=plan.wanted.find(l=>l.item===itemId);if(ex)ex.count++;else plan.wanted.push({item:itemId,count:1,weekly:false});}
+  else if(state.tab==='meals'&&state.mealOpen){const m=mealById(state.mealOpen);const ex=m.lines.find(l=>l[0]===itemId);if(ex)ex[1]++;else m.lines.push([itemId,1]);}
+  else if(state.tab==='shop'&&curShop()){const shop=curShop();const ex=shop.lines.find(l=>l.itemId===itemId);if(ex)ex.count++;else shop.lines.push({id:nextId++,name:nameOf(itemId),size:sizeOf(itemId),count:1,sources:['added'],done:false,itemId});}
+  state.query='';
+}
+function bind(root){
+  root.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.query='';state.share=false;state.shopEdit=null;state.dayOpen=null;state.pickSlot=null;render();});
+  root.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.planView=b.dataset.view;state.query='';render();});
+  const ta=root.querySelector('#ta');
+  if(ta){ta.oninput=()=>{state.query=ta.value;render();const n=$('#ta');n.focus();n.setSelectionRange(n.value.length,n.value.length);};
+    ta.onkeydown=e=>{if(e.key==='Enter'){const first=$('.suggest button');if(first)first.click();else{const nm=$('[data-newmeal]')||$('[data-adhoc]')||$('[data-pick]');if(nm)nm.click();}}};}
+  root.querySelectorAll('[data-add-item]').forEach(b=>b.onclick=()=>{addItemLine(+b.dataset.addItem);render();$('#ta')?.focus();});
+  root.querySelectorAll('[data-add-new]').forEach(b=>b.onclick=()=>{addItemLine(item(b.dataset.addNew,''));render();$('#ta')?.focus();});
+  root.querySelectorAll('[data-inc]').forEach(b=>b.onclick=()=>{const [l,i]=b.dataset.inc.split(':');plan[l][i].count++;render();});
+  root.querySelectorAll('[data-dec]').forEach(b=>b.onclick=()=>{const [l,i]=b.dataset.dec.split(':');if(plan[l][i].count>1)plan[l][i].count--;else plan[l].splice(i,1);render();});
+  root.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const [l,i]=b.dataset.rm.split(':');plan[l].splice(i,1);render();});
+  root.querySelectorAll('[data-weekly]').forEach(b=>b.onclick=()=>{const l=plan.wanted[b.dataset.weekly];l.weekly=!l.weekly;render();});
+  root.querySelectorAll('[data-pickslot]').forEach(b=>b.onclick=()=>{state.pickSlot=+b.dataset.pickslot;render();});
+  root.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{plan.slots[state.pickSlot]=place(+b.dataset.pick);state.pickSlot=null;state.query='';render();});
+  root.querySelectorAll('[data-adhoc]').forEach(b=>b.onclick=()=>{plan.slots[state.pickSlot]={name:b.dataset.adhoc,mealId:null,lines:[]};state.dayOpen=state.pickSlot;state.pickSlot=null;state.query='';render();});
+  root.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{state.dayOpen=+b.dataset.day;state.query='';render();});
+  root.querySelectorAll('[data-dinc]').forEach(b=>b.onclick=()=>{const [i,j]=b.dataset.dinc.split(':');plan.slots[i].lines[j][1]++;render();});
+  root.querySelectorAll('[data-ddec]').forEach(b=>b.onclick=()=>{const [i,j]=b.dataset.ddec.split(':');const L=plan.slots[i].lines;if(L[j][1]>1)L[j][1]--;else L.splice(j,1);render();});
+  root.querySelectorAll('[data-drm]').forEach(b=>b.onclick=()=>{const [i,j]=b.dataset.drm.split(':');plan.slots[i].lines.splice(j,1);render();});
+  root.querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{const d=plan.slots[b.dataset.reset];d.lines=mealById(d.mealId).lines.map(l=>[...l]);render();});
+  root.querySelectorAll('[data-saveas]').forEach(b=>b.onclick=()=>{const d=plan.slots[b.dataset.saveas];const m={id:nextId++,name:d.name,lines:d.lines.map(l=>[...l])};meals.push(m);d.mealId=m.id;render();});
+  root.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>{plan.slots[b.dataset.clear]=null;state.dayOpen=null;render();});
+  // Press the handle and drag, with finger or mouse: a ghost follows the pointer, the slot under it highlights, release swaps.
+  root.querySelectorAll('[data-handle]').forEach(h=>h.onpointerdown=e=>{
+    e.preventDefault();
+    const from=+h.dataset.handle,slot=h.closest('.slot');slot.classList.add('lifted');
+    const ghost=document.createElement('div');ghost.className='ghost';ghost.textContent=plan.slots[from].name;document.body.appendChild(ghost);
+    let over=null;
+    const move=ev=>{ghost.style.left=(ev.clientX+12)+'px';ghost.style.top=(ev.clientY-20)+'px';
+      const el=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.slot');
+      if(over&&over!==el)over.classList.remove('dragover');
+      over=el&&el!==slot?el:null;if(over)over.classList.add('dragover');};
+    const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);ghost.remove();
+      if(over){const to=+over.dataset.slot;[plan.slots[from],plan.slots[to]]=[plan.slots[to],plan.slots[from]];}render();};
+    window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+  });
+  // Swipe a line left to reveal Remove; past 96px it stays open, a tap elsewhere closes it.
+  root.querySelectorAll('.swipe').forEach(w=>{
+    const row=w.querySelector('.row,.slot');let x0=null,y0=null,dx=0,open=false,dragging=false;
+    row.onpointerdown=e=>{if(e.target.closest('button,[data-handle]'))return;x0=e.clientX;y0=e.clientY;dx=0;dragging=false;row.style.transition='none';};
+    row.onpointermove=e=>{if(x0===null)return;const mx=e.clientX-x0,my=e.clientY-y0;
+      if(!dragging){if(Math.abs(my)>Math.abs(mx))return;if(Math.abs(mx)<8)return;dragging=true;row.setPointerCapture(e.pointerId);}
+      const w=row.parentElement.querySelector('.behind').scrollWidth>0?[...row.parentElement.querySelectorAll('.behind button')].reduce((a,b)=>a+b.offsetWidth,0):96;
+      dx=Math.min(0,Math.max(-(w+24),mx+(open?-w:0)));row.style.transform=`translateX(${dx}px)`;row.dataset.w=w;};
+    const end=()=>{if(x0===null)return;x0=null;row.style.transition='transform .15s';
+      if(!dragging){return;}
+      const w=+row.dataset.w||96;open=dx<-w*0.6;row.style.transform=open?`translateX(-${w}px)`:'';};
+    row.onpointerup=end;row.onpointercancel=end;
+    row.addEventListener('click',e=>{if(dragging){e.stopPropagation();e.preventDefault();dragging=false;}},true);
+  });
+  root.querySelectorAll('[data-shop]').forEach(b=>b.onclick=()=>{state.shopId=+b.dataset.shop;state.shopEdit=null;state.share=false;render();});
+  const shop=curShop();
+  root.querySelectorAll('[data-tick]').forEach(b=>b.onclick=()=>{const l=shop.lines.find(x=>x.id===+b.dataset.tick);l.done=!l.done;render();});
+  root.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{state.shopEdit=+b.dataset.edit;render();});
+  root.querySelectorAll('[data-sinc]').forEach(b=>b.onclick=()=>{shop.lines.find(x=>x.id===+b.dataset.sinc).count++;render();});
+  root.querySelectorAll('[data-sdec]').forEach(b=>b.onclick=()=>{const l=shop.lines.find(x=>x.id===+b.dataset.sdec);if(l.count>1)l.count--;render();});
+  root.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{const l=shop.lines.find(x=>x.id===+b.dataset.save);l.name=$('#e-name').value;l.size=$('#e-size').value;state.shopEdit=null;render();});
+  root.querySelectorAll('[data-srm]').forEach(b=>b.onclick=()=>{shop.lines=shop.lines.filter(x=>x.id!==+b.dataset.srm);state.shopEdit=null;render();});
+  root.querySelectorAll('[data-outofstock]').forEach(b=>b.onclick=()=>{const l=shop.lines.find(x=>x.id===+b.dataset.outofstock);if(l.itemId&&!plan.wanted.some(w=>w.item===l.itemId))plan.wanted.push({item:l.itemId,count:l.count,weekly:false});shop.lines=shop.lines.filter(x=>x!==l);state.shopEdit=null;render();});
+  root.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{state.mealOpen=+b.dataset.open;state.query='';render();});
+  root.querySelectorAll('[data-newmeal]').forEach(b=>b.onclick=()=>{const m={id:nextId++,name:b.dataset.newmeal,lines:[]};meals.push(m);state.mealOpen=m.id;state.query='';render();});
+  root.querySelectorAll('[data-addmeal]').forEach(b=>b.onclick=()=>{const i=plan.slots.slice(0,plan.days).indexOf(null);if(i>=0){plan.slots[i]=place(+b.dataset.addmeal);state.tab='plan';state.planView='meals';state.mealOpen=null;}render();});
+  root.querySelectorAll('[data-minc]').forEach(b=>b.onclick=()=>{mealById(state.mealOpen).lines[b.dataset.minc][1]++;render();});
+  root.querySelectorAll('[data-mdec]').forEach(b=>b.onclick=()=>{const m=mealById(state.mealOpen),i=+b.dataset.mdec;if(m.lines[i][1]>1)m.lines[i][1]--;else m.lines.splice(i,1);render();});
+  root.querySelectorAll('[data-mrm]').forEach(b=>b.onclick=()=>{mealById(state.mealOpen).lines.splice(+b.dataset.mrm,1);render();});
+  root.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const h=history[b.dataset.copy];plan.slots=Array.from({length:plan.days},(_,i)=>{if(!h.meals[i])return null;const m=meals.find(x=>x.name===h.meals[i]);return m?place(m.id):{name:h.meals[i],mealId:null,lines:[]};});state.tab='plan';state.planView='meals';state.more='menu';render();});
+  root.querySelectorAll('[data-iedit]').forEach(b=>b.onclick=()=>{state.itemEdit=+b.dataset.iedit;render();});
+  root.querySelectorAll('[data-isave]').forEach(b=>b.onclick=()=>{const i=items[b.dataset.isave];i.name=$('#i-name').value;i.size=$('#i-size').value;state.itemEdit=null;render();});
+  root.querySelectorAll('[data-merge],[data-delitem]').forEach(b=>b.onclick=()=>{state.itemEdit=null;render();});
+  root.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+    const a=b.dataset.act;
+    if(a==='make'){state.breakdown=true;state.tab='shop';}
+    if(a==='closebreakdown')state.breakdown=false;
+    if(a==='generate'){makeShop();state.breakdown=false;}
+    if(a==='closeday'){state.dayOpen=null;state.query='';}
+    if(a==='makeempty'){makeEmptyShop();state.tab='shop';}
+    if(a==='newplan')state.newPlan=true; if(a==='newplancancel')state.newPlan=false;
+    if(a==='newplango'){plan.start=addDays(plan.start,plan.days);plan.wanted=plan.wanted.filter(w=>w.weekly);state.newPlan=false;}
+    if(a==='resttowanted'){const s=curShop();s.lines.filter(l=>!l.done&&l.itemId).forEach(l=>{const w=plan.wanted.find(w=>w.item===l.itemId);if(w)w.count+=l.count;else plan.wanted.push({item:l.itemId,count:l.count,weekly:false});});s.lines=s.lines.filter(l=>l.done);}
+    if(a==='deletelist'){const s=curShop();shops.splice(shops.indexOf(s),1);state.shopId=null;state.share=false;}
+    if(a==='share')state.share=true; if(a==='closeshare')state.share=false;
+    if(a==='archive')archive();
+    if(a==='cancelpick'){state.pickSlot=null;state.query='';}
+    if(a==='closemeal'){state.mealOpen=null;state.query='';}
+    if(a==='pickdate'){const inp=$('#w-start');inp.onchange=()=>{const [y,mo,d]=inp.value.split('-').map(Number);if(y){plan.start=new Date(y,mo-1,d);render();}};
+      try{inp.showPicker();}catch(_){inp.style.pointerEvents='auto';inp.focus();inp.click();}return;}
+    if(a==='dayplus'&&plan.days<21)plan.days++; if(a==='dayminus'&&plan.days>1)plan.days--;
+    if(a==='moremenu'){state.more='menu';state.query='';} if(a==='morehistory')state.more='history'; if(a==='moreitems'){state.more='items';state.query='';}
+    if(a==='offline')state.offline=!state.offline;
+    render();
+  });
+}
+$('#goOnline').onclick=()=>{state.offline=false;render();};
+$('#themeBtn').onclick=()=>{const r=document.documentElement;const dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);r.setAttribute('data-theme',dark?'light':'dark');};
+render();
+})();
+</script>
