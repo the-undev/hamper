@@ -13,11 +13,12 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  // The app is one precached bundle, so the size warning does not apply at this limit.
+  build: { chunkSizeWarningLimit: 700 },
   // tanstackRouter must come before react(); tests beside routes are not routes.
   plugins: [
     tanstackRouter({
       target: "react",
-      autoCodeSplitting: true,
       routeFileIgnorePattern: "\\.test\\.",
     }),
     react(),
