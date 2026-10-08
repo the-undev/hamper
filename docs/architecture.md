@@ -230,11 +230,30 @@ Screens read the store through Dexie live queries, so a screen re-renders
 when the store changes, whether from the user or from a pull. TanStack Query
 serves only the REST endpoints, such as history and export.
 
-A sync loop drains the outbox when online and pulls on every SSE revision,
-on reconnect, and on app focus.
+A sync loop pushes and then pulls, one run at a time. A request to sync
+while a run is going queues one more run.
 
-Offline is `navigator.onLine` plus the last push or pull failing. The status
-bar shows it, and the size of the outbox.
+The push reads the outbox in `seq` order and sends one change per entry: the
+row as it stands, without its revision, under the entry's `seq` as the
+change id. When the server applies the batch, the loop deletes each applied
+entry whose `dirtiedAt` has not moved since the batch was read, and upserts
+each returned row that is not still in the outbox. A row changed while its
+push was in flight stays in the outbox for the next batch. A 400 keeps the
+outbox and reports the problem's title; the batch is sent again on the next
+run.
+
+The pull asks for every row above the cursor, upserts each row that is not
+in the outbox, and stores the returned revision as the cursor. Only the pull
+moves the cursor. A pull follows every push, a refused one included.
+
+The loop syncs when the event stream opens or reopens, on a `revision` event
+above the cursor, when the browser comes online, and when the app comes back
+into focus or view.
+
+Offline is `navigator.onLine` false, or the last push, pull or event stream
+failing to reach the server. The loop's status holds that, the size of the
+outbox, when the last sync finished and the last problem the server
+reported, for the status bar to show.
 
 ## Images
 
