@@ -79,6 +79,8 @@ Tapping one opens it read only. "Copy these meals to the plan" on each.
 
 - A bar under the header, shown only when offline or with changes not yet
   sent: "Offline. Changes are kept on this phone." or "3 changes to send".
+  The count is of rows waiting to be sent, and offline is shown when both
+  apply.
 - Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
   press and hold on the handle, with the day under the finger highlighted.
 - The type-ahead is the same control wherever a line is added: type, pick an

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, expect, test, vi } from "vitest";
-import type { SyncLoop } from "@/sync/loop";
+import { afterEach, expect, test } from "vitest";
 import { freshDb } from "@/test/db";
+import { fakeLoop } from "@/test/fake-loop";
 import type { HamperDb } from "./db";
 import { StoreProvider, useDb, useSyncLoop } from "./provider";
 
@@ -10,23 +10,6 @@ let db: HamperDb | null = null;
 afterEach(async () => {
   await db?.delete();
 });
-
-function fakeLoop(): SyncLoop {
-  return {
-    start: vi.fn(),
-    stop: vi.fn(),
-    syncNow: vi.fn(async () => {}),
-    status: {
-      get: () => ({
-        online: true,
-        pending: 0,
-        lastSyncAt: null,
-        lastError: null,
-      }),
-      subscribe: () => () => {},
-    },
-  };
-}
 
 function StoreProbe() {
   const probedDb = useDb();

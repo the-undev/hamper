@@ -35,3 +35,6 @@ Object.defineProperty(window, "localStorage", {
   writable: true,
   value: new MemoryStorage(),
 });
+
+// jsdom does not implement scrolling; the router scrolls to the top on every navigation.
+window.scrollTo = () => {};

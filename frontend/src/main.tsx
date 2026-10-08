@@ -1,23 +1,12 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { QueryClient } from "@tanstack/react-query";
+import { createBrowserHistory } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { routeTree } from "./routeTree.gen";
+import { App, createAppRouter } from "./app";
 import { HamperDb } from "./store/db";
-import { StoreProvider } from "./store/provider";
 import { openEvents, syncApi } from "./sync/api";
 import { createSyncLoop } from "./sync/loop";
 import "./index.css";
-
-const queryClient = new QueryClient();
-
-const router = createRouter({ routeTree });
-
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
 
 const db = new HamperDb("hamper");
 
@@ -36,10 +25,11 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <StoreProvider db={db} loop={syncLoop}>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </StoreProvider>
+    <App
+      db={db}
+      loop={syncLoop}
+      queryClient={new QueryClient()}
+      router={createAppRouter(createBrowserHistory())}
+    />
   </StrictMode>,
 );
