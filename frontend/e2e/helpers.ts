@@ -90,9 +90,11 @@ export async function addLine(
   await expect(line(page, itemName)).toBeVisible();
 }
 
-/** The list row of a line by its item's name, found by its + button. */
-export function line(page: Page, itemName: string): Locator {
-  return page.getByRole("listitem").filter({
+/** The list row of a line by its item's name, found by its + button, on the page or within a section of it. */
+export function line(scope: Page | Locator, itemName: string): Locator {
+  // The inner locator is matched inside each row, so it starts from the page.
+  const page = "page" in scope ? scope.page() : scope;
+  return scope.getByRole("listitem").filter({
     has: page.getByRole("button", {
       name: `One more ${itemName}`,
       exact: true,
@@ -136,6 +138,7 @@ export function dayHandle(
 
 /** Clears a day through its Clear action: a swipe and a tap on a phone, keyboard focus and Enter on a desktop. */
 export async function clearDay(page: Page, dayLabel: string): Promise<void> {
+  await planView(page, "Meals");
   const clear = page.getByRole("button", {
     name: `Clear ${dayLabel}`,
     exact: true,
@@ -262,13 +265,13 @@ export async function centre(locator: Locator): Promise<Point> {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-/** Swipes a row left from just right of its middle, clear of a tick box, a handle or a text box on its edges. */
+/** Swipes left across most of an element, which should sit clear of a row's tick box, handle and text boxes. */
 export async function swipeLeft(page: Page, locator: Locator): Promise<void> {
   const box = await settledBox(locator);
   const y = box.y + box.height / 2;
   await drag(
     page,
-    { x: box.x + box.width * 0.55, y },
+    { x: box.x + box.width * 0.9, y },
     { x: box.x + box.width * 0.05, y },
     0,
   );
