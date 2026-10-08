@@ -5,7 +5,8 @@ import {
   type DragEndEvent,
   DragOverlay,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   type UniqueIdentifier,
   useSensor,
   useSensors,
@@ -24,6 +25,12 @@ import { formatDay, nowIso } from "@/lib/dates";
 import type { Day, DayLine, Item, Meal, Plan } from "@/store/types";
 import { DaySlot, slotId } from "./DaySlot";
 
+/** A mouse lifts a day once it moves 8px; a finger lifts it after a 250ms hold, so a scroll that starts on the handle still scrolls. */
+export const daySwapSensorOptions = {
+  mouse: { activationConstraint: { distance: 8 } },
+  touch: { activationConstraint: { delay: 250, tolerance: 8 } },
+} as const;
+
 /** Days swap rather than reorder, so no slot moves while one is dragged. */
 const holdStill: SortingStrategy = () => null;
 
@@ -31,7 +38,7 @@ function positionOf(id: UniqueIdentifier): number {
   return Number(String(id).replace("slot-", ""));
 }
 
-/** The plan's days in order; a filled day drags by its handle, after a press and hold, onto another to swap. */
+/** The plan's days in order; a filled day drags by its handle onto another to swap. */
 export function DayList({
   plan,
   days,
@@ -50,9 +57,8 @@ export function DayList({
   const write = useWrite();
   const [draggedPosition, setDraggedPosition] = useState<number | null>(null);
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { delay: 250, tolerance: 8 },
-    }),
+    useSensor(MouseSensor, daySwapSensorOptions.mouse),
+    useSensor(TouchSensor, daySwapSensorOptions.touch),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
