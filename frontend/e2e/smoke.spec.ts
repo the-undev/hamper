@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { openApp } from "./helpers.ts";
+import { expect, openApp, test } from "./helpers.ts";
 
 test("the shell loads and the Plan shows seven days", async ({ page }) => {
   await openApp(page, "/plan");

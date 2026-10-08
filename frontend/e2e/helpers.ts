@@ -1,11 +1,26 @@
 import {
   type Browser,
   type BrowserContext,
+  test as base,
+  type CDPSession,
   expect,
   type Locator,
   type Page,
-  test,
 } from "@playwright/test";
+
+export { expect };
+
+/** Playwright's test, which after each test waits until the page has sent every change, so the next test starts from the server's state. */
+export const test = base.extend<{ sentEverything: undefined }>({
+  sentEverything: [
+    async ({ page }, use) => {
+      await use(undefined);
+      // A closed context loses its outbox, so an edit not yet sent would never reach the server.
+      await expect.poll(() => statusBar(page)).toBeNull();
+    },
+    { auto: true },
+  ],
+});
 
 let nameCount = 0;
 
@@ -37,7 +52,12 @@ export async function planView(
   page: Page,
   name: "Meals" | "Items",
 ): Promise<void> {
-  await page.getByRole("radio", { name }).check();
+  // The radio is visually hidden under its label, which takes the click.
+  await page
+    .getByRole("group", { name: "Plan view" })
+    .getByText(name, { exact: true })
+    .click();
+  await expect(page.getByRole("radio", { name })).toBeChecked();
 }
 
 /** Adds a meal to the library with one line per item name, and leaves the page on the meal. */
@@ -98,6 +118,7 @@ export async function placeOnFirstEmptyDay(
     .first()
     .click();
   await expect(dayHandle(page, mealName, dayLabel)).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   return dayLabel;
 }
 
@@ -113,17 +134,21 @@ export function dayHandle(
   });
 }
 
-/** Clears a day of the plan through its Clear action, reached by keyboard focus. */
-export async function clearDayByFocus(
-  page: Page,
-  dayLabel: string,
-): Promise<void> {
+/** Clears a day through its Clear action: a swipe and a tap on a phone, keyboard focus and Enter on a desktop. */
+export async function clearDay(page: Page, dayLabel: string): Promise<void> {
   const clear = page.getByRole("button", {
     name: `Clear ${dayLabel}`,
     exact: true,
   });
-  await clear.focus();
-  await clear.press("Enter");
+  if (test.info().project.use.hasTouch) {
+    const slot = page.getByRole("listitem").filter({ has: clear });
+    await swipeLeft(page, slot.getByRole("link"));
+    await clear.click();
+  } else {
+    await clear.focus();
+    await expect(clear).toBeFocused();
+    await page.keyboard.press("Enter");
+  }
   await expect(
     page.getByRole("button", {
       name: `Pick a meal for ${dayLabel}`,
@@ -137,30 +162,33 @@ export async function statusBar(page: Page): Promise<string | null> {
   const bar = page
     .getByRole("status")
     .filter({ hasText: /^(Offline\.|\d+ changes? to send)/ });
-  if ((await bar.count()) === 0) {
-    return null;
-  }
-  return bar.first().textContent();
+  // allTextContents does not wait, so a bar that clears between polls reads as null.
+  const texts = await bar.allTextContents();
+  return texts[0] ?? null;
 }
 
-/** A touch point for the DevTools protocol. */
+/** A point on the page, in CSS pixels. */
 interface Point {
   x: number;
   y: number;
 }
 
+/** An element's box on the page. */
+interface Box extends Point {
+  width: number;
+  height: number;
+}
+
 /** Sends one touch event through the DevTools protocol, which Chromium turns into real touch and pointer events. */
 async function touch(
-  page: Page,
+  session: CDPSession,
   type: "touchStart" | "touchMove" | "touchEnd",
   point: Point,
 ): Promise<void> {
-  const session = await page.context().newCDPSession(page);
   await session.send("Input.dispatchTouchEvent", {
     type,
     touchPoints: type === "touchEnd" ? [] : [{ x: point.x, y: point.y }],
   });
-  await session.detach();
 }
 
 /** Moves a pointer from one point to another: a finger on a touch project, the mouse otherwise; a hold waits before moving. */
@@ -176,14 +204,17 @@ export async function drag(
     y: from.y + ((to.y - from.y) * step) / steps,
   });
   if (test.info().project.use.hasTouch) {
-    await touch(page, "touchStart", from);
+    // One session for the whole gesture: the protocol tracks the touch per session.
+    const session = await page.context().newCDPSession(page);
+    await touch(session, "touchStart", from);
     if (holdMs > 0) {
       await page.waitForTimeout(holdMs);
     }
     for (let step = 1; step <= steps; step += 1) {
-      await touch(page, "touchMove", at(step));
+      await touch(session, "touchMove", at(step));
     }
-    await touch(page, "touchEnd", to);
+    await touch(session, "touchEnd", to);
+    await session.detach();
     return;
   }
   await page.mouse.move(from.x, from.y);
@@ -198,21 +229,42 @@ export async function drag(
   await page.mouse.up();
 }
 
-/** The centre of an element on the page. */
-export async function centre(locator: Locator): Promise<Point> {
-  const box = await locator.boundingBox();
-  if (!box) {
-    throw new Error("The element has no box to drag");
+/** Where an element sits once the page has stopped moving: no sync bar shifting it, and the same box twice running. */
+async function settledBox(locator: Locator): Promise<Box> {
+  await expect.poll(() => statusBar(locator.page())).toBeNull();
+  // Playwright's own actions can scroll the Plan's clipped track sideways; bring the element back into view first.
+  await locator.scrollIntoViewIfNeeded();
+  let lastBox: Box | null = null;
+  let settled: Box | null = null;
+  await expect
+    .poll(
+      async () => {
+        const box = await locator.boundingBox();
+        settled =
+          box && lastBox && JSON.stringify(box) === JSON.stringify(lastBox)
+            ? box
+            : null;
+        lastBox = box;
+        return settled !== null;
+      },
+      { intervals: [50] },
+    )
+    .toBe(true);
+  if (!settled) {
+    throw new Error("The element never settled");
   }
+  return settled;
+}
+
+/** The centre of an element once the page has stopped moving. */
+export async function centre(locator: Locator): Promise<Point> {
+  const box = await settledBox(locator);
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
 /** Swipes a row left from just right of its middle, clear of a tick box, a handle or a text box on its edges. */
 export async function swipeLeft(page: Page, locator: Locator): Promise<void> {
-  const box = await locator.boundingBox();
-  if (!box) {
-    throw new Error("The row has no box to swipe");
-  }
+  const box = await settledBox(locator);
   const y = box.y + box.height / 2;
   await drag(
     page,
@@ -240,4 +292,9 @@ export async function secondDevice(browser: Browser): Promise<BrowserContext> {
     isMobile,
     hasTouch,
   });
+}
+
+/** Waits for a row's count, the number between its − and +. */
+export async function expectCount(row: Locator, count: number): Promise<void> {
+  await expect(row).toHaveText(new RegExp(`−${count}\\+`));
 }
