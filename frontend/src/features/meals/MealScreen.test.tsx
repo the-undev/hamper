@@ -198,3 +198,11 @@ test("change_photo_is_disabled_with_a_note_while_offline", async () => {
     screen.getByText("Changing the photo needs a connection to the server."),
   ).toBeInTheDocument();
 });
+
+test("done_goes_to_the_meals_when_the_meal_was_opened_directly", async () => {
+  const { user, router } = renderApp(`/meals/${curry.id}`, db, fakeLoop());
+
+  await user.click(await screen.findByRole("button", { name: "Done" }));
+
+  await waitFor(() => expect(router.state.location.pathname).toBe("/meals"));
+});

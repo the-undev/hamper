@@ -29,7 +29,7 @@ export function ScreenHeader({
         {back && (
           <Link
             to={back.to}
-            className="-ml-2 flex min-h-11 items-center px-2 text-sm font-semibold text-accent"
+            className="-ml-2 flex min-h-11 min-w-11 items-center px-2 text-sm font-semibold text-accent"
           >
             ‹ {back.label}
           </Link>

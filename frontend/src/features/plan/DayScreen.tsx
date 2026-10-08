@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { DoneButton } from "@/components/DoneButton";
 import { EmptyState, WaitingForServer } from "@/components/EmptyState";
 import { SavedField } from "@/components/SavedField";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -93,6 +94,7 @@ export function DayScreen({ position }: { position: number }) {
         <ScreenHeader title={title} back={back} />
         <EmptyState>Nothing planned for this day. Pick a meal.</EmptyState>
         <MealPicker position={position} onPlaced={() => {}} />
+        <DoneButton parent="/plan" />
       </>
     );
   }
@@ -153,6 +155,7 @@ export function DayScreen({ position }: { position: number }) {
         itemsById={itemsById}
         typeAheadLabel="Add an item for this day"
       />
+      <DoneButton parent="/plan" />
     </>
   );
 }

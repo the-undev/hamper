@@ -176,3 +176,16 @@ test("an_empty_day_offers_the_meal_picker", async () => {
     ]),
   );
 });
+
+test("done_goes_back_to_the_screen_the_day_was_opened_from", async () => {
+  await seed(db, { days: [curryDay] });
+  const { user, router } = renderApp("/meals", db, fakeLoop());
+  await router.navigate({
+    to: "/plan/day/$position",
+    params: { position: "0" },
+  });
+
+  await user.click(await screen.findByRole("button", { name: "Done" }));
+
+  await waitFor(() => expect(router.state.location.pathname).toBe("/meals"));
+});

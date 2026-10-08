@@ -93,6 +93,8 @@ History needs the server, and says so while offline.
   sent: "Offline. Changes are kept on this phone." or "3 changes to send".
   The count is of rows waiting to be sent, and offline is shown when both
   apply.
+- Every edit is saved as it is made. Editing screens end with Done, which
+  goes back.
 - Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
   press and hold on the handle, with the day under the finger highlighted.
 - The type-ahead is the same control wherever a line is added: type, then

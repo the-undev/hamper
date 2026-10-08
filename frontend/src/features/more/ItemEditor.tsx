@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { DoneButton } from "@/components/DoneButton";
 import { EmptyState } from "@/components/EmptyState";
 import { Picture } from "@/components/Picture";
 import { SavedField } from "@/components/SavedField";
@@ -77,6 +78,7 @@ export function ItemEditor({ itemId }: { itemId: string }) {
       >
         Delete
       </button>
+      <DoneButton parent="/more/items" />
       <ConfirmDialog
         open={mergeTarget !== null}
         onOpenChange={(open) => {

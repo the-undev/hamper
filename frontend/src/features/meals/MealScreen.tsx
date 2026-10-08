@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { DoneButton } from "@/components/DoneButton";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
@@ -139,6 +140,7 @@ export function MealScreen({ mealId }: { mealId: string }) {
           Delete
         </button>
       </div>
+      <DoneButton parent="/meals" />
       <ConfirmDialog
         open={confirmingDelete}
         onOpenChange={setConfirmingDelete}
