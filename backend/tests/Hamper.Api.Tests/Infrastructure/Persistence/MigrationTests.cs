@@ -27,8 +27,9 @@ public sealed class MigrationTests
         Assert.Equal(new DateOnly(2026, 3, 14), plan.StartDate);
         Assert.Equal(7, plan.LengthDays);
         Assert.Null(plan.DeletedAt);
+        Assert.Equal(1, plan.Revision);
         Assert.Equal(SyncState.SingletonId, syncState.Id);
-        Assert.Equal(0, syncState.CurrentRevision);
+        Assert.Equal(1, syncState.CurrentRevision);
     }
 
     [Fact]
@@ -41,7 +42,8 @@ public sealed class MigrationTests
 
         db.MealLines.Add(new MealLine { Id = Guid.NewGuid(), MealId = Guid.NewGuid(), ItemId = Guid.NewGuid(), Count = 1 });
 
-        var error = await Assert.ThrowsAsync<DbUpdateException>(() => db.SaveChangesAsync(ct));
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() =>
+            scope.ServiceProvider.GetRequiredService<WriteGate>().RunAsync(token => db.SaveChangesAsync(token), ct));
         Assert.Contains("FOREIGN KEY", error.InnerException?.Message, StringComparison.Ordinal);
     }
 }

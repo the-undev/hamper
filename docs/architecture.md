@@ -53,6 +53,13 @@ Chosen clear of skarrow (8766, 5273, 4273, 8767, 8768) and the legacy app
 Every device holds the whole synced dataset and a queue of changes not yet
 sent. The server is the source of truth.
 
+### Where the rules run
+
+The rules in [domain](domain.md) run on the device against its store, so
+every edit works offline. The server validates rows, assigns revisions, and
+runs what needs history or the file system: archive, history, export, import
+and images.
+
 ### What is synced
 
 Items, meals and their lines, the plan with its days, planned meals and
@@ -65,6 +72,10 @@ sequence shared by all tables, and `deleted_at`. A write sets a new revision;
 a delete sets `deleted_at` and a new revision and the row stays. A client
 asks for everything after the last revision it saw, so one cursor covers
 every table.
+
+Revisions come from one counter in `sync_state`, assigned on save. Writes are
+serialised in the process, so revisions commit in the order they were
+assigned.
 
 ### Pull
 

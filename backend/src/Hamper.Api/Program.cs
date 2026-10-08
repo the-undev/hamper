@@ -1,4 +1,5 @@
 using Hamper.Api.Features.Plans;
+using Hamper.Api.Features.Sync;
 using Hamper.Api.Infrastructure.Endpoints;
 using Hamper.Api.Infrastructure.Hosting;
 using Hamper.Api.Infrastructure.Persistence;
@@ -7,9 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<HamperDbContext>(options =>
+builder.Services.AddSingleton<WriteGate>();
+builder.Services.AddSingleton<RevisionStamper>();
+builder.Services.AddDbContext<HamperDbContext>((services, options) =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Hamper"))
-        .AddInterceptors(new SqlitePragmaInterceptor()));
+        .AddInterceptors(new SqlitePragmaInterceptor(), services.GetRequiredService<RevisionStamper>()));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 
@@ -28,8 +31,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<HamperDbContext>();
+    var time = scope.ServiceProvider.GetRequiredService<TimeProvider>();
     await db.Database.MigrateAsync();
-    await SeedPlan.EnsureAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>(), CancellationToken.None);
+    await app.Services.GetRequiredService<WriteGate>().RunAsync(
+        ct => SeedPlan.EnsureAsync(db, time, ct),
+        CancellationToken.None);
 }
 
 // Unhandled exceptions return problem+json; binding failures keep their client-error status.
