@@ -16,7 +16,7 @@ PWA added.
 | Real time | Server-sent events |
 | PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode, and `workbox-window` under its register module: the web app manifest, and a service worker for the app shell and viewed images |
 | Images | Cropped on the phone with a canvas, resized on the server with Magick.NET (`Magick.NET-Q8-AnyCPU`, Apache 2.0) |
-| Tests | Backend: xUnit v3, integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database, with `FakeTimeProvider`. Frontend: Vitest, Testing Library, jsdom and `fake-indexeddb`. Browser: Playwright in Chromium, as a phone and as a desktop, against the API serving the built frontend on 8778 with its own temp database, run by `make e2e` |
+| Tests | Backend: xUnit v3, integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database, with `FakeTimeProvider`. Frontend: Vitest, Testing Library, jsdom and `fake-indexeddb`. Browser: Playwright in Chromium, as a phone and as a desktop, against the API serving the built frontend on 8778 with its own temp database, run by `make e2e`; it covers the journeys in [screens](screens.md), live sync between two browsers, offline edits, swipes and drags by finger and mouse, pictures, export and import, and the service worker |
 
 One process: the API serves the built frontend from `wwwroot`. One `/data`
 volume holds `hamper.db` and `images/`.
