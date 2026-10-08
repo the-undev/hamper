@@ -2,6 +2,15 @@
   "version": 1,
   "dependencies": {
     "net10.0": {
+      "Magick.NET-Q8-AnyCPU": {
+        "type": "Direct",
+        "requested": "[14.15.0, )",
+        "resolved": "14.15.0",
+        "contentHash": "GYcT4dC2Dxgq/FN/PwVY+PHJEuZc5ZfQm0bj0BmvmSRXPjPPJzdOV8tbcMyNUQtHcRnsp6E/mJ5Tf62I8in3bg==",
+        "dependencies": {
+          "Magick.NET.Core": "14.15.0"
+        }
+      },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
         "requested": "[4.14.0, )",
@@ -57,6 +66,11 @@
         "type": "Transitive",
         "resolved": "2.14.1",
         "contentHash": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw=="
+      },
+      "Magick.NET.Core": {
+        "type": "Transitive",
+        "resolved": "14.15.0",
+        "contentHash": "xgD1zqb4KQ1gMQcd3eIRp8hFMHBxzW9fOpLLDR7BWN0oCwZ0i6NW7rIUiCdsEi/NuZi1UlCLWBHh3v7Y2E3LIw=="
       },
       "Microsoft.Build.Framework": {
         "type": "Transitive",

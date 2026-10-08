@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Hamper.Api.Features.History;
 using Hamper.Api.Features.Items;
@@ -28,6 +29,10 @@ public sealed record TransferDocument(
     /// <summary>The name of the JSON entry in the zip.</summary>
     public const string EntryName = "data.json";
 
+    /// <summary>The name of one size of an image in the zip.</summary>
+    public static string ImageEntryName(Guid imageId, string size) =>
+        string.Create(CultureInfo.InvariantCulture, $"images/{imageId:D}/{size}.jpg");
+
     /// <summary>camelCase, and strict on read: a missing field or a null where none is allowed fails the import.</summary>
     public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -39,18 +44,18 @@ public sealed record TransferDocument(
 
 public sealed record TransferPlan(DateOnly StartDate, int LengthDays);
 
-public sealed record TransferItem(Guid Id, string Name, string? Size, DateTimeOffset? DeletedAt)
+public sealed record TransferItem(Guid Id, string Name, string? Size, Guid? ImageId, DateTimeOffset? DeletedAt)
 {
-    public static TransferItem From(Item item) => new(item.Id, item.Name, item.Size, item.DeletedAt);
+    public static TransferItem From(Item item) => new(item.Id, item.Name, item.Size, item.ImageId, item.DeletedAt);
 
-    public Item ToEntity() => new() { Id = Id, Name = Name, Size = Size, DeletedAt = DeletedAt };
+    public Item ToEntity() => new() { Id = Id, Name = Name, Size = Size, ImageId = ImageId, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferMeal(Guid Id, string Name, DateTimeOffset? DeletedAt)
+public sealed record TransferMeal(Guid Id, string Name, Guid? ImageId, DateTimeOffset? DeletedAt)
 {
-    public static TransferMeal From(Meal meal) => new(meal.Id, meal.Name, meal.DeletedAt);
+    public static TransferMeal From(Meal meal) => new(meal.Id, meal.Name, meal.ImageId, meal.DeletedAt);
 
-    public Meal ToEntity() => new() { Id = Id, Name = Name, DeletedAt = DeletedAt };
+    public Meal ToEntity() => new() { Id = Id, Name = Name, ImageId = ImageId, DeletedAt = DeletedAt };
 }
 
 public sealed record TransferMealLine(Guid Id, Guid MealId, Guid ItemId, int Count, DateTimeOffset? DeletedAt)

@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text.Json;
+using Hamper.Api.Features.Images;
 using Hamper.Api.Features.Plans;
 using Hamper.Api.Features.Sync;
 using Hamper.Api.Infrastructure.Endpoints;
@@ -8,61 +9,66 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hamper.Api.Features.Transfer;
 
-/// <summary>Takes an export zip as the raw request body and writes it into an empty database in one transaction.</summary>
+/// <summary>Takes an export zip as the raw request body and writes it into an empty database in one transaction, with the images it holds.</summary>
 public sealed class ImportData : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app) =>
-        app.MapPost("/api/import", async (HttpRequest request, HamperDbContext db, WriteGate gate, CancellationToken ct) =>
+        app.MapPost("/api/import", async (HttpRequest request, HamperDbContext db, WriteGate gate, ImageStore images, CancellationToken ct) =>
         {
             using var body = new MemoryStream();
             await request.Body.CopyToAsync(body, ct);
             body.Position = 0;
 
-            var (document, problem) = await ReadDocumentAsync(body, ct);
+            using var archive = OpenZip(body);
+            if (archive is null)
+            {
+                return BadRequest("The body is not a zip");
+            }
+
+            var (document, problem) = await ReadDocumentAsync(archive, ct);
             if (document is null)
             {
                 return BadRequest(problem!);
             }
 
-            return await gate.RunAsync(token => WriteAsync(db, document, token), ct);
+            return await gate.RunAsync(token => WriteAsync(db, images, archive, document, token), ct);
         });
 
-    private static async Task<(TransferDocument? Document, string? Problem)> ReadDocumentAsync(Stream body, CancellationToken ct)
+    private static ZipArchive? OpenZip(Stream body)
     {
-        ZipArchive archive;
         try
         {
-            archive = new ZipArchive(body, ZipArchiveMode.Read, leaveOpen: true);
+            return new ZipArchive(body, ZipArchiveMode.Read, leaveOpen: true);
         }
         catch (InvalidDataException)
         {
-            return (null, "The body is not a zip");
+            return null;
+        }
+    }
+
+    private static async Task<(TransferDocument? Document, string? Problem)> ReadDocumentAsync(ZipArchive archive, CancellationToken ct)
+    {
+        var entry = archive.GetEntry(TransferDocument.EntryName);
+        if (entry is null)
+        {
+            return (null, "The zip has no data.json");
         }
 
-        using (archive)
+        await using var entryStream = await entry.OpenAsync(ct);
+        try
         {
-            var entry = archive.GetEntry(TransferDocument.EntryName);
-            if (entry is null)
+            using var json = await JsonDocument.ParseAsync(entryStream, cancellationToken: ct);
+            if (!IsCurrentFormat(json.RootElement))
             {
-                return (null, "The zip has no data.json");
+                return (null, $"data.json is not format {TransferDocument.CurrentFormat}");
             }
 
-            await using var entryStream = await entry.OpenAsync(ct);
-            try
-            {
-                using var json = await JsonDocument.ParseAsync(entryStream, cancellationToken: ct);
-                if (!IsCurrentFormat(json.RootElement))
-                {
-                    return (null, $"data.json is not format {TransferDocument.CurrentFormat}");
-                }
-
-                var document = json.RootElement.Deserialize<TransferDocument>(TransferDocument.JsonOptions);
-                return document is null ? (null, "data.json is empty") : (document, null);
-            }
-            catch (JsonException)
-            {
-                return (null, "data.json is not valid");
-            }
+            var document = json.RootElement.Deserialize<TransferDocument>(TransferDocument.JsonOptions);
+            return document is null ? (null, "data.json is empty") : (document, null);
+        }
+        catch (JsonException)
+        {
+            return (null, "data.json is not valid");
         }
     }
 
@@ -73,7 +79,8 @@ public sealed class ImportData : IEndpoint
         && format.TryGetInt32(out var formatNumber)
         && formatNumber == TransferDocument.CurrentFormat;
 
-    private static async Task<IResult> WriteAsync(HamperDbContext db, TransferDocument document, CancellationToken ct)
+    private static async Task<IResult> WriteAsync(
+        HamperDbContext db, ImageStore images, ZipArchive archive, TransferDocument document, CancellationToken ct)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         if (await HasDataAsync(db, ct))
@@ -81,11 +88,15 @@ public sealed class ImportData : IEndpoint
             return Results.Problem(statusCode: StatusCodes.Status409Conflict, title: "Database is not empty");
         }
 
+        var items = document.Items.Select(row => row.ToEntity()).ToList();
+        var meals = document.Meals.Select(row => row.ToEntity()).ToList();
+        var writtenImageIds = await WriteImagesAsync(images, archive, [.. items, .. meals], ct);
+
         var plan = await db.Plans.SingleAsync(row => row.Id == Plan.SingletonId, ct);
         plan.StartDate = document.Plan.StartDate;
         plan.LengthDays = document.Plan.LengthDays;
-        db.Items.AddRange(document.Items.Select(row => row.ToEntity()));
-        db.Meals.AddRange(document.Meals.Select(row => row.ToEntity()));
+        db.Items.AddRange(items);
+        db.Meals.AddRange(meals);
         db.MealLines.AddRange(document.MealLines.Select(row => row.ToEntity()));
         db.Days.AddRange(document.Days.Select(row => row.ToEntity()));
         db.DayLines.AddRange(document.DayLines.Select(row => row.ToEntity()));
@@ -100,11 +111,49 @@ public sealed class ImportData : IEndpoint
         }
         catch (DbUpdateException)
         {
+            foreach (var imageId in writtenImageIds)
+            {
+                images.Delete(imageId);
+            }
+
             return BadRequest("data.json does not fit the schema");
         }
 
         await transaction.CommitAsync(ct);
         return Results.NoContent();
+    }
+
+    /// <summary>Stores every image the rows point at from the zip, clears the image id of a row whose files the zip lacks, and returns the ids stored.</summary>
+    private static async Task<HashSet<Guid>> WriteImagesAsync(
+        ImageStore images, ZipArchive archive, IReadOnlyList<IHasImage> rows, CancellationToken ct)
+    {
+        var writtenImageIds = new HashSet<Guid>();
+        foreach (var row in rows)
+        {
+            if (row.ImageId is not { } imageId || writtenImageIds.Contains(imageId))
+            {
+                continue;
+            }
+
+            var entries = ImageStore.Sizes
+                .Select(size => (Size: size, Entry: archive.GetEntry(TransferDocument.ImageEntryName(imageId, size))))
+                .ToList();
+            if (entries.Any(sized => sized.Entry is null))
+            {
+                row.ImageId = null;
+                continue;
+            }
+
+            foreach (var (size, entry) in entries)
+            {
+                await using var entryStream = await entry!.OpenAsync(ct);
+                await images.WriteAsync(imageId, size, entryStream, ct);
+            }
+
+            writtenImageIds.Add(imageId);
+        }
+
+        return writtenImageIds;
     }
 
     /// <summary>Whether anything has ever been written, tombstones included.</summary>

@@ -1,3 +1,4 @@
+using Hamper.Api.Features.Images;
 using Hamper.Api.Features.Sync;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Hamper.Api.Features.Items;
 
 /// <summary>A thing bought, with an optional usual size as free text.</summary>
-public sealed class Item : ISynced
+public sealed class Item : IHasImage
 {
     public const int NameMaxLength = 200;
 
@@ -25,6 +26,8 @@ public sealed class Item : ISynced
     }
 
     public string? Size { get; set; }
+
+    public Guid? ImageId { get; set; }
 }
 
 public sealed class ItemConfiguration : IEntityTypeConfiguration<Item>

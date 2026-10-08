@@ -28,6 +28,7 @@ export async function ensureItem(w: Writer, name: string): Promise<Item> {
     deletedAt: null,
     name: trimmedName,
     size: null,
+    imageId: null,
   };
   await w.put("items", createdItem);
   return createdItem;

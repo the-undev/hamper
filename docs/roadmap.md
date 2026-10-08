@@ -17,11 +17,6 @@ heading so a document can link to it.
 
 ## Open decisions
 
-### Image library
-
-Magick.NET, which skarrow uses, or ImageSharp. Resizing JPEGs is all that is
-needed. `TBD`.
-
 ### PWA tooling
 
 `vite-plugin-pwa` with Workbox, or a hand-written service worker. The shell

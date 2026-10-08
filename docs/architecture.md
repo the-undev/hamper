@@ -13,7 +13,7 @@ PWA added.
 | On-device store | Dexie (IndexedDB) |
 | Real time | Server-sent events |
 | PWA | Web app manifest and a service worker for the app shell and viewed images; tooling `TBD` |
-| Images | Cropped on the phone with a canvas, resized on the server; library `TBD` (Magick.NET as in skarrow, or ImageSharp) |
+| Images | Cropped on the phone with a canvas, resized on the server with Magick.NET (`Magick.NET-Q8-AnyCPU`, Apache 2.0) |
 | Tests | Integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database; Vitest for the frontend |
 
 One process: the API serves the built frontend from `wwwroot`. One `/data`
@@ -52,8 +52,8 @@ Chosen clear of skarrow (8766, 5273, 4273, 8767, 8768) and the legacy app
 
 Every endpoint lives under `/api` except `/health`, the `/sync` endpoints and
 `/images`, which the service worker treats differently from API calls. An
-unknown path under `/api` or `/sync` is a problem+json 404; any other unknown
-path gets the app shell.
+unknown path under `/api`, `/sync` or `/images` is a problem+json 404; any
+other unknown path gets the app shell.
 
 - `GET /health`: the status for a monitor.
 - `POST /api/shops/{id}/archive`: copies an open shop into history and
@@ -62,15 +62,17 @@ path gets the app shell.
 - `GET /api/history/{id}`: one archived shop with its lines.
 - `GET /api/export`: the export zip.
 - `POST /api/import`: takes an export zip into an empty database.
+- `POST /api/items/{id}/image`, `POST /api/meals/{id}/image`: store a new
+  picture for the row. See [Images](#images).
+- `DELETE /api/items/{id}/image`, `DELETE /api/meals/{id}/image`: clear the
+  row's picture.
+- `GET /images/{imageId}/{size}`: one size of an image.
 - `GET /sync?since=<revision>`: every synced row written after the cursor,
   and the current revision. See [Pull](#pull).
 - `POST /sync`: applies a batch of row changes and returns the rows as they
   now stand. See [Push](#push).
 - `GET /sync/events`: a server-sent event stream of the current revision.
   See [Live updates](#live-updates).
-
-The image endpoints are added in their phase of the
-[build order](roadmap.md#build-order).
 
 ## Sync
 
@@ -262,13 +264,33 @@ reported, for the status bar to show.
 
 ## Images
 
-An item or meal has at most one image. The client opens the camera or the
-photo picker, shows a crop box, and uploads the cropped image as JPEG.
-`POST /api/items/{id}/image` and `POST /api/meals/{id}/image` take it; the
-server resizes to two fixed sizes, a thumbnail for lists and a larger one for
-the meal screen, and stores both under `/data/images/<id>/`. The database
-holds the image's id and sizes. `GET /images/<id>/<size>` serves them with
-long cache headers, and the service worker caches responses it has seen.
+An item or meal has at most one image, named by the `imageId` column on its
+row, null when it has none. The column syncs like any other; the files do not.
+
+`POST /api/items/{id}/image` and `POST /api/meals/{id}/image` take the
+picture as the raw request body, `image/jpeg`, `image/png` or `image/webp`,
+at most 10 MB. Inside the write gate the server checks the row is live, makes
+a new image id, and writes two JPEGs with Magick.NET, oriented from the EXIF
+data and then stripped of it, at quality 82:
+
+| Size | File | Shape |
+| --- | --- | --- |
+| `thumb` | `<data>/images/<imageId>/thumb.jpg` | 240 by 240, scaled to fill and cropped to the centre |
+| `large` | `<data>/images/<imageId>/large.jpg` | at most 1200 on the longer edge, never enlarged |
+
+It then sets the row's `imageId`, which gives the row a new revision, deletes
+the previous image's directory, and returns `{ "imageId": "..." }`. A missing
+or deleted row is a 404 problem, another media type a 415, a body over 10 MB
+a 413, and a body Magick cannot read as the media type a 400, "Not an image".
+
+`DELETE` on the same paths clears `imageId`, deletes the files and returns
+204; a row with no image returns 204 and is not written.
+
+`GET /images/{imageId}/{size}`, `size` being `thumb` or `large`, serves the
+file as `image/jpeg` with `Cache-Control: public, max-age=31536000,
+immutable`. An image id never changes its content; a new picture gets a new
+id. An unknown image, size or path under `/images` is a problem+json 404. The
+service worker caches responses it has seen.
 
 ## Export and import
 
@@ -277,8 +299,9 @@ long cache headers, and the service worker caches responses it has seen.
 the synced tables without revisions, and all of history. Each row carries
 `deletedAt`, null for a live row. A deleted item or meal that an exported row
 still points at is exported as a tombstone, so every reference resolves on
-import, where it stays deleted. Images join the zip in their phase of the
-[build order](roadmap.md#build-order).
+import, where it stays deleted. Beside `data.json`, the zip holds
+`images/<imageId>/thumb.jpg` and `images/<imageId>/large.jpg` for every
+exported item and meal with an image whose files exist.
 
 `POST /api/import` takes the same zip as the raw request body
 (`application/zip`) and writes it in one transaction: every row as it
@@ -286,6 +309,9 @@ comes, `deletedAt` included, with new revisions, and the plan's start date and
 length. It refuses with 409 when any item, meal, day, wanted line, shop or
 archived shop exists, deleted ones included, and with 400 when the zip has no
 `data.json`, the format is not 1, or the JSON does not fit the schema.
+Import writes each image's two files from the zip into the data directory. A
+row whose `imageId` lacks either file in the zip is imported with `imageId`
+cleared.
 
 ## Share and download
 

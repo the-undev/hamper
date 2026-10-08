@@ -16,6 +16,7 @@ export async function createMeal(w: Writer, name: string): Promise<Meal> {
     revision: 0,
     deletedAt: null,
     name: requireName(name, nameMaxLength),
+    imageId: null,
   };
   await w.put("meals", createdMeal);
   return createdMeal;

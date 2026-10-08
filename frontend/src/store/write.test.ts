@@ -21,6 +21,7 @@ const milk: Item = {
   deletedAt: null,
   name: "Milk",
   size: null,
+  imageId: null,
 };
 const bread: Item = {
   id: "b2",
@@ -28,6 +29,7 @@ const bread: Item = {
   deletedAt: null,
   name: "Bread",
   size: null,
+  imageId: null,
 };
 
 test("a put stores the row and records one outbox entry", async () => {

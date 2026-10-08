@@ -15,6 +15,9 @@ public interface IFileStorage
     /// <summary>Ensures the parent directory, lets the producer write to a sibling temp path, then moves it over the destination.</summary>
     Task WriteAtomicAsync(string destination, Func<string, Task> produceToTemp);
 
+    /// <summary>Copies the content to the destination through a sibling temp path, as the producer form does.</summary>
+    Task WriteAtomicAsync(string destination, Stream content, CancellationToken ct);
+
     void DeleteFile(string path);
 
     /// <summary>Deletes the directory and everything under it.</summary>

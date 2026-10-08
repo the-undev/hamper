@@ -1,3 +1,4 @@
+using Hamper.Api.Features.Images;
 using Hamper.Api.Features.Sync;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Hamper.Api.Features.Meals;
 
 /// <summary>A library meal: a name and its lines.</summary>
-public sealed class Meal : ISynced
+public sealed class Meal : IHasImage
 {
     public const int NameMaxLength = 200;
 
@@ -16,6 +17,8 @@ public sealed class Meal : ISynced
     public DateTimeOffset? DeletedAt { get; set; }
 
     public required string Name { get; set; }
+
+    public Guid? ImageId { get; set; }
 }
 
 public sealed class MealConfiguration : IEntityTypeConfiguration<Meal>

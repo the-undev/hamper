@@ -10,11 +10,15 @@ export interface SyncedRow {
 export interface Item extends SyncedRow {
   name: string;
   size: string | null;
+  /** The server's image of it, or null when it has none. */
+  imageId: string | null;
 }
 
 /** A library meal: a name and its lines. */
 export interface Meal extends SyncedRow {
   name: string;
+  /** The server's image of it, or null when it has none. */
+  imageId: string | null;
 }
 
 /** An item and a count on a library meal. */

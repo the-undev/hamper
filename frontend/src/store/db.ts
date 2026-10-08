@@ -56,6 +56,17 @@ export class HamperDb extends Dexie {
       outbox: "++seq, &[table+rowId]",
       meta: "key",
     });
+    // Items and meals stored before images existed have no imageId, which every push must carry.
+    this.version(2).upgrade(async (transaction) => {
+      for (const table of ["items", "meals"]) {
+        await transaction
+          .table(table)
+          .toCollection()
+          .modify((row: { imageId?: string | null }) => {
+            row.imageId ??= null;
+          });
+      }
+    });
   }
 }
 

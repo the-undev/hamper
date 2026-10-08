@@ -34,7 +34,7 @@ public sealed class PullTests
         Assert.All(SyncApi.TableNames, table => Assert.Single(pulled[table]!.AsArray()));
         Assert.Equal((long)pulled["revision"]!, SyncApi.AllRows(pulled).Max(row => (long)row["revision"]!));
         var item = pulled["items"]![0]!.AsObject();
-        Assert.Equal(["id", "revision", "deletedAt", "name", "size"], item.Select(property => property.Key));
+        Assert.Equal(["id", "revision", "deletedAt", "name", "size", "imageId"], item.Select(property => property.Key));
         Assert.Equal((milk.Id.ToString(), "Milk", "4 pints"), ((string?)item["id"], (string?)item["name"], (string?)item["size"]));
         Assert.Null(item["deletedAt"]);
         Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", (string?)pulled["plan"]![0]!["startDate"]);

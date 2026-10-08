@@ -1,3 +1,4 @@
+using Hamper.Api.Features.Images;
 using Hamper.Api.Features.Plans;
 using Hamper.Api.Features.Sync;
 using Hamper.Api.Infrastructure.Endpoints;
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<HamperDbContext>((services, options) =>
         .AddInterceptors(new SqlitePragmaInterceptor(), services.GetRequiredService<RevisionStamper>()));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+builder.Services.AddSingleton<ImageStore>();
 
 builder.Services.AddOptions<StorageOptions>()
     .BindConfiguration("Storage")

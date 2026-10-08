@@ -77,6 +77,46 @@ public sealed class PushTests
     }
 
     [Fact]
+    public async Task Push_accepts_an_image_id()
+    {
+        using var factory = new HamperApiFactory();
+        using var client = factory.CreateClient();
+        var ct = TestContext.Current.CancellationToken;
+        var milkId = Guid.NewGuid();
+        var curryId = Guid.NewGuid();
+        var milkImageId = Guid.NewGuid();
+
+        await SyncApi.PushAcceptedAsync(
+            client,
+            [
+                new SyncChange("c1", "items", WireRows.Item(milkId, "Milk", imageId: milkImageId)),
+                new SyncChange("c2", "meals", WireRows.Meal(curryId, "Curry")),
+            ],
+            ct);
+
+        var pulled = await SyncApi.PullAsync(client, 0, ct);
+        Assert.Equal(milkImageId, pulled["items"]![0]!["imageId"]!.GetValue<Guid>());
+        Assert.Null(pulled["meals"]![0]!["imageId"]);
+        Assert.True(pulled["meals"]![0]!.AsObject().ContainsKey("imageId"));
+    }
+
+    [Fact]
+    public async Task Push_rejects_an_image_id_that_is_not_a_guid()
+    {
+        using var factory = new HamperApiFactory();
+        using var client = factory.CreateClient();
+        var ct = TestContext.Current.CancellationToken;
+        var row = WireRows.Item(Guid.NewGuid(), "Milk");
+        row["imageId"] = "photo.jpg";
+
+        var response = await SyncApi.PushAsync(client, [new SyncChange("c1", "items", row)], ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(ct);
+        Assert.StartsWith("Change c1: the row does not fit items", problem?.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Push_rejects_an_unknown_table()
     {
         using var factory = new HamperApiFactory();

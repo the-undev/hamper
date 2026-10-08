@@ -36,6 +36,15 @@ public sealed class LocalFileStorage : IFileStorage
         }
     }
 
+    public Task WriteAtomicAsync(string destination, Stream content, CancellationToken ct) =>
+        WriteAtomicAsync(destination, async tempPath =>
+        {
+            await using var output = new FileStream(
+                tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+                bufferSize: 1 << 16, FileOptions.Asynchronous);
+            await content.CopyToAsync(output, ct);
+        });
+
     public void DeleteFile(string path) => File.Delete(path);
 
     public void DeleteDirectory(string path) => Directory.Delete(path, recursive: true);

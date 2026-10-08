@@ -24,12 +24,12 @@ const synced = () => ({ id: newId(), revision: 0, deletedAt: null });
 
 /** An item row. */
 export function anItem(name: string, size: string | null = null): Item {
-  return { ...synced(), name, size };
+  return { ...synced(), name, size, imageId: null };
 }
 
 /** A meal row. */
 export function aMeal(name: string): Meal {
-  return { ...synced(), name };
+  return { ...synced(), name, imageId: null };
 }
 
 /** A meal line row. */

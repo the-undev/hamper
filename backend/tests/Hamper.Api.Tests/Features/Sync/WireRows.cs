@@ -8,11 +8,11 @@ internal static class WireRows
 {
     public static readonly DateTimeOffset Morning = new(2026, 6, 1, 9, 0, 0, TimeSpan.Zero);
 
-    public static JsonObject Item(Guid id, string name, string? size = null, DateTimeOffset? deletedAt = null) =>
-        new() { ["id"] = id, ["deletedAt"] = deletedAt, ["name"] = name, ["size"] = size };
+    public static JsonObject Item(Guid id, string name, string? size = null, DateTimeOffset? deletedAt = null, Guid? imageId = null) =>
+        new() { ["id"] = id, ["deletedAt"] = deletedAt, ["name"] = name, ["size"] = size, ["imageId"] = imageId };
 
-    public static JsonObject Meal(Guid id, string name) =>
-        new() { ["id"] = id, ["deletedAt"] = null, ["name"] = name };
+    public static JsonObject Meal(Guid id, string name, Guid? imageId = null) =>
+        new() { ["id"] = id, ["deletedAt"] = null, ["name"] = name, ["imageId"] = imageId };
 
     public static JsonObject MealLine(Guid id, Guid mealId, Guid itemId, int count) =>
         new() { ["id"] = id, ["deletedAt"] = null, ["mealId"] = mealId, ["itemId"] = itemId, ["count"] = count };

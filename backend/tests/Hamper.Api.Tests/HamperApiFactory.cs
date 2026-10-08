@@ -21,6 +21,9 @@ public class HamperApiFactory : WebApplicationFactory<Program>
         _configureServices = configureServices;
     }
 
+    /// <summary>The app's data directory, which holds the images.</summary>
+    public string DataDir => _dataDir.Path;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("Storage:DataDir", _dataDir.Path);

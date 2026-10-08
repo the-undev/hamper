@@ -70,7 +70,7 @@ public sealed class ExportDataTests
         Assert.Equal(HttpStatusCode.OK, archiveResponse.StatusCode);
         var exportedItem = Assert.Single(data["items"]!.AsArray())!.AsObject();
         Assert.Equal(milk.Id.ToString(), (string?)exportedItem["id"]);
-        Assert.Equal(["id", "name", "size", "deletedAt"], exportedItem.Select(property => property.Key));
+        Assert.Equal(["id", "name", "size", "imageId", "deletedAt"], exportedItem.Select(property => property.Key));
         Assert.Null(exportedItem["deletedAt"]);
         Assert.Empty(data["shops"]!.AsArray());
         Assert.Empty(data["shopLines"]!.AsArray());

@@ -14,7 +14,13 @@ function stubFetch(response: Response) {
   return fetchMock;
 }
 
-const milkRow = { id: "a1", deletedAt: null, name: "Milk", size: null };
+const milkRow = {
+  id: "a1",
+  deletedAt: null,
+  name: "Milk",
+  size: null,
+  imageId: null,
+};
 
 test("pull_asks_for_the_rows_above_the_cursor_and_returns_them", async () => {
   const body = {

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO.Compression;
 using System.Text.Json;
+using Hamper.Api.Features.Images;
 using Hamper.Api.Features.Plans;
 using Hamper.Api.Features.Sync;
 using Hamper.Api.Infrastructure.Endpoints;
@@ -9,16 +10,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hamper.Api.Features.Transfer;
 
-/// <summary>Returns a zip holding data.json with every live row, the deleted items and meals that live rows point at, and all of history.</summary>
+/// <summary>Returns a zip holding data.json with every live row, the deleted items and meals that live rows point at, and all of history, and the images of the exported items and meals.</summary>
 public sealed class ExportData : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app) =>
-        app.MapGet("/api/export", async (HamperDbContext db, WriteGate gate, TimeProvider time, CancellationToken ct) =>
+        app.MapGet("/api/export", async (HamperDbContext db, WriteGate gate, ImageStore images, TimeProvider time, CancellationToken ct) =>
         {
-            // Read inside the gate so no write lands between the table reads.
-            var document = await gate.RunAsync(token => ReadAsync(db, time.GetUtcNow(), token), ct);
+            // Read and zip inside the gate so no write lands between the table reads, and no upload deletes an image being copied.
+            var zip = await gate.RunAsync(
+                async token => await ZipAsync(await ReadAsync(db, time.GetUtcNow(), token), images, token),
+                ct);
             var fileName = string.Create(CultureInfo.InvariantCulture, $"hamper-{time.GetLocalNow():yyyyMMdd-HHmmss}.zip");
-            return Results.File(await ZipAsync(document, ct), "application/zip", fileName);
+            return Results.File(zip, "application/zip", fileName);
         });
 
     private static async Task<TransferDocument> ReadAsync(HamperDbContext db, DateTimeOffset exportedAt, CancellationToken ct)
@@ -60,16 +63,45 @@ public sealed class ExportData : IEndpoint
             (await db.ArchivedShops.AsNoTracking().ToListAsync(ct)).Select(TransferArchivedShop.From).OrderBy(row => row.Id).ToList());
     }
 
-    private static async Task<byte[]> ZipAsync(TransferDocument document, CancellationToken ct)
+    private static async Task<byte[]> ZipAsync(TransferDocument document, ImageStore images, CancellationToken ct)
     {
         using var zipBuffer = new MemoryStream();
         await using (var archive = new ZipArchive(zipBuffer, ZipArchiveMode.Create, leaveOpen: true))
         {
             var entry = archive.CreateEntry(TransferDocument.EntryName, CompressionLevel.Optimal);
-            await using var entryStream = await entry.OpenAsync(ct);
-            await JsonSerializer.SerializeAsync(entryStream, document, TransferDocument.JsonOptions, ct);
+            await using (var entryStream = await entry.OpenAsync(ct))
+            {
+                await JsonSerializer.SerializeAsync(entryStream, document, TransferDocument.JsonOptions, ct);
+            }
+
+            var imageIds = document.Items.Select(item => item.ImageId)
+                .Concat(document.Meals.Select(meal => meal.ImageId))
+                .OfType<Guid>()
+                .Distinct();
+            foreach (var imageId in imageIds)
+            {
+                foreach (var size in ImageStore.Sizes)
+                {
+                    await ZipImageFileAsync(archive, images, imageId, size, ct);
+                }
+            }
         }
 
         return zipBuffer.ToArray();
+    }
+
+    /// <summary>Copies one size of an image into the zip, unless its file is missing.</summary>
+    private static async Task ZipImageFileAsync(ZipArchive archive, ImageStore images, Guid imageId, string size, CancellationToken ct)
+    {
+        await using var file = images.OpenRead(imageId, size);
+        if (file is null)
+        {
+            return;
+        }
+
+        // JPEGs are already compressed.
+        var entry = archive.CreateEntry(TransferDocument.ImageEntryName(imageId, size), CompressionLevel.NoCompression);
+        await using var entryStream = await entry.OpenAsync(ct);
+        await file.CopyToAsync(entryStream, ct);
     }
 }

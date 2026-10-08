@@ -71,12 +71,24 @@ test("push_sends_every_outbox_entry_as_a_whole_row_in_seq_order", async () => {
       {
         id: String(entries[0]?.seq),
         table: "items",
-        row: { id: milk.id, deletedAt: null, name: "Oat milk", size: null },
+        row: {
+          id: milk.id,
+          deletedAt: null,
+          name: "Oat milk",
+          size: null,
+          imageId: null,
+        },
       },
       {
         id: String(entries[1]?.seq),
         table: "items",
-        row: { id: bread.id, deletedAt: null, name: "Bread", size: null },
+        row: {
+          id: bread.id,
+          deletedAt: null,
+          name: "Bread",
+          size: null,
+          imageId: null,
+        },
       },
     ],
   ]);

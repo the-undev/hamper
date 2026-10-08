@@ -4,7 +4,7 @@ namespace Hamper.Api.Infrastructure.Hosting;
 public static class SpaHosting
 {
     /// <summary>Prefixes whose unknown paths stay problem+json 404s instead of getting the shell.</summary>
-    private static readonly string[] GuardedPrefixes = ["/api", "/sync"];
+    private static readonly string[] GuardedPrefixes = ["/api", "/sync", "/images"];
 
     private const string IndexFile = "index.html";
 
@@ -30,7 +30,7 @@ public static class SpaHosting
         return app;
     }
 
-    /// <summary>Serves the shell for any path no endpoint claimed, except unknown /api and /sync paths, which stay problem+json 404s.</summary>
+    /// <summary>Serves the shell for any path no endpoint claimed, except unknown /api, /sync and /images paths, which stay problem+json 404s.</summary>
     public static WebApplication MapSpaFallback(this WebApplication app)
     {
         app.MapFallback((HttpContext context, IWebHostEnvironment environment) =>
