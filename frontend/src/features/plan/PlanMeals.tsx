@@ -4,7 +4,6 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Counter } from "@/components/Counter";
 import { WaitingForServer } from "@/components/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { secondaryButton } from "@/components/styles";
 import {
   Sheet,
   SheetContent,
@@ -78,13 +77,15 @@ export function PlanMeals() {
         mealsById={mealsById}
         onPick={setPickingPosition}
       />
-      <button
-        type="button"
-        className={secondaryButton}
-        onClick={() => setConfirmingNewPlan(true)}
-      >
-        Start new plan from {nextStart}
-      </button>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          className="min-h-11 rounded-[14px] border border-line px-4 text-sm font-semibold"
+          onClick={() => setConfirmingNewPlan(true)}
+        >
+          Start new plan from {nextStart}
+        </button>
+      </div>
       <ConfirmDialog
         open={confirmingNewPlan}
         onOpenChange={setConfirmingNewPlan}
