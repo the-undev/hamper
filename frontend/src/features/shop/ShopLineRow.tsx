@@ -1,11 +1,17 @@
+import { Counter } from "@/components/Counter";
 import { SwipeRow } from "@/components/SwipeRow";
-import { lineToWanted, removeShopLine, tickShopLine } from "@/domain/shops";
+import {
+  editShopLine,
+  lineToWanted,
+  removeShopLine,
+  tickShopLine,
+} from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { ShopLineView } from "./lineView";
 
-/** One line of a list: a tick box, the name with size and sources, and the count; swiping reveals To wanted and Remove. */
+/** One line of a list: a tick box, the name with size and sources, and − count +; swiping reveals To wanted and Remove. */
 export function ShopLineRow({
   view,
   onEdit,
@@ -35,7 +41,7 @@ export function ShopLineRow({
         },
       ]}
     >
-      <div className="flex min-w-0 items-center gap-1 py-0.5 pr-3 pl-0.5">
+      <div className="flex min-w-0 items-center gap-1 py-0.5 pr-1 pl-0.5">
         <input
           type="checkbox"
           aria-label={`${name} in the trolley`}
@@ -58,9 +64,19 @@ export function ShopLineRow({
             <small className="truncate text-xs text-muted">{detail}</small>
           )}
         </button>
-        <span className="min-w-8 text-right font-bold tabular-nums">
-          ×{line.count}
-        </span>
+        <Counter
+          count={line.count}
+          subject={name}
+          onChange={(count) =>
+            void write((w) =>
+              editShopLine(w, line.id, {
+                nameOverride: line.nameOverride,
+                sizeOverride: line.sizeOverride,
+                count,
+              }),
+            )
+          }
+        />
       </div>
     </SwipeRow>
   );

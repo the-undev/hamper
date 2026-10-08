@@ -97,6 +97,30 @@ test("the_line_editor_edits_the_lines_own_text_and_count_and_leaves_the_item", a
   expect(await db.items.get(milk.id)).toEqual(milk);
 });
 
+test("the_count_is_changed_on_the_row", async () => {
+  const { user } = renderApp(`/shop/${shop.id}`, db, fakeLoop());
+
+  await user.click(
+    await screen.findByRole("button", { name: "One more Rice" }),
+  );
+  await waitFor(async () =>
+    expect((await db.shopLines.get(riceLine.id))?.count).toBe(3),
+  );
+  await user.click(screen.getByRole("button", { name: "One fewer Rice" }));
+  await waitFor(async () =>
+    expect((await db.shopLines.get(riceLine.id))?.count).toBe(2),
+  );
+  await user.click(screen.getByRole("button", { name: "One fewer Rice" }));
+
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "One fewer Rice" }),
+    ).toBeDisabled(),
+  );
+  expect((await db.shopLines.get(riceLine.id))?.count).toBe(1);
+  expect(await db.items.get(rice.id)).toEqual(rice);
+});
+
 test("out_of_stock_in_the_editor_and_to_wanted_on_the_swipe_move_lines_to_wanted", async () => {
   await seed(db, { wantedLines: [aWantedLine(rice, 1, true)] });
   const { user } = renderApp(`/shop/${shop.id}`, db, fakeLoop());
