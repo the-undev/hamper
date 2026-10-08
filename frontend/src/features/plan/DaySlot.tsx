@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { Link } from "@tanstack/react-router";
+import { Picture } from "@/components/Picture";
 import { SwipeRow } from "@/components/SwipeRow";
-import { Thumb } from "@/components/Thumb";
 import { formatDay, formatDayOfMonth, formatWeekday } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { Day } from "@/store/types";
@@ -28,6 +28,7 @@ export function DaySlot({
   position,
   date,
   day,
+  imageId,
   summary,
   onPick,
   onClear,
@@ -35,6 +36,8 @@ export function DaySlot({
   position: number;
   date: string;
   day: Day | undefined;
+  /** The picture of the library meal the day came from, or null. */
+  imageId: string | null;
   /** The day's lines in one line. */
   summary: string;
   onPick: () => void;
@@ -93,7 +96,7 @@ export function DaySlot({
           )}
         >
           <DayLabel date={date} />
-          <Thumb name={day.name} size="row" />
+          <Picture name={day.name} imageId={imageId} size="row" />
           <Link
             to="/plan/day/$position"
             params={{ position: String(position) }}

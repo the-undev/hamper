@@ -20,6 +20,16 @@ export function useItemsById(): Map<string, Item> | undefined {
   );
 }
 
+/** Every meal by id, deleted ones included, so a day linked to one can show its picture. */
+export function useMealsById(): Map<string, Meal> | undefined {
+  const db = useDb();
+  return useLive(
+    async () =>
+      new Map((await db.meals.toArray()).map((meal) => [meal.id, meal])),
+    [db],
+  );
+}
+
 /** The live items, sorted by name. */
 export function useLiveItems(): Item[] | undefined {
   const db = useDb();

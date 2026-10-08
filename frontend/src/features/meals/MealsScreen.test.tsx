@@ -82,3 +82,16 @@ test("enter_adds_a_new_meal_or_opens_the_one_named", async () => {
   );
   expect(await live(db, "meals")).toHaveLength(2);
 });
+
+test("a_card_shows_the_meals_picture", async () => {
+  await db.meals.update(curry.id, { imageId: "curry-image" });
+  renderApp("/meals", db, fakeLoop());
+
+  await waitFor(() =>
+    expect(
+      [...document.querySelectorAll("img")].map((image) =>
+        image.getAttribute("src"),
+      ),
+    ).toEqual(["/images/curry-image/thumb"]),
+  );
+});

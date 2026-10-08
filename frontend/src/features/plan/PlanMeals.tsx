@@ -22,6 +22,7 @@ import {
 import {
   useDayLinesByDay,
   useItemsById,
+  useMealsById,
   usePlan,
   usePlannedDays,
 } from "@/hooks/data";
@@ -37,6 +38,7 @@ export function PlanMeals() {
   const days = usePlannedDays();
   const linesByDay = useDayLinesByDay();
   const itemsById = useItemsById();
+  const mealsById = useMealsById();
   const write = useWrite();
   const navigate = useNavigate();
   const [pickingPosition, setPickingPosition] = useState<number | null>(null);
@@ -50,7 +52,7 @@ export function PlanMeals() {
       </>
     );
   }
-  if (!plan || !days || !linesByDay || !itemsById) {
+  if (!plan || !days || !linesByDay || !itemsById || !mealsById) {
     return <ScreenHeader title="Plan" />;
   }
 
@@ -73,6 +75,7 @@ export function PlanMeals() {
         days={days}
         linesByDay={linesByDay}
         itemsById={itemsById}
+        mealsById={mealsById}
         onPick={setPickingPosition}
       />
       <button

@@ -19,26 +19,24 @@ export function colourFor(name: string): string {
   return placeholderColours[total % placeholderColours.length] ?? "#8c6a4a";
 }
 
-const sizeClasses = {
+/** The box each picture size fills, shared by the placeholder and the image. */
+export const pictureSizes = {
   row: "size-11 rounded-[10px] text-base",
   card: "h-21 w-full text-3xl",
   hero: "h-38 w-full rounded-2xl text-5xl",
 } as const;
 
+/** Where a picture shows: a list row, a meal card, or the top of the meal screen. */
+export type PictureSize = keyof typeof pictureSizes;
+
 /** The placeholder picture for a meal or item: a coloured block with the name's first letter. */
-export function Thumb({
-  name,
-  size,
-}: {
-  name: string;
-  size: keyof typeof sizeClasses;
-}) {
+export function Thumb({ name, size }: { name: string; size: PictureSize }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
         "grid flex-none place-items-center font-bold text-white",
-        sizeClasses[size],
+        pictureSizes[size],
       )}
       style={{ background: colourFor(name) }}
     >

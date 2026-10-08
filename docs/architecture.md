@@ -40,7 +40,7 @@ tests and the frontend build. Nothing merges without it.
 | What | Port |
 | --- | --- |
 | API, dev | 8776 |
-| Vite dev server, proxies `/api` and `/sync` to the API | 5276 |
+| Vite dev server, proxies `/api`, `/sync` and `/images` to the API | 5276 |
 | Vite preview | 4276 |
 | API, live test (own database and data dir) | 8777 |
 | Container | 8080 |
@@ -291,6 +291,21 @@ file as `image/jpeg` with `Cache-Control: public, max-age=31536000,
 immutable`. An image id never changes its content; a new picture gets a new
 id. An unknown image, size or path under `/images` is a problem+json 404. The
 service worker caches responses it has seen.
+
+On the device, Change photo opens a file input that accepts `image/*`, so the
+phone offers the camera or the library. The picture is drawn on a canvas in a
+square crop box: dragging pans it, and a slider zooms from the size that just
+covers the box to three times that. Use photo draws the crop at 1200 by 1200
+and sends it as a JPEG through a TanStack Query mutation. The device syncs
+before the upload, so the server has a row made offline, and after it, so
+the new `imageId` arrives with the pull. Remove photo calls the delete. Both
+need the server and are disabled while offline.
+
+A picture shows the `thumb` in lists, on meal cards and on the plan, and the
+`large` on the meal screen. A day shows the picture of the library meal it
+came from. With no image, or when the request fails, offline with nothing
+cached for example, the placeholder shows instead: a coloured block with the
+name's first letter.
 
 ## Export and import
 

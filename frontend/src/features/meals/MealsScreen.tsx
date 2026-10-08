@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
+import { Picture } from "@/components/Picture";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { secondaryButton, textInput } from "@/components/styles";
-import { Thumb } from "@/components/Thumb";
 import { createMeal } from "@/domain/meals";
 import { useLiveMeals, useMealLinesByMeal } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
@@ -79,7 +79,7 @@ export function MealsScreen() {
               params={{ mealId: meal.id }}
               className="flex h-full flex-col overflow-hidden rounded-[14px] border border-line"
             >
-              <Thumb name={meal.name} size="card" />
+              <Picture name={meal.name} imageId={meal.imageId} size="card" />
               <span className="px-2.5 py-2 text-sm font-semibold">
                 {meal.name}
                 <small className="block text-xs font-normal text-muted">

@@ -2,12 +2,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { Picture } from "@/components/Picture";
 import { SavedField } from "@/components/SavedField";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { secondaryButton, sectionLabel } from "@/components/styles";
-import { Thumb } from "@/components/Thumb";
 import { TypeAhead, type TypeAheadOption } from "@/components/TypeAhead";
 import { deleteItem, mergeItem, renameItem, setItemSize } from "@/domain/items";
+import { CropUpload } from "@/features/images/CropUpload";
 import { itemOptions, useLiveItems } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
@@ -39,11 +40,15 @@ export function ItemEditor({ itemId }: { itemId: string }) {
   return (
     <>
       <ScreenHeader title="Item" back={back} />
-      <div className="flex items-center gap-3">
-        <Thumb name={item.name} size="row" />
-        <span className="text-xs text-muted">
-          Pictures arrive in a later version.
-        </span>
+      <div className="flex items-start gap-3">
+        <Picture name={item.name} imageId={item.imageId} size="row" />
+        <div className="flex-1">
+          <CropUpload
+            table="items"
+            rowId={item.id}
+            hasImage={item.imageId !== null}
+          />
+        </div>
       </div>
       <SavedField
         key={`name-${item.name}`}

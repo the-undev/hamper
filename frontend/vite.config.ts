@@ -26,6 +26,7 @@ export default defineConfig({
     proxy: {
       "/api": "http://localhost:8776",
       "/sync": "http://localhost:8776",
+      "/images": "http://localhost:8776",
     },
   },
   preview: {

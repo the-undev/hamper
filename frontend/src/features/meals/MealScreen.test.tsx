@@ -7,7 +7,7 @@ import { dayIdFor } from "@/store/ids";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeFetch } from "@/test/fake-fetch";
-import { fakeLoop } from "@/test/fake-loop";
+import { fakeLoop, quietStatus } from "@/test/fake-loop";
 import {
   aDay,
   aMeal,
@@ -182,4 +182,19 @@ test("last_shopped_shows_nothing_when_history_cannot_be_read", async () => {
   expect(await screen.findByLabelText("Name")).toHaveValue("Curry");
   await new Promise((resolve) => setTimeout(resolve, 50));
   expect(screen.queryByText(/shopped/)).not.toBeInTheDocument();
+});
+
+test("change_photo_is_disabled_with_a_note_while_offline", async () => {
+  renderApp(
+    `/meals/${curry.id}`,
+    db,
+    fakeLoop({ ...quietStatus, online: false }),
+  );
+
+  expect(
+    await screen.findByRole("button", { name: "Change photo" }),
+  ).toBeDisabled();
+  expect(
+    screen.getByText("Changing the photo needs a connection to the server."),
+  ).toBeInTheDocument();
 });

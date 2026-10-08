@@ -65,8 +65,9 @@ needs the server, so it is disabled while offline.
 A search and add bar, then the library as a grid of cards with pictures. A
 name matching nothing offers "Add as a new meal".
 
-**Meal.** The picture with a Change photo button (take or choose, crop,
-upload), the name, when it was last shopped for, "Add to <next empty day>" or
+**Meal.** The picture, Change photo (take or choose, crop square, upload) and,
+when there is a picture, Remove photo; both are disabled while offline. Then
+the name, when it was last shopped for, "Add to <next empty day>" or
 "On the plan", then the type-ahead and the meal's lines with + and − and
 swipe to remove. Duplicate and Delete. When it was last shopped for comes
 from history, so it is left out while offline.
@@ -78,8 +79,9 @@ the last sync. Import says "Imported", or the reason the server refused the
 file.
 
 **Items.** A search, then every item with its usual size. Tapping one opens
-the editor: name, usual size, picture, Merge into another item (a type-ahead
-over the rest), Delete.
+the editor: the picture with Change photo and Remove photo as on the Meal
+screen, name, usual size, Merge into another item (a type-ahead over the
+rest), Delete.
 
 **History.** Archived shops by date, each with its meals and a count of lines.
 Tapping one opens it read only. "Copy these meals to the plan" on each.
@@ -98,7 +100,7 @@ History needs the server, and says so while offline.
   the best at the top, and the create row comes last; when nothing matches it
   is the only row. Enter takes the first row. The meal picker's "Use as it
   is" row follows the same order.
-- Until images arrive, a picture is a coloured block with the name's first
-  letter.
+- A picture with no image, or one that cannot load, offline for example, is
+  a coloured block with the name's first letter.
 - On a desktop the same screens render in a centred column; nothing is
   desktop-only.

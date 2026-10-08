@@ -272,3 +272,20 @@ test("dragging_a_day_onto_an_empty_day_moves_it_and_leaves_its_old_day_empty", a
     expect((await live(db, "days")).map((day) => day.position)).toEqual([2]),
   );
 });
+
+test("a_day_from_a_library_meal_shows_the_meals_picture", async () => {
+  const pictured = { ...aMeal("Fajitas"), imageId: "fajitas-image" };
+  await seed(db, {
+    meals: [pictured],
+    days: [aDay(0, "Fajitas", pictured), aDay(1, "Takeaway")],
+  });
+  renderApp("/plan", db, fakeLoop());
+
+  await waitFor(() =>
+    expect(
+      [...document.querySelectorAll("img")].map((image) =>
+        image.getAttribute("src"),
+      ),
+    ).toEqual(["/images/fajitas-image/thumb"]),
+  );
+});

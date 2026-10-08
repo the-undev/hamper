@@ -21,7 +21,7 @@ import { clearDay, swapDays } from "@/domain/plan";
 import { lineNames } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
-import type { Day, DayLine, Item, Plan } from "@/store/types";
+import type { Day, DayLine, Item, Meal, Plan } from "@/store/types";
 import { DaySlot, slotId } from "./DaySlot";
 
 /** Days swap rather than reorder, so no slot moves while one is dragged. */
@@ -37,12 +37,14 @@ export function DayList({
   days,
   linesByDay,
   itemsById,
+  mealsById,
   onPick,
 }: {
   plan: Plan;
   days: ReadonlyMap<number, Day>;
   linesByDay: ReadonlyMap<string, DayLine[]>;
   itemsById: ReadonlyMap<string, Item>;
+  mealsById: ReadonlyMap<string, Meal>;
   onPick: (position: number) => void;
 }) {
   const write = useWrite();
@@ -100,6 +102,9 @@ export function DayList({
                 position={position}
                 date={dayDate(plan, position)}
                 day={day}
+                imageId={
+                  (day?.mealId && mealsById.get(day.mealId)?.imageId) || null
+                }
                 summary={lineNames(
                   day ? (linesByDay.get(day.id) ?? []) : [],
                   itemsById,

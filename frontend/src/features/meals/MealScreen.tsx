@@ -4,10 +4,10 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
+import { Picture } from "@/components/Picture";
 import { SavedField } from "@/components/SavedField";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, secondaryButton, sectionLabel } from "@/components/styles";
-import { Thumb } from "@/components/Thumb";
 import { liveWhere } from "@/domain/checks";
 import {
   deleteMeal,
@@ -15,6 +15,7 @@ import {
   renameMeal,
   setMealLine,
 } from "@/domain/meals";
+import { CropUpload } from "@/features/images/CropUpload";
 import { useItemsById } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatTimestampDay, nowIso } from "@/lib/dates";
@@ -60,16 +61,12 @@ export function MealScreen({ mealId }: { mealId: string }) {
   return (
     <>
       <ScreenHeader title="Meal" back={back} />
-      <div className="relative">
-        <Thumb name={meal.name} size="hero" />
-        <button
-          type="button"
-          disabled
-          className="absolute right-2.5 bottom-2.5 rounded-full bg-black/45 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-70"
-        >
-          Change photo
-        </button>
-      </div>
+      <Picture name={meal.name} imageId={meal.imageId} size="hero" />
+      <CropUpload
+        table="meals"
+        rowId={meal.id}
+        hasImage={meal.imageId !== null}
+      />
       <SavedField
         key={meal.name}
         label="Name"

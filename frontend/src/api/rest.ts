@@ -80,5 +80,30 @@ export async function importExport(zip: Blob): Promise<void> {
   });
 }
 
+/** The synced tables whose rows can have a picture. */
+export type PictureTable = "items" | "meals";
+
+/** Sends a cropped JPEG as a row's picture and returns the new image id, which the row's next pull brings too. */
+export async function uploadImage(
+  table: PictureTable,
+  rowId: string,
+  jpeg: Blob,
+): Promise<string> {
+  const response = await send(`/api/${table}/${rowId}/image`, {
+    method: "POST",
+    headers: { "Content-Type": "image/jpeg" },
+    body: jpeg,
+  });
+  return ((await response.json()) as { imageId: string }).imageId;
+}
+
+/** Clears a row's picture on the server. */
+export async function deleteImage(
+  table: PictureTable,
+  rowId: string,
+): Promise<void> {
+  await send(`/api/${table}/${rowId}/image`, { method: "DELETE" });
+}
+
 /** The query key of the history list; archiving invalidates it. */
 export const historyKey = ["history"] as const;
