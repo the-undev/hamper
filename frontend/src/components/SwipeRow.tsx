@@ -30,12 +30,15 @@ export function SwipeRow({
   actions,
   children,
   className,
+  rounded,
 }: {
   /** What the row is, for the action buttons' names: "Remove <subject>". */
   subject: string;
   actions: readonly SwipeAction[];
   children: ReactNode;
   className?: string;
+  /** A rounding class for the row's shape; the wrapper takes it too, so the action strip is clipped to it. */
+  rounded?: string;
 }) {
   const [offset, setOffset] = useState(0);
   const [open, setOpen] = useState(false);
@@ -109,11 +112,16 @@ export function SwipeRow({
   };
 
   return (
-    <div ref={rowRef} data-swipe-row className="relative overflow-hidden">
+    <div
+      ref={rowRef}
+      data-swipe-row
+      className={cn("relative overflow-hidden", rounded)}
+    >
       <div
         className={cn(
           "relative z-[1] touch-pan-y select-none bg-surface",
           start.current?.swiping ? "" : "transition-transform duration-150",
+          rounded,
           className,
         )}
         style={

@@ -68,3 +68,15 @@ test("the_sliding_element_does_not_select_text_under_a_mouse_swipe", () => {
     screen.getByRole("button", { name: "Milk" }).parentElement,
   ).toHaveClass("select-none");
 });
+
+test("the_wrapper_clips_to_the_rows_rounding", () => {
+  render(
+    <SwipeRow subject="Milk" actions={[]} rounded="rounded-[14px]">
+      <button type="button">Milk</button>
+    </SwipeRow>,
+  );
+  const front = screen.getByRole("button", { name: "Milk" }).parentElement;
+
+  expect(front).toHaveClass("rounded-[14px]");
+  expect(front?.parentElement).toHaveClass("rounded-[14px]", "overflow-hidden");
+});

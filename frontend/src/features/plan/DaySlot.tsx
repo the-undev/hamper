@@ -107,7 +107,7 @@ export function DaySlot({
       <SwipeRow
         subject={label}
         actions={[{ label: "Clear", tone: "danger", onAction: onClear }]}
-        className="rounded-[14px]"
+        rounded="rounded-[14px]"
       >
         <div
           className={cn(
