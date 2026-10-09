@@ -28,15 +28,27 @@ The Release workflow, `.github/workflows/release.yml`, runs when a `v*` tag is
 pushed. It runs the CI workflow against the tagged commit as its gates, then
 builds the image with the same two stamps, the version being the tag without
 its `v`. It pushes the image to `ghcr.io/the-undev/hamper:<version>` and
-`:latest`, logging in with the workflow's `GITHUB_TOKEN`. If the first publish
-leaves the package private, making it public in its GitHub settings lets a
-host pull it with no login.
+`:latest`, logging in with the workflow's `GITHUB_TOKEN`. A version with a `-`
+in it, such as `1.0.0-rc.1`, is a prerelease and publishes without `:latest`.
+If the first publish leaves the package private, making it public in its GitHub
+settings lets a host pull it with no login.
+
+The Publish edge workflow, `.github/workflows/publish-edge.yml`, runs on every
+push to `main` and when started by hand on any branch. It runs the CI workflow
+as its gates, then builds the image stamped `0.0.0-edge` and
+`0.0.0-edge+<short sha>`. It pushes three tags: `:edge`, `:sha-<short sha>` and
+`:<branch>`. `:edge` is set only on `main`, so it always points at the newest
+`main`. A manual run on a branch publishes that branch's `:<branch>` and
+`:sha-<short sha>` and leaves `:edge` alone.
 
 ## Running it
 
 ```
 docker run -d --name hamper -v <dir>:/data -p <port>:8080 ghcr.io/the-undev/hamper:latest
 ```
+
+Use `:edge` to follow `main`. Use `:latest` or a version tag to stay put until
+the next release.
 
 Once it is up, `GET /health` on the mapped port answers `{"status":"ok"}`, or a
 503 problem when the database cannot be reached. The first start creates

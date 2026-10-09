@@ -1,9 +1,10 @@
-# Publishes the image for a version tag once the CI gates pass on the tagged commit.
-name: Release
+# Publishes an image for every push to main, and for a manual run on any branch, once the CI gates pass.
+name: Publish edge
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,14 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The same two stamps the Makefile's image target passes.
       - id: version
-        run: |
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-          version="${GITHUB_REF_NAME#v}"
-          [[ "$version" == *-* ]] && prerelease=true || prerelease=false
-          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -44,8 +39,9 @@ jobs:
           images: ghcr.io/the-undev/hamper
           flavor: latest=false
           tags: |
-            type=raw,value=${{ steps.version.outputs.version }}
-            type=raw,value=latest,enable=${{ steps.version.outputs.prerelease == 'false' }}
+            type=raw,value=edge,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+            type=ref,event=branch
 
       - uses: docker/build-push-action@v6
         with:
@@ -54,5 +50,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=${{ steps.version.outputs.version }}
-            INFORMATIONAL_VERSION=${{ steps.version.outputs.version }}+${{ steps.version.outputs.sha }}
+            VERSION=0.0.0-edge
+            INFORMATIONAL_VERSION=0.0.0-edge+${{ steps.version.outputs.sha }}
