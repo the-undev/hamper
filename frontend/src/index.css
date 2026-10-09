@@ -81,7 +81,7 @@
     scrollbar-gutter: stable;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-surface text-foreground;
     margin: 0;
   }
   button:not(:disabled) {

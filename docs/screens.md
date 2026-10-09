@@ -136,4 +136,4 @@ History needs the server, and says so while offline.
   a coloured block with the name's first letter.
 - The same screens render in a centred column up to 760px wide, so a tablet
   or desktop gets the same layout at a comfortable width; nothing is
-  desktop-only.
+  desktop-only. The surface colour fills the display around the column.

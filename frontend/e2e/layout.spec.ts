@@ -93,6 +93,30 @@ test.describe("the column grows with the viewport up to 760px", () => {
     expect(Math.abs(column.x - column.right)).toBeLessThanOrEqual(2);
   });
 
+  for (const colorScheme of ["light", "dark"] as const) {
+    test(`the surface colour fills the display around the column in ${colorScheme} mode`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme });
+      await columnAt(page, 1920, 1080);
+      const background = (selector: string) =>
+        page.evaluate(
+          (selector) =>
+            getComputedStyle(document.querySelector(selector) as Element)
+              .backgroundColor,
+          selector,
+        );
+      const shell = await page.evaluate(
+        () =>
+          getComputedStyle(
+            document.querySelector("main")?.closest(".bg-surface") as Element,
+          ).backgroundColor,
+      );
+
+      expect(await background("body")).toBe(shell);
+    });
+  }
+
   test("a phone width fills the width and keeps the gutters", async ({
     page,
   }) => {

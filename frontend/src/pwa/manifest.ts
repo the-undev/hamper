@@ -9,7 +9,7 @@ export const manifest: Partial<ManifestOptions> = {
   start_url: "/",
   scope: "/",
   theme_color: "#2f7d4a",
-  background_color: "#f3f4ef",
+  background_color: "#ffffff",
   icons: [
     {
       src: "/icon-192.png",
