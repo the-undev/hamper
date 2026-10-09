@@ -71,7 +71,7 @@ export function SwipeRow({
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>): void => {
     const target = event.target as HTMLElement;
-    if (target.closest("input, [data-drag-handle]")) {
+    if (target.closest('input, [role="checkbox"], [data-drag-handle]')) {
       return;
     }
     start.current = { x: event.clientX, y: event.clientY, swiping: false };

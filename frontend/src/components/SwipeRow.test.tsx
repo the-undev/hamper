@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { SwipeRow } from "./SwipeRow";
+import { Checkbox } from "./ui/checkbox";
 
 function renderRow() {
   const onRemove = vi.fn();
@@ -79,4 +80,23 @@ test("the_wrapper_clips_to_the_rows_rounding", () => {
 
   expect(front).toHaveClass("rounded-[14px]");
   expect(front?.parentElement).toHaveClass("rounded-[14px]", "overflow-hidden");
+});
+
+test("a_press_on_a_tick_box_does_not_start_a_swipe", () => {
+  render(
+    <SwipeRow
+      subject="Milk"
+      actions={[{ label: "Remove", tone: "danger", onAction: vi.fn() }]}
+    >
+      <Checkbox aria-label="Milk in the trolley" />
+    </SwipeRow>,
+  );
+  const tickBox = screen.getByRole("checkbox", { name: "Milk in the trolley" });
+  const front = tickBox.parentElement;
+
+  fireEvent.pointerDown(tickBox, { clientX: 200, clientY: 10, pointerId: 1 });
+  fireEvent.pointerMove(tickBox, { clientX: 60, clientY: 12, pointerId: 1 });
+  fireEvent.pointerUp(tickBox, { clientX: 60, clientY: 12, pointerId: 1 });
+
+  expect(front?.style.transform).toBe("");
 });

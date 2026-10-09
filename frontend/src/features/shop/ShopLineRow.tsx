@@ -1,5 +1,6 @@
 import { Counter } from "@/components/Counter";
 import { SwipeRow } from "@/components/SwipeRow";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   editShopLine,
   lineToWanted,
@@ -42,14 +43,14 @@ export function ShopLineRow({
       ]}
     >
       <div className="flex min-w-0 items-center gap-1 py-0.5 pr-1 pl-0.5">
-        <input
-          type="checkbox"
+        <Checkbox
           aria-label={`${name} in the trolley`}
           checked={line.ticked}
-          onChange={() =>
+          onCheckedChange={() =>
             void write((w) => tickShopLine(w, line.id, !line.ticked))
           }
-          className="size-11 flex-none cursor-pointer appearance-none before:m-[9px] before:grid before:size-[26px] before:place-items-center before:rounded-lg before:border-2 before:border-line before:text-sm before:text-white before:content-[''] checked:before:border-tick checked:before:bg-tick checked:before:content-['✓']"
+          // The box is 26px; its margin and the wider ::after make the 44px target.
+          className="m-[9px] size-[26px] flex-none cursor-pointer rounded-lg after:-inset-[9px] data-checked:border-tick data-checked:bg-tick data-checked:text-white [&_svg]:size-4"
         />
         <button
           type="button"

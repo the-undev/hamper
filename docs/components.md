@@ -48,4 +48,4 @@ names (`--color-primary`, `--color-border` and the rest) map onto ours.
 | `columnWidth` | The centred column, up to `--column-max` | none | keep |
 | Once / Weekly | The pill on a wanted line that toggles it | Badge | done |
 | "close match" | The note on a suggestion a few typing slips away | Badge | done |
-| Shop tick box | A shop line's "in the trolley" box | Checkbox | shadcn |
+| Shop tick box | A shop line's "in the trolley" box | Checkbox | done |
