@@ -132,6 +132,9 @@ and hides what is absent.
 
 A keyword monitor watches `/health` for `ok`. It needs no login.
 
+The production log carries only warnings and errors from EF Core's SQL
+commands. Development logs every command.
+
 ## Development
 
 `make setup` restores the .NET packages and installs the frontend's. `make dev`

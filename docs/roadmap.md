@@ -20,14 +20,6 @@ The dev and live-test instances are on the developer's machine. A phone needs
 to reach one over the LAN, or through a dev tunnel, to exercise offline and
 install before a release.
 
-## Planned
-
-### Quieter query logging
-
-EF Core logs every SQL command at Information, which is most of the container
-log in production. Set `Microsoft.EntityFrameworkCore.Database.Command` to
-`Warning` in the production settings and leave Development as it is.
-
 ## Parked
 
 ### Swap an item on a line
