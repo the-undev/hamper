@@ -54,7 +54,7 @@ the lines are in the trolley: "Shop Mon 1 Jun, from 5 meals. 3 of 12 in the
 trolley."), the type-ahead to add a line, then the unticked lines and under
 them the ticked ones. Each line: a 44px tick box, the name, the size and
 sources in small text, and the count with − and +. Tapping the name opens the
-line editor: name, size, count, "Out of stock" (to wanted), Remove, Done.
+line editor: name, size, count, "To wanted", Remove, Done.
 Swiping left reveals To wanted and Remove. Under the list: Share, Download;
 Rest to wanted, Archive, Delete.
 

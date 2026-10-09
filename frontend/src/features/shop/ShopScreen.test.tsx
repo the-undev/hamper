@@ -131,7 +131,7 @@ test("out_of_stock_in_the_editor_and_to_wanted_on_the_swipe_move_lines_to_wanted
   await user.click(screen.getByRole("button", { name: /^Milk/ }));
   await user.click(
     within(await screen.findByRole("dialog")).getByRole("button", {
-      name: "Out of stock",
+      name: "To wanted",
     }),
   );
 

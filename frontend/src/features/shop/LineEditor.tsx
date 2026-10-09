@@ -106,7 +106,7 @@ function LineEditorFields({
           onClick={() => void close((w) => lineToWanted(w, line.id, nowIso()))}
           className="min-h-11 flex-1 rounded-[10px] border border-warn text-[13px] font-semibold text-warn"
         >
-          Out of stock
+          To wanted
         </button>
         <button
           type="button"
