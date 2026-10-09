@@ -44,7 +44,7 @@ export function ShopSwitcher({ currentShopId }: { currentShopId: string }) {
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="mx-auto max-w-[480px] rounded-t-2xl bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+          className="mx-auto max-w-(--column-max) rounded-t-2xl bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
         >
           <SheetTitle className="text-lg font-bold">
             Start another list

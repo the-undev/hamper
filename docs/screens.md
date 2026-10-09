@@ -120,5 +120,6 @@ History needs the server, and says so while offline.
   there takes only an exact name or the highlighted row.
 - A picture with no image, or one that cannot load, offline for example, is
   a coloured block with the name's first letter.
-- On a desktop the same screens render in a centred column; nothing is
+- The same screens render in a centred column up to 760px wide, so a tablet
+  or desktop gets the same layout at a comfortable width; nothing is
   desktop-only.

@@ -1,5 +1,8 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { act, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test } from "vitest";
+import { columnWidth } from "@/components/styles";
 import type { HamperDb } from "@/store/db";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
@@ -70,4 +73,20 @@ test("an_update_shows_a_toast_whose_reload_switches_to_the_new_version", async (
   await user.click(screen.getByRole("button", { name: "Reload" }));
   expect(appUpdate.reload).toHaveBeenCalledTimes(1);
   expect(screen.queryByText("Update ready")).not.toBeInTheDocument();
+});
+
+test("the_shell_column_uses_the_shared_width_and_no_source_file_hardcodes_480px", async () => {
+  renderApp("/plan", db, fakeLoop());
+  const main = await screen.findByRole("main");
+
+  expect(main.parentElement?.className).toContain(columnWidth);
+
+  const sourceRoot = join(process.cwd(), "src");
+  const hardcoded = (readdirSync(sourceRoot, { recursive: true }) as string[])
+    .filter((path) => /\.(tsx?|css)$/.test(path))
+    .filter((path) => !path.endsWith(".test.tsx") && !path.endsWith(".test.ts"))
+    .filter((path) =>
+      readFileSync(join(sourceRoot, path), "utf8").includes("480px"),
+    );
+  expect(hardcoded).toEqual([]);
 });

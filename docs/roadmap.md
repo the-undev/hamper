@@ -20,12 +20,6 @@ The dev and live-test instances are on the developer's machine. A phone needs
 to reach one over the LAN, or through a dev tunnel, to exercise offline and
 install before a release.
 
-### Desktop layout
-
-The screens render in a centred column about 480px wide on a desktop, as
-screens.md sets out. Whether a wide screen should get more is undecided, for
-example the plan's days as a grid with the shop beside them.
-
 ## Parked
 
 ### Swap an item on a line

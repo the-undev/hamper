@@ -20,3 +20,6 @@ export const textInput =
 /** The bordered box that holds a list of rows. */
 export const listBox =
   "flex flex-col overflow-hidden rounded-[14px] border border-line";
+
+/** The widest the app gets: a centred column that grows with the viewport up to --column-max. */
+export const columnWidth = "mx-auto w-full max-w-(--column-max)";

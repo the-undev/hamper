@@ -98,7 +98,7 @@ export function PlanMeals() {
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="mx-auto max-h-[85dvh] max-w-[480px] overflow-y-auto rounded-t-2xl bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+          className="mx-auto max-h-[85dvh] max-w-(--column-max) overflow-y-auto rounded-t-2xl bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
         >
           <SheetTitle className="text-lg font-bold">
             Pick a meal for {pickingLabel}

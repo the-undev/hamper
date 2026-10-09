@@ -4,6 +4,7 @@
 
 /* The prototype's tokens, light by default and dark when the system asks. */
 :root {
+  --column-max: 760px;
   --background: #f3f4ef;
   --surface: #ffffff;
   --foreground: #1d221c;

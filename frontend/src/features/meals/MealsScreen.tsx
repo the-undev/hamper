@@ -71,7 +71,7 @@ export function MealsScreen() {
       {meals.length === 0 && (
         <EmptyState>No meals yet. Type a name above to add one.</EmptyState>
       )}
-      <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0">
+      <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5 p-0">
         {shownMeals.map((meal) => (
           <li key={meal.id}>
             <Link

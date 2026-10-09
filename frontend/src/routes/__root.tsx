@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FooterSlotContext } from "@/components/ScreenFooter";
 import { HeaderSlotContext } from "@/components/ScreenHeader";
 import { SyncIndicator } from "@/components/SyncIndicator";
+import { columnWidth } from "@/components/styles";
 import { TabBar } from "@/components/TabBar";
 import { useUpdateToast } from "@/pwa/update";
 import { useSyncLoop } from "@/store/provider";
@@ -15,14 +16,14 @@ export const Route = createRootRoute({
   ),
 });
 
-/** The header with the sync indicator, the screen, its footer and the tab bar, in a column a phone wide. */
+/** The header with the sync indicator, the screen, its footer and the tab bar, in a centred column. */
 function Shell() {
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   const [footerSlot, setFooterSlot] = useState<HTMLElement | null>(null);
   const status = useSyncStatus(useSyncLoop());
   useUpdateToast();
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-surface min-[480px]:border-line min-[480px]:border-x">
+    <div className={`flex min-h-dvh flex-col bg-surface ${columnWidth}`}>
       <header className="sticky top-0 z-10 flex min-h-14 items-center gap-1 border-line border-b bg-surface pt-[max(10px,env(safe-area-inset-top,0px))] pr-2 pb-2.5 pl-4">
         <div
           ref={setHeaderSlot}
