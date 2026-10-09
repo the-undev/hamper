@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import type { Writer } from "@/store/write";
 import { textInput } from "./styles";
 
+function ignoreText(): void {}
+
 /** A labelled text box saved when it loses focus or on Enter, and put back when the save is refused; a title shows the label only to screen readers. */
 export function SavedField({
   label,
@@ -11,12 +13,15 @@ export function SavedField({
   placeholder,
   save,
   title = false,
+  onTextChange = ignoreText,
 }: {
   label: string;
   value: string;
   placeholder?: string;
   save: (w: Writer, value: string) => Promise<void>;
   title?: boolean;
+  /** Called with the text as it is typed. */
+  onTextChange?: (text: string) => void;
 }) {
   const write = useWrite();
   const [text, setText] = useState(value);
@@ -38,7 +43,10 @@ export function SavedField({
       <input
         value={text}
         placeholder={placeholder}
-        onChange={(event) => setText(event.target.value)}
+        onChange={(event) => {
+          setText(event.target.value);
+          onTextChange(event.target.value);
+        }}
         onBlur={() => void commit()}
         onKeyDown={(event) => {
           if (event.key === "Enter") {

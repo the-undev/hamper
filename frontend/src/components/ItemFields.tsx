@@ -5,12 +5,8 @@ import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import type { Item } from "@/store/types";
 import { ConfirmDialog } from "./ConfirmDialog";
-import {
-  primaryButton,
-  secondaryButton,
-  sectionLabel,
-  textInput,
-} from "./styles";
+import { SavedField } from "./SavedField";
+import { hint, primaryButton, secondaryButton, sectionLabel } from "./styles";
 import { TypeAhead, type TypeAheadOption } from "./TypeAhead";
 
 /** A count and a noun, with an s when the count is not one. */
@@ -29,7 +25,7 @@ export function ItemUsageText({ itemId }: { itemId: string }) {
   return usage ? usageText(usage) : null;
 }
 
-/** An item's name and usual size, saved by Done, then Merge into another item and Delete; a name another item has turns Done into Merge into that item. */
+/** An item's name and usual size, each saved as it is edited, then Merge into another item and Delete; a name another item has is not saved and turns Done into Merge into that item. */
 export function ItemFields({
   item,
   items,
@@ -49,13 +45,12 @@ export function ItemFields({
 }) {
   const write = useWrite();
   const [name, setName] = useState(item.name);
-  const [size, setSize] = useState(item.size ?? "");
   const [mergeTarget, setMergeTarget] = useState<TypeAheadOption | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const otherItems = items.filter((candidate) => candidate.id !== item.id);
   const typedKey = name.trim().toLowerCase();
   const sameNamedItem = otherItems.find(
-    (other) => other.name.toLowerCase() === typedKey,
+    (other) => other.name.trim().toLowerCase() === typedKey,
   );
 
   const merge = async (targetId: string): Promise<void> => {
@@ -68,42 +63,33 @@ export function ItemFields({
     }
   };
 
-  const save = async (): Promise<void> => {
-    const saved = await write(async (w) => {
-      if (name.trim() !== item.name) {
-        await renameItem(w, item.id, name);
-      }
-      if (size.trim() !== (item.size ?? "")) {
-        await setItemSize(w, item.id, size);
-      }
-      return true;
-    });
-    if (saved) {
-      onDone();
-    }
-  };
-
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
-        <label className="flex min-w-0 flex-col gap-1 text-[11px] font-semibold text-muted">
-          Name
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className={textInput}
-          />
-        </label>
-        <label className="flex min-w-0 flex-col gap-1 text-[11px] font-semibold text-muted">
-          Usual size
-          <input
-            value={size}
-            placeholder="e.g. 1kg bag, 4 pints, tin"
-            onChange={(event) => setSize(event.target.value)}
-            className={textInput}
-          />
-        </label>
+        <SavedField
+          label="Name"
+          value={item.name}
+          onTextChange={setName}
+          save={async (w, text) => {
+            const typedKey = text.trim().toLowerCase();
+            if (
+              otherItems.some(
+                (other) => other.name.trim().toLowerCase() === typedKey,
+              )
+            ) {
+              return;
+            }
+            await renameItem(w, item.id, text);
+          }}
+        />
+        <SavedField
+          label="Usual size"
+          value={item.size ?? ""}
+          placeholder="e.g. 1kg bag, 4 pints, tin"
+          save={(w, text) => setItemSize(w, item.id, text)}
+        />
       </div>
+      {sameNamedItem && <p className={hint}>An item with that name exists.</p>}
       <h2 className={sectionLabel}>Merge into another item</h2>
       <TypeAhead
         label="Merge into"
@@ -128,11 +114,7 @@ export function ItemFields({
             Merge into {sameNamedItem.name}
           </button>
         ) : (
-          <button
-            type="button"
-            className={primaryButton}
-            onClick={() => void save()}
-          >
+          <button type="button" className={primaryButton} onClick={onDone}>
             Done
           </button>
         ),

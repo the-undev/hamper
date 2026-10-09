@@ -67,16 +67,20 @@ test("the_sheet_says_where_the_item_is_used", async () => {
   ).toBeInTheDocument();
 });
 
-test("done_renames_the_item_everywhere", async () => {
+test("a_blur_renames_the_item_everywhere_and_done_only_closes", async () => {
   const { user, sheet } = await openSheet("banan");
 
   const name = within(sheet).getByLabelText("Name");
   await user.clear(name);
   await user.type(name, "Plantain");
-  await user.click(within(sheet).getByRole("button", { name: "Done" }));
+  await user.tab();
 
+  await waitFor(async () =>
+    expect((await db.items.get(banan.id))?.name).toBe("Plantain"),
+  );
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+  await user.click(within(sheet).getByRole("button", { name: "Done" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-  expect((await db.items.get(banan.id))?.name).toBe("Plantain");
   expect(screen.getByRole("button", { name: "Plantain" })).toBeInTheDocument();
 });
 
@@ -86,7 +90,12 @@ test("a_name_another_item_has_offers_a_merge_into_it", async () => {
   const name = within(sheet).getByLabelText("Name");
   await user.clear(name);
   await user.type(name, " banana ");
+  await user.tab();
   expect(within(sheet).queryByRole("button", { name: "Done" })).toBeNull();
+  expect(
+    within(sheet).getByText("An item with that name exists."),
+  ).toBeInTheDocument();
+  expect((await db.items.get(banan.id))?.name).toBe("banan");
   await user.click(
     within(sheet).getByRole("button", { name: "Merge into Banana" }),
   );
@@ -102,6 +111,18 @@ test("a_name_another_item_has_offers_a_merge_into_it", async () => {
   expect((await live(db, "dayLines")).map((line) => line.itemId)).toEqual([
     banana.id,
   ]);
+});
+
+test("a_blur_saves_the_usual_size", async () => {
+  const { user, sheet } = await openSheet("banan");
+
+  const size = within(sheet).getByLabelText("Usual size");
+  await user.type(size, "a bunch");
+  await user.tab();
+
+  await waitFor(async () =>
+    expect((await db.items.get(banan.id))?.size).toBe("a bunch"),
+  );
 });
 
 test("delete_after_a_confirm_removes_the_item_and_its_lines", async () => {

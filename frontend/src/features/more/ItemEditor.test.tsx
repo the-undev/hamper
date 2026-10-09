@@ -77,8 +77,7 @@ test("a_rename_shows_everywhere_the_item_is_used", async () => {
   const size = screen.getByLabelText("Usual size");
   await user.clear(size);
   await user.type(size, "2kg bag");
-  const footer = screen.getByRole("group", { name: "Screen actions" });
-  await user.click(within(footer).getByRole("button", { name: "Done" }));
+  await user.tab();
   await waitFor(async () =>
     expect(await db.items.get(potatoes.id)).toMatchObject({
       name: "Maris Pipers",
@@ -93,6 +92,26 @@ test("a_rename_shows_everywhere_the_item_is_used", async () => {
 
   expect(await screen.findByText("Maris Pipers")).toBeInTheDocument();
   expect(screen.getByText("2kg bag")).toBeInTheDocument();
+});
+
+test("a_name_another_item_has_offers_a_merge_and_does_not_rename", async () => {
+  const { user, router } = renderApp(`/more/items/${spuds.id}`, db, fakeLoop());
+
+  const name = await screen.findByLabelText("Name");
+  await user.clear(name);
+  await user.type(name, " potatoes ");
+  await user.tab();
+
+  expect(screen.getByText("An item with that name exists.")).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
+  expect((await db.items.get(spuds.id))?.name).toBe("Spuds");
+
+  await user.click(screen.getByRole("button", { name: "Merge into Potatoes" }));
+
+  await waitFor(() =>
+    expect(router.state.location.pathname).toBe(`/more/items/${potatoes.id}`),
+  );
+  expect((await db.items.get(spuds.id))?.deletedAt).not.toBeNull();
 });
 
 test("merge_repoints_and_combines_after_a_confirm", async () => {
