@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import type { HamperDb } from "@/store/db";
 import { renderApp } from "@/test/app";
+import { waitForCount } from "@/test/counter";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import {
@@ -103,13 +104,9 @@ test("the_count_is_changed_on_the_row", async () => {
   await user.click(
     await screen.findByRole("button", { name: "One more Rice" }),
   );
-  await waitFor(async () =>
-    expect((await db.shopLines.get(riceLine.id))?.count).toBe(3),
-  );
+  await waitForCount("Rice", "3");
   await user.click(screen.getByRole("button", { name: "One fewer Rice" }));
-  await waitFor(async () =>
-    expect((await db.shopLines.get(riceLine.id))?.count).toBe(2),
-  );
+  await waitForCount("Rice", "2");
   await user.click(screen.getByRole("button", { name: "One fewer Rice" }));
 
   await waitFor(() =>
