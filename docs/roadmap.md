@@ -30,11 +30,6 @@ October 2026, each to be triaged.
 Make from plan shows each day's lines and lets items be added. The add changes
 that day, and it reads as a change to the meal.
 
-### The term wanted
-
-"Wanted" names the items beyond the meals. The word does not separate that
-list from the meals clearly.
-
 ### A day holds one meal
 
 The plan blurs day and meal. A day with any number of meals would also cover
@@ -105,4 +100,4 @@ Method, servings, timings. Out of scope by design; see
 ### Voice
 
 The voice assistant's list is what "add beans" goes to today. A way to add to
-the wanted list by voice would close that gap. No route known yet.
+the extras list by voice would close that gap. No route known yet.

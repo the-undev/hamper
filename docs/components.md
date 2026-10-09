@@ -17,7 +17,7 @@ names (`--color-primary`, `--color-border` and the rest) map onto ours.
 | `TypeAhead` | The box for adding a line, with ranked suggestions floating under it | Popover and Command (cmdk) | done |
 | `ConfirmDialog` | Asks before an action that cannot be undone | AlertDialog | done: wraps AlertDialog |
 | `Toast` | One short message near the bottom, with an optional action such as Undo | Sonner | done: `showToast` calls Sonner |
-| `Segmented` | The Plan's Meals and Items switch, radios underneath | Tabs | done |
+| `Segmented` | The Plan's Meals and Extras switch, radios underneath | Tabs | done |
 | `SavedField` | A labelled text box saved on blur or Enter | Input and Label | done |
 | `BottomSheet` | A sheet from the bottom of the column | Sheet | keep, no gain: already wraps shadcn's Sheet |
 | `Counter` | − count +, each a 44px button | none | keep |
@@ -46,6 +46,6 @@ names (`--color-primary`, `--color-border` and the rest) map onto ours.
 | `hint` | Small muted text under a control | none | keep |
 | `listBox` | The bordered box holding a list's rows | none | keep |
 | `columnWidth` | The centred column, up to `--column-max` | none | keep |
-| Once / Weekly | The pill on a wanted line that toggles it | Badge | done |
+| Once / Weekly | The pill on an extras line that toggles it | Badge | done |
 | "close match" | The note on a suggestion a few typing slips away | Badge | done |
 | Shop tick box | A shop line's "in the trolley" box | Checkbox | done |

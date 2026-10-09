@@ -158,7 +158,7 @@ test("merging_combines_lines_that_become_duplicates_on_one_meal_or_day_by_adding
   ).toEqual([[semiSkimmed.id, 5]]);
 });
 
-test("merging_combines_duplicate_wanted_lines_and_keeps_the_targets_mark", async () => {
+test("merging_combines_duplicate_extras_lines_and_keeps_the_targets_mark", async () => {
   const milk = anItem("Milk");
   const semiSkimmed = anItem("Semi-skimmed");
   await seed(db, {

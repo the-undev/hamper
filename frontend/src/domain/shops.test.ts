@@ -74,7 +74,7 @@ async function shopLinesByItem(shopId: string) {
   return new Map(shopLines.map((line) => [line.itemId, line]));
 }
 
-test("generating_sums_counts_per_item_across_the_days_and_the_wanted_list", async () => {
+test("generating_sums_counts_per_item_across_the_days_and_the_extras_list", async () => {
   await seedPlan();
 
   const shop = await write(db, (w) => generateShop(w, "Big shop", now));
@@ -86,7 +86,7 @@ test("generating_sums_counts_per_item_across_the_days_and_the_wanted_list", asyn
   expect(linesByItem.get(milk.id)?.count).toBe(2);
 });
 
-test("generating_names_the_sources_in_position_order_with_wanted_last", async () => {
+test("generating_names_the_sources_in_position_order_with_extras_last", async () => {
   await seedPlan();
 
   const shop = await write(db, (w) => generateShop(w, "Big shop", now));
@@ -96,9 +96,9 @@ test("generating_names_the_sources_in_position_order_with_wanted_last", async ()
     "Curry",
     "Fajitas",
     "Roast",
-    "wanted",
+    "extras",
   ]);
-  expect(linesByItem.get(milk.id)?.sources).toEqual(["wanted"]);
+  expect(linesByItem.get(milk.id)?.sources).toEqual(["extras"]);
 });
 
 test("generating_ignores_days_at_or_beyond_the_length", async () => {
@@ -231,7 +231,7 @@ test("lines_can_be_ticked_and_removed", async () => {
   ]);
 });
 
-test("to_wanted_puts_the_lines_count_on_the_wanted_list_as_once_and_removes_the_line", async () => {
+test("to_extras_puts_the_lines_count_on_the_extras_list_as_once_and_removes_the_line", async () => {
   const shop = aShop("Corner shop");
   const line = aShopLine(shop, milk, 3);
   await seed(db, { items: [milk], shops: [shop], shopLines: [line] });
@@ -244,7 +244,7 @@ test("to_wanted_puts_the_lines_count_on_the_wanted_list_as_once_and_removes_the_
   expect(await live(db, "shopLines")).toEqual([]);
 });
 
-test("to_wanted_adds_the_lines_count_to_a_wanted_line_already_there", async () => {
+test("to_extras_adds_the_lines_count_to_an_extras_line_already_there", async () => {
   const shop = aShop("Corner shop");
   const line = aShopLine(shop, milk, 3);
   await seed(db, {
@@ -261,7 +261,7 @@ test("to_wanted_adds_the_lines_count_to_a_wanted_line_already_there", async () =
   ]);
 });
 
-test("to_wanted_brings_a_deleted_item_back", async () => {
+test("to_extras_brings_a_deleted_item_back", async () => {
   const shop = aShop("Corner shop");
   const deletedMilk = { ...milk, deletedAt: now };
   const deletedRice = { ...rice, deletedAt: now };
@@ -289,7 +289,7 @@ test("to_wanted_brings_a_deleted_item_back", async () => {
   );
 });
 
-test("rest_to_wanted_moves_every_unticked_line", async () => {
+test("rest_to_extras_moves_every_unticked_line", async () => {
   const shop = aShop("Corner shop");
   const tickedLine = { ...aShopLine(shop, rice, 1), ticked: true };
   await seed(db, {

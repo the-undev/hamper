@@ -6,13 +6,13 @@ import { Checkbox } from "./ui/checkbox";
 
 function renderRow() {
   const onRemove = vi.fn();
-  const onToWanted = vi.fn();
+  const onToExtras = vi.fn();
   const onOpen = vi.fn();
   render(
     <SwipeRow
       subject="Milk"
       actions={[
-        { label: "To wanted", tone: "accent", onAction: onToWanted },
+        { label: "To extras", tone: "accent", onAction: onToExtras },
         { label: "Remove", tone: "danger", onAction: onRemove },
       ]}
     >
@@ -21,17 +21,17 @@ function renderRow() {
       </button>
     </SwipeRow>,
   );
-  return { onRemove, onToWanted, onOpen };
+  return { onRemove, onToExtras, onOpen };
 }
 
 test("the_actions_are_buttons_named_for_the_row", async () => {
   const user = userEvent.setup();
-  const { onRemove, onToWanted } = renderRow();
+  const { onRemove, onToExtras } = renderRow();
 
-  await user.click(screen.getByRole("button", { name: "To wanted Milk" }));
+  await user.click(screen.getByRole("button", { name: "To extras Milk" }));
   await user.click(screen.getByRole("button", { name: "Remove Milk" }));
 
-  expect(onToWanted).toHaveBeenCalledTimes(1);
+  expect(onToExtras).toHaveBeenCalledTimes(1);
   expect(onRemove).toHaveBeenCalledTimes(1);
 });
 
@@ -43,7 +43,7 @@ test("a_keyboard_reaches_the_actions_and_focus_slides_the_row_open", async () =>
   await user.tab();
   await user.tab();
 
-  expect(screen.getByRole("button", { name: "To wanted Milk" })).toHaveFocus();
+  expect(screen.getByRole("button", { name: "To extras Milk" })).toHaveFocus();
   expect(front?.style.transform).toMatch(/translateX\(-/);
 });
 

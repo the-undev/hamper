@@ -13,8 +13,8 @@ import { lineName, lineSize } from "./display";
 import { requirePlan } from "./plan";
 import { addWanted } from "./wanted";
 
-/** The source a shop line names for counts that came from the wanted list. */
-export const wantedSource = "wanted";
+/** The source a shop line names for counts that came from the extras list. */
+export const extrasSource = "extras";
 
 /** A summed count for one item and the names of the days and list it came from. */
 interface ItemTotal {
@@ -22,7 +22,7 @@ interface ItemTotal {
   sources: string[];
 }
 
-/** Makes a shop from the plan: one line per item with the count summed across the days within the length and the wanted list. */
+/** Makes a shop from the plan: one line per item with the count summed across the days within the length and the extras list. */
 export async function generateShop(
   w: Writer,
   name: string,
@@ -46,7 +46,7 @@ export async function generateShop(
     }
   }
   for (const line of liveRows(await w.all("wantedLines"))) {
-    addToTotal(line.itemId, line.count, wantedSource);
+    addToTotal(line.itemId, line.count, extrasSource);
   }
 
   const plannedMeals: ShopMeal[] = plannedDays.map((day) => ({
@@ -176,7 +176,7 @@ export async function removeShopLine(
   await w.tombstone("shopLines", lineId, now);
 }
 
-/** Adds the line's count to its item on the wanted list, bringing a deleted item back, and takes the line off the shop. */
+/** Adds the line's count to its item on the extras list, bringing a deleted item back, and takes the line off the shop. */
 export async function lineToWanted(
   w: Writer,
   lineId: string,
@@ -191,7 +191,7 @@ export async function lineToWanted(
   await w.tombstone("shopLines", lineId, now);
 }
 
-/** Moves every unticked line of a shop to the wanted list. */
+/** Moves every unticked line of a shop to the extras list. */
 export async function restToWanted(
   w: Writer,
   shopId: string,

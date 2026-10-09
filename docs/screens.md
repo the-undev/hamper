@@ -7,9 +7,9 @@ data; open it in a browser, on a phone as well as a desktop.
 ## Plan
 
 Opens here. The header holds the start date, which opens the phone's date
-picker, and − N days +, on both views. Two tabs at the top,
-Meals and Items, switch between the two views, and a swipe does the same. The views slide,
-and during a swipe they follow the finger. The view last used is remembered.
+picker, and − N days +, on both views. Two tabs at the top, Meals and Extras,
+switch between the two views, and a swipe does the same. The views slide, and
+during a swipe they follow the finger. The view last used is remembered.
 
 **Meals.** A read-only line says when the plan starts and ends: "Starts Mon
 1 Jun, ends Sun 7 Jun", with dates in the browser's locale. Below it, one
@@ -40,9 +40,9 @@ library meal. Reset to the meal, or Save as
 a meal for an ad-hoc day. Then the type-ahead and the day's lines, each with +
 and − and a swipe to remove.
 
-**Items.** The type-ahead at the top, then the wanted list: each line with its
-usual size under the name, a Once / Weekly toggle, + and −, and a swipe to
-remove.
+**Extras.** Headed "Extras, beyond what the meals need". The type-ahead at
+the top, then the extras list: each line with its usual size under the name, a
+Once / Weekly toggle, + and −, and a swipe to remove.
 
 ## Shop
 
@@ -51,9 +51,9 @@ at the top to switch between them and a + to start another, then the chosen
 list.
 
 **Breakdown.** Reached by "Make from plan". Every day with its lines, then the
-wanted list, all editable with the same controls as the Day and Items screens,
-and every edit saved to the plan. "Generate the list" at the bottom, Cancel at
-the top. The list is named after the plan's start date, "Shop Mon 1 Jun"; an
+extras list, all editable with the same controls as the Day screen and the
+Extras view, and every edit saved to the plan. "Generate the list" at the
+bottom, Cancel at the top. The list is named after the plan's start date, "Shop Mon 1 Jun"; an
 empty one is "Quick shop" and today's date.
 
 **List.** A line of status (name, how many meals it came from, how many of
@@ -61,9 +61,9 @@ the lines are in the trolley: "Shop Mon 1 Jun, from 5 meals. 3 of 12 in the
 trolley."), the type-ahead to add a line, then the unticked lines and under
 them the ticked ones. Each line: a 44px tick box, the name, the size and
 sources in small text, and the count with − and +. Tapping the name opens the
-line editor: name, size, count, "To wanted", Remove, Done.
-Swiping left reveals To wanted and Remove. Under the list: Share, Download;
-Rest to wanted, Archive, Delete.
+line editor: name, size, count, "To extras", Remove, Done.
+Swiping left reveals To extras and Remove. Under the list: Share, Download;
+Rest to extras, Archive, Delete.
 
 Share opens the share sheet with the unticked lines as text; on a desktop it
 copies the text instead. Download saves the same as a text file. Archive
@@ -111,9 +111,9 @@ History needs the server, and says so while offline.
   on Done. Day, Meal and the item
   editor have a footer that stays above the tabs, holding Done, which goes
   back, and on a Day, Clear day.
-- Tapping a line's name on a meal, a day or the wanted list opens its item in
+- Tapping a line's name on a meal, a day or the extras list opens its item in
   a sheet: the name and usual size, each saved as it is edited; where it is used, "Used on
-  2 meals, 1 day, 1 list", with the wanted list counted as a list; Merge into
+  2 meals, 1 day, 1 list", with the extras list counted as a list; Merge into
   another item (a type-ahead over the rest); and Delete item, which asks
   first. When the typed name is another item's, ignoring case and spaces at
   the ends, the name is not saved, a line says an item with that name exists,

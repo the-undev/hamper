@@ -30,7 +30,7 @@ public sealed class ArchiveShopTests
             factory,
             new ShopSeed("Big shop", FromPlan: true, PlanStartDate: new DateOnly(2026, 6, 1), PlanLengthDays: 7, Meals: meals),
             [
-                new ShopLineSeed(milk, 2, Sources: ["Monday", "wanted"], Ticked: true),
+                new ShopLineSeed(milk, 2, Sources: ["Monday", "extras"], Ticked: true),
                 new ShopLineSeed(bread, 1, NameOverride: "Sourdough", SizeOverride: "small"),
                 new ShopLineSeed(eggs, 6),
             ],
@@ -62,7 +62,7 @@ public sealed class ArchiveShopTests
             line =>
             {
                 Assert.Equal(("Milk", "4 pints", 2, true), (line.Name, line.Size, line.Count, line.Ticked));
-                Assert.Equal(["Monday", "wanted"], line.Sources);
+                Assert.Equal(["Monday", "extras"], line.Sources);
             },
             line => Assert.Equal(("Sourdough", "small", 1, false), (line.Name, line.Size, line.Count, line.Ticked)));
 

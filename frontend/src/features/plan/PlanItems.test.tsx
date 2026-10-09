@@ -21,21 +21,21 @@ afterEach(async () => {
   await db.delete();
 });
 
-test("the_items_view_opens_when_it_was_the_last_one_used", async () => {
+test("the_extras_view_opens_when_it_was_the_last_one_used", async () => {
   renderApp("/plan", db, fakeLoop());
 
-  expect(await screen.findByRole("tab", { name: "Items" })).toHaveAttribute(
+  expect(await screen.findByRole("tab", { name: "Extras" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
   expect(
-    await screen.findByText("Nothing wanted beyond the meals"),
+    await screen.findByText("No extras beyond the meals"),
   ).toBeInTheDocument();
 });
 
-test("adding_from_the_items_view_puts_a_known_or_new_item_on_the_wanted_list", async () => {
+test("adding_from_the_extras_view_puts_a_known_or_new_item_on_the_extras_list", async () => {
   const { user } = renderApp("/plan", db, fakeLoop());
-  const typeAhead = await screen.findByLabelText("Add an item");
+  const typeAhead = await screen.findByLabelText("Add to extras");
 
   await user.type(typeAhead, "milk{Enter}");
   await user.type(typeAhead, "Loo roll{Enter}");
@@ -82,7 +82,7 @@ test("the_once_weekly_toggle_marks_the_line", async () => {
   );
 });
 
-test("a_wanted_line_counts_up_and_down_and_swipes_away", async () => {
+test("an_extras_line_counts_up_and_down_and_swipes_away", async () => {
   const milkLine = aWantedLine(milk, 2, true);
   await seed(db, { wantedLines: [milkLine] });
   const { user } = renderApp("/plan", db, fakeLoop());
@@ -96,7 +96,7 @@ test("a_wanted_line_counts_up_and_down_and_swipes_away", async () => {
   await user.click(screen.getByRole("button", { name: "Remove Milk" }));
 
   expect(
-    await screen.findByText("Nothing wanted beyond the meals"),
+    await screen.findByText("No extras beyond the meals"),
   ).toBeInTheDocument();
   expect(await live(db, "wantedLines")).toEqual([]);
 });

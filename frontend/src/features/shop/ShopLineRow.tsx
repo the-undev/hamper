@@ -8,7 +8,7 @@ import { nowIso } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { ShopLineView } from "./lineView";
 
-/** One line of a list: a tick box, the name with size and sources, and − count +; swiping reveals To wanted and Remove. */
+/** One line of a list: a tick box, the name with size and sources, and − count +; swiping reveals To extras and Remove. */
 export function ShopLineRow({
   view,
   onEdit,
@@ -26,7 +26,7 @@ export function ShopLineRow({
       subject={name}
       actions={[
         {
-          label: "To wanted",
+          label: "To extras",
           tone: "accent",
           onAction: () => void write((w) => lineToWanted(w, line.id, nowIso())),
         },

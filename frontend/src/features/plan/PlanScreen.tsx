@@ -20,7 +20,7 @@ const viewSetting = "planView";
 
 const views = [
   { value: "meals", label: "Meals" },
-  { value: "items", label: "Items" },
+  { value: "items", label: "Extras" },
 ] as const;
 
 function rememberedView(): PlanView {
@@ -40,7 +40,7 @@ function trackTransform(
   return view === "items" ? "translateX(-50%)" : undefined;
 }
 
-/** The plan, its days and its wanted items side by side on a track that slides between them by the tabs or a swipe; the last view is remembered. */
+/** The plan, its days and its extras side by side on a track that slides between them by the tabs or a swipe; the last view is remembered. */
 export function PlanScreen() {
   const plan = usePlan();
   const [view, setView] = useState<PlanView>(rememberedView);

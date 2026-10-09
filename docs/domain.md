@@ -14,7 +14,7 @@ A thing you buy. A name, an optional usual size as free text ("1kg bag",
   open shops still pointing at it. Archived shops hold text and do not change.
 - Merging an item into another repoints every reference at the target and
   removes the source. Lines that would then be duplicates on one meal, one day
-  or the wanted list are combined by adding their counts. Lines on open shops
+  or the extras list are combined by adding their counts. Lines on open shops
   are repointed and not combined.
 - Deleting an item removes its lines from meals and the plan. Archived shops
   keep their text.
@@ -23,7 +23,7 @@ A thing you buy. A name, an optional usual size as free text ("1kg bag",
 
 An item and a count. A count is a whole number, at least 1, and one means one
 meal's worth. There are no units; size belongs to the item. Lines live on
-meals, on days of the plan, and on the wanted list. + and − change the stored
+meals, on days of the plan, and on the extras list. + and − change the stored
 count by one inside one write, so a fast double tap never loses one.
 
 ## Meal
@@ -49,8 +49,9 @@ over from week to week and nothing changes it except a person.
   beyond the length is kept but hidden, and shows again when the length grows.
 - The first plan starts today with seven days.
 - One day holds at most one planned meal. A day can be empty.
-- A wanted list: lines for things beyond what the days need, milk, loo roll,
-  a cereal someone fancies. Each wanted line is marked Once or Weekly.
+- An extras list: lines for things beyond what the days need, milk, loo roll,
+  a cereal someone fancies. Each extras line is marked Once or Weekly. The
+  extras list is `wantedLines` in the code and on the wire.
 - "Start new plan" moves the start date on by the length and removes the
   Once lines. Days and Weekly lines stay as they are. It asks for a confirm.
 - "Copy meals from a past week" fills the days from an archived shop's meals,
@@ -89,11 +90,11 @@ A shopping list. Any number can be open at once.
 
 - Made from the plan, or started empty for a quick trip.
 - Making one from the plan goes through the breakdown: every day's lines and
-  the wanted list, editable, with every change saved to the plan. Generate
+  the extras list, editable, with every change saved to the plan. Generate
   then produces the shop.
 - Generating sums counts per item across the days within the length and the
-  wanted list. A shop line is one item: a link to the item, the summed count,
-  the names of the days in day order and then "wanted" it came from, and a
+  extras list. A shop line is one item: a link to the item, the summed count,
+  the names of the days in day order and then "extras" it came from, and a
   ticked flag.
 - A shop line's name, size and count are edited on the shop only. The plan
   and the item do not change.
@@ -103,10 +104,10 @@ A shopping list. Any number can be open at once.
   last had.
 - Lines can be added by typing, removed, and ticked. Ticked lines sink to the
   bottom.
-- "To wanted" on a line puts its item on the plan's wanted list as Once with
-  the line's count, adding the count to a wanted line already there (which
+- "To extras" on a line puts its item on the plan's extras list as Once with
+  the line's count, adding the count to an extras line already there (which
   keeps its Once or Weekly mark), and removes the line from the shop. "Rest
-  to wanted" does that for every unticked line. An item deleted since the
+  to extras" does that for every unticked line. An item deleted since the
   shop was made comes back.
 - Archive moves the shop to history. Delete discards it. Neither touches the
   plan.

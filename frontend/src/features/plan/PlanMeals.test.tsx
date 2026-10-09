@@ -149,7 +149,7 @@ test("the_plan_waits_for_the_server_until_the_first_pull_brings_it", async () =>
 test("the_view_is_remembered", async () => {
   const { user } = renderApp("/plan", db, fakeLoop());
 
-  await user.click(await screen.findByRole("tab", { name: "Items" }));
+  await user.click(await screen.findByRole("tab", { name: "Extras" }));
 
   expect(window.localStorage.getItem("hamper.planView")).toBe("items");
 });

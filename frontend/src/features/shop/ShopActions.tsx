@@ -20,7 +20,7 @@ const shareResults = {
   unavailable: "Sharing needs the HTTPS address",
 } as const;
 
-/** Share and Download; Rest to wanted, Archive and Delete, the last two after a confirm. */
+/** Share and Download; Rest to extras, Archive and Delete, the last two after a confirm. */
 export function ShopActions({
   shop,
   lines,
@@ -103,7 +103,7 @@ export function ShopActions({
           disabled={!anyUnticked}
           onClick={() => void write((w) => restToWanted(w, shop.id, nowIso()))}
         >
-          Rest to wanted
+          Rest to extras
         </Button>
         <Button
           type="button"

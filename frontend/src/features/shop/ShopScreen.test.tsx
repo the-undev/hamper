@@ -115,17 +115,17 @@ test("the_count_is_changed_on_the_row", async () => {
   expect(await db.items.get(rice.id)).toEqual(rice);
 });
 
-test("out_of_stock_in_the_editor_and_to_wanted_on_the_swipe_move_lines_to_wanted", async () => {
+test("out_of_stock_in_the_editor_and_to_extras_on_the_swipe_move_lines_to_extras", async () => {
   await seed(db, { wantedLines: [aWantedLine(rice, 1, true)] });
   const { user } = renderApp(`/shop/${shop.id}`, db, fakeLoop());
 
   await user.click(
-    await screen.findByRole("button", { name: "To wanted Rice" }),
+    await screen.findByRole("button", { name: "To extras Rice" }),
   );
   await user.click(screen.getByRole("button", { name: /^Milk/ }));
   await user.click(
     within(await screen.findByRole("dialog")).getByRole("button", {
-      name: "To wanted",
+      name: "To extras",
     }),
   );
 
@@ -149,18 +149,18 @@ test("out_of_stock_in_the_editor_and_to_wanted_on_the_swipe_move_lines_to_wanted
   );
 });
 
-test("rest_to_wanted_moves_every_unticked_line", async () => {
+test("rest_to_extras_moves_every_unticked_line", async () => {
   await seed(db, { shopLines: [{ ...milkLine, ticked: true }] });
   const { user } = renderApp(`/shop/${shop.id}`, db, fakeLoop());
 
   await user.click(
-    await screen.findByRole("button", { name: "Rest to wanted" }),
+    await screen.findByRole("button", { name: "Rest to extras" }),
   );
 
   expect(
     await screen.findByText("Everything is in the trolley"),
   ).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Rest to wanted" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Rest to extras" })).toBeDisabled();
   expect(
     (await live(db, "wantedLines")).map((line) => line.itemId).sort(),
   ).toEqual([rice.id, bread.id].sort());

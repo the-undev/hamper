@@ -35,7 +35,7 @@ test("the column stays put whether or not the view scrolls", async ({
 
   await planView(page, "Meals");
   const onMeals = await column();
-  await planView(page, "Items");
+  await planView(page, "Extras");
   const onItems = await column();
 
   expect(onItems).toEqual(onMeals);
@@ -141,9 +141,9 @@ test.describe("a placeholder is fainter than typed text", () => {
     }) => {
       await page.emulateMedia({ colorScheme });
       await openApp(page, "/plan");
-      await planView(page, "Items");
+      await planView(page, "Extras");
       const colours = await page
-        .getByRole("combobox", { name: "Add an item" })
+        .getByRole("combobox", { name: "Add to extras" })
         .evaluate((input) => {
           const pixel = document.createElement("canvas").getContext("2d", {
             willReadFrequently: true,

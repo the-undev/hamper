@@ -301,7 +301,7 @@ export async function clearDay(
   await w.tombstone("days", day.id, now);
 }
 
-/** Moves the start date on by the length and removes the Once wanted lines; days and Weekly lines stay. */
+/** Moves the start date on by the length and removes the Once extras lines; days and Weekly lines stay. */
 export async function startNewPlan(w: Writer, now: string): Promise<void> {
   const plan = await requirePlan(w);
   await w.put("plan", { ...plan, startDate: dayDate(plan, plan.lengthDays) });

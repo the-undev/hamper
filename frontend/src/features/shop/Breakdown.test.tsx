@@ -60,7 +60,7 @@ test("make_from_plan_goes_through_the_breakdown_and_generate_sums_the_lines", as
 
   expect(
     await screen.findByRole("button", {
-      name: /^Rice\s*1kg bag · Curry, Fajitas, wanted$/,
+      name: /^Rice\s*1kg bag · Curry, Fajitas, extras$/,
     }),
   ).toBeInTheDocument();
   const [shop] = await live(db, "shops");
@@ -99,9 +99,9 @@ test("an_edit_in_the_breakdown_is_saved_to_the_plan", async () => {
     ),
     "milk{Enter}",
   );
-  const wantedSection = screen.getByRole("region", { name: "Wanted" });
+  const extrasSection = screen.getByRole("region", { name: "Extras" });
   await user.click(
-    within(wantedSection).getByRole("button", { name: "Remove Milk" }),
+    within(extrasSection).getByRole("button", { name: "Remove Milk" }),
   );
 
   await waitFor(async () =>

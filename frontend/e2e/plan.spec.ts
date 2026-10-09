@@ -254,7 +254,7 @@ test("the Clear action opens by keyboard focus on a desktop", async ({
   ).toBeVisible();
 });
 
-test("the views slide and the wanted list is edited on Items", async ({
+test("the views slide and the extras list is edited on Extras", async ({
   page,
 }) => {
   const item = uniqueName("Coffee");
@@ -265,15 +265,15 @@ test("the views slide and the wanted list is edited on Items", async ({
   if (test.info().project.use.hasTouch) {
     await swipeLeft(page, page.getByText(/^Starts /));
   } else {
-    await planView(page, "Items");
+    await planView(page, "Extras");
   }
   await expect(track).toHaveAttribute("style", /translateX\(-50%\)/);
-  await expect(page.getByRole("tab", { name: "Items" })).toHaveAttribute(
+  await expect(page.getByRole("tab", { name: "Extras" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
 
-  await addLine(page, "Add an item", item);
+  await addLine(page, "Add to extras", item);
   const row = line(page, item);
   await row.getByRole("button", { name: `One more ${item}` }).click();
   await expectCount(row, 2);
@@ -290,18 +290,18 @@ test("the views slide and the wanted list is edited on Items", async ({
   await expect(track).not.toHaveAttribute("style", /translateX/);
 });
 
-test("the suggestions float over the wanted list without moving it", async ({
+test("the suggestions float over the extras list without moving it", async ({
   page,
 }) => {
   const first = uniqueName("Olive");
   const second = uniqueName("Olive");
   await openApp(page, "/plan");
-  await planView(page, "Items");
-  await addLine(page, "Add an item", first);
-  await addLine(page, "Add an item", second);
-  const input = page.getByRole("combobox", { name: "Add an item" });
-  const wantedList = page.locator('[data-plan-view="items"]').getByRole("list");
-  const firstRow = wantedList.getByRole("listitem").first();
+  await planView(page, "Extras");
+  await addLine(page, "Add to extras", first);
+  await addLine(page, "Add to extras", second);
+  const input = page.getByRole("combobox", { name: "Add to extras" });
+  const extrasList = page.locator('[data-plan-view="items"]').getByRole("list");
+  const firstRow = extrasList.getByRole("listitem").first();
 
   await input.focus();
   const before = await centre(firstRow);
@@ -311,7 +311,7 @@ test("the suggestions float over the wanted list without moving it", async ({
 
   expect(await centre(firstRow)).toEqual(before);
   const suggestionsBox = await suggestions.boundingBox();
-  const listBox = await wantedList.boundingBox();
+  const listBox = await extrasList.boundingBox();
   if (!suggestionsBox || !listBox) {
     throw new Error("The suggestions or the list has no box");
   }
@@ -338,10 +338,10 @@ test("Enter adds what was typed beside a longer name it is a prefix of", async (
   const longer = uniqueName("Banana");
   const typed = longer.slice(0, -1);
   await openApp(page, "/plan");
-  await planView(page, "Items");
-  await addLine(page, "Add an item", longer);
+  await planView(page, "Extras");
+  await addLine(page, "Add to extras", longer);
 
-  await page.getByRole("combobox", { name: "Add an item" }).fill(typed);
+  await page.getByRole("combobox", { name: "Add to extras" }).fill(typed);
   await page.keyboard.press("Enter");
 
   await expect(line(page, typed)).toBeVisible();
@@ -361,7 +361,7 @@ test("the header keeps its height when the view switches", async ({ page }) => {
   const header = page.getByRole("banner");
   const mealsBox = await header.boundingBox();
 
-  await planView(page, "Items");
+  await planView(page, "Extras");
   await expect(header.getByLabel("Start date")).toBeVisible();
   const itemsBox = await header.boundingBox();
 
@@ -375,9 +375,9 @@ test("Start new plan moves the start and clears Once lines, after a confirm", as
   const once = uniqueName("Bread");
   const weekly = uniqueName("Milk");
   await openApp(page, "/plan");
-  await planView(page, "Items");
-  await addLine(page, "Add an item", once);
-  await addLine(page, "Add an item", weekly);
+  await planView(page, "Extras");
+  await addLine(page, "Add to extras", once);
+  await addLine(page, "Add to extras", weekly);
   await line(page, weekly)
     .getByRole("button", { name: `${weekly}: Once` })
     .click();
@@ -413,7 +413,7 @@ test("Start new plan moves the start and clears Once lines, after a confirm", as
   expected.setUTCDate(expected.getUTCDate() + lengthDays);
   await expect(startDate).toHaveValue(expected.toISOString().slice(0, 10));
 
-  await planView(page, "Items");
+  await planView(page, "Extras");
   await expect(line(page, once)).toHaveCount(0);
   await expect(line(page, weekly)).toBeVisible();
   await swipeLeft(page, line(page, weekly).getByText(weekly, { exact: true }));

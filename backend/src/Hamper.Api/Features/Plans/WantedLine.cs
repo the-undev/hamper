@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Hamper.Api.Features.Plans;
 
-/// <summary>An item and a count on the plan's wanted list, kept by "Start new plan" when weekly.</summary>
+/// <summary>An item and a count on the plan's extras list, kept by "Start new plan" when weekly.</summary>
 public sealed class WantedLine : ISynced
 {
     public Guid Id { get; init; }

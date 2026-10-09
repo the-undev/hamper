@@ -16,20 +16,20 @@ What hamper has to do, by flow. Each flow names the screens in
 - Fill the days from a past week in history.
 - Start a new plan: the date moves on, Once items clear, everything else stays.
 
-## Add something wanted
+## Add an extra
 
 - From anywhere, at any time, on any device: type a name, pick the match or
-  create it, and it is on the wanted list with a count of 1.
+  create it, and it is on the extras list with a count of 1.
 - Mark it Once or Weekly. Change the count with + and −. Swipe to remove.
 - See it on every other device within seconds.
 
 ## Make the list
 
-- Open the breakdown: every day's items and the wanted list, editable, saved
+- Open the breakdown: every day's items and the extras list, editable, saved
   to the plan as edited.
 - Generate: one line per item, counts summed, each line saying which days and
-  whether wanted brought it in. "Potatoes ×3, 1kg bag, Roast, Shepherd's pie,
-  Fish and chips" is how two meals needing potatoes shows.
+  whether the extras list brought it in. "Potatoes ×3, 1kg bag, Roast,
+  Shepherd's pie, Fish and chips" is how two meals needing potatoes shows.
 - Edit the list against the kitchen: change a line's count, size or name,
   remove it, add to it. The plan is untouched.
 
@@ -37,8 +37,8 @@ What hamper has to do, by flow. Each flow names the screens in
 
 - Open the list with no signal. Tick lines as they go in the trolley, or into
   the online order; ticked lines drop to the bottom.
-- Put a line back on wanted when it is out of stock, or every unticked line at
-  once when the trip is over.
+- Put a line back on the extras list when it is out of stock, or every
+  unticked line at once when the trip is over.
 - Share the unticked lines to a messaging app from the phone's share sheet.
   Download them as a text file.
 - Archive the list when done, or delete it.
