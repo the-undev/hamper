@@ -34,6 +34,8 @@ export interface SyncApi {
 export interface RevisionEvents {
   /** Listens for `open`, `error` and `revision` events. */
   addEventListener(type: string, listener: (event: MessageEvent) => void): void;
+  /** 0 while connecting, 1 when open, 2 when closed for good. */
+  readonly readyState: number;
   /** Closes the stream. */
   close(): void;
 }

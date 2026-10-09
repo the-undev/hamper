@@ -8,6 +8,8 @@ export class FakeEventSource implements RevisionEvents {
 
   readonly url: string;
   closed = false;
+  /** 0 until `open()`, 1 after it, 2 after `fail(true)` or `close()`; a test may set it. */
+  readyState = 0;
   private readonly listeners = new Map<string, Set<Listener>>();
 
   constructor(url: string) {
@@ -30,6 +32,7 @@ export class FakeEventSource implements RevisionEvents {
 
   close(): void {
     this.closed = true;
+    this.readyState = 2;
   }
 
   /** Delivers a named event whose data is the JSON of the value. */
@@ -42,11 +45,13 @@ export class FakeEventSource implements RevisionEvents {
 
   /** Delivers `open`, as on connect and reconnect. */
   open(): void {
+    this.readyState = 1;
     this.emit("open", null);
   }
 
-  /** Delivers `error`, as when the connection drops. */
-  fail(): void {
+  /** Delivers `error`; the browser retries unless `final`, which leaves the stream closed as Firefox does offline. */
+  fail(final = false): void {
+    this.readyState = final ? 2 : 0;
     this.emit("error", null);
   }
 

@@ -263,7 +263,10 @@ moves the cursor. A pull follows every push, a refused one included.
 
 The loop syncs when the event stream opens or reopens, on a `revision` event
 above the cursor, when the browser comes online, when the app comes back
-into focus or view, and 300 ms after a local write while online.
+into focus or view, and 300 ms after a local write while online. Firefox
+leaves an event stream closed when it fails offline, so on the online, focus
+and visibility triggers, and after a closing error while online, the loop
+replaces a closed stream with a new one; a connecting or open stream is kept.
 
 Offline is `navigator.onLine` false, or the last push, pull or event stream
 failing to reach the server. The loop's status holds that, the size of the

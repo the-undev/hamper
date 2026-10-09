@@ -393,3 +393,50 @@ test("stop_closes_the_event_stream", () => {
 
   expect(events().closed).toBe(true);
 });
+
+test("a_closed_stream_is_reopened_when_the_browser_comes_online", async () => {
+  loop.start();
+  const first = events();
+  first.readyState = 2;
+
+  window.dispatchEvent(new Event("online"));
+  await settle();
+
+  expect(FakeEventSource.instances).toHaveLength(2);
+  expect(first.closed).toBe(true);
+});
+
+test("an_open_stream_is_left_alone_on_focus", async () => {
+  loop.start();
+  events().open();
+
+  window.dispatchEvent(new Event("focus"));
+  await settle();
+
+  expect(FakeEventSource.instances).toHaveLength(1);
+  expect(events().closed).toBe(false);
+});
+
+test("a_stream_closed_by_a_final_error_is_reopened_on_the_next_trigger", async () => {
+  let browserOnline = false;
+  loop.stop();
+  loop = createSyncLoop({
+    db,
+    api,
+    events: () => new FakeEventSource("/sync/events"),
+    now: () => syncedAt,
+    online: () => browserOnline,
+  });
+  loop.start();
+  const first = events();
+  first.fail(true);
+  await settle();
+  expect(FakeEventSource.instances).toHaveLength(1);
+
+  browserOnline = true;
+  window.dispatchEvent(new Event("online"));
+  await settle();
+
+  expect(FakeEventSource.instances).toHaveLength(2);
+  expect(first.closed).toBe(true);
+});

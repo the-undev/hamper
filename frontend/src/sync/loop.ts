@@ -227,23 +227,45 @@ export function createSyncLoop({
     if (stopListening) {
       return;
     }
-    const source = events();
-    source.addEventListener("open", () => void syncNow());
-    source.addEventListener("error", () => setReachable(false));
-    source.addEventListener("revision", (event) => {
-      const revision = Number(event.data);
-      void readCursor(db).then((cursor) => {
-        if (revision > cursor) {
-          void syncNow();
+    let source = events();
+    const closedStreamState = 2;
+    const listen = (stream: RevisionEvents): void => {
+      stream.addEventListener("open", () => void syncNow());
+      stream.addEventListener("error", () => {
+        setReachable(false);
+        // Offline, a new stream would fail at once; the `online` event reopens it instead.
+        if (online()) {
+          reopenIfClosed();
         }
       });
-    });
+      stream.addEventListener("revision", (event) => {
+        const revision = Number(event.data);
+        void readCursor(db).then((cursor) => {
+          if (revision > cursor) {
+            void syncNow();
+          }
+        });
+      });
+    };
+    /** Firefox leaves a stream closed after a failure while offline; Chromium retries by itself. */
+    const reopenIfClosed = (): void => {
+      if (source.readyState !== closedStreamState) {
+        return;
+      }
+      source.close();
+      source = events();
+      listen(source);
+    };
+    listen(source);
 
-    const syncOnWake = (): void => void syncNow();
+    const syncOnWake = (): void => {
+      reopenIfClosed();
+      void syncNow();
+    };
     const refreshOnline = (): void => update({ online: online() && reachable });
     const syncWhenVisible = (): void => {
       if (document.visibilityState === "visible") {
-        void syncNow();
+        syncOnWake();
       }
     };
     window.addEventListener("online", syncOnWake);
