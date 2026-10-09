@@ -57,6 +57,7 @@ test("a_name_two_edits_away_is_offered", async () => {
 
   await user.type(input, "panama");
   expect(rowNames()).toEqual(["Banana close match", "Add “panama”"]);
+  expect(screen.getByText("close match")).toHaveAttribute("data-slot", "badge");
 
   await user.clear(input);
   await user.type(input, "pajama");

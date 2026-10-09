@@ -1,10 +1,10 @@
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
+import { Badge } from "@/components/ui/badge";
 import { addToWanted } from "@/domain/adds";
 import { removeWanted, setWantedCount, setWantedWeekly } from "@/domain/wanted";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
-import { cn } from "@/lib/utils";
 import { liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
 import type { Item } from "@/store/types";
@@ -50,16 +50,9 @@ export function WantedLines({
               }
               className="min-h-11 flex-none px-1 text-[11px] font-semibold"
             >
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5",
-                  line.weekly
-                    ? "bg-warn-soft text-warn"
-                    : "bg-soft text-accent",
-                )}
-              >
+              <Badge variant={line.weekly ? "warn" : "secondary"}>
                 {line.weekly ? "Weekly" : "Once"}
-              </span>
+              </Badge>
             </button>
           )}
         />

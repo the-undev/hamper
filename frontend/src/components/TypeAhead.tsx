@@ -10,6 +10,7 @@ import {
 import { isCloseMatch } from "@/lib/distance";
 import { cn } from "@/lib/utils";
 import { textInput } from "./styles";
+import { Badge } from "./ui/badge";
 import { Command, CommandGroup, CommandItem, CommandList } from "./ui/command";
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
 
@@ -76,9 +77,20 @@ type Row<O> =
   | { kind: "pick"; option: O; close: boolean }
   | { kind: "create"; name: string };
 
-/** The small text beside a match: the option's own detail, else "close match" for a name a few edits away. */
-function pickDetail(option: TypeAheadOption, close: boolean): string | null {
-  return option.detail ?? (close ? "close match" : null);
+/** The note beside a match: the option's own detail, else a "close match" badge for a name a few edits away. */
+function PickDetail({
+  option,
+  close,
+}: {
+  option: TypeAheadOption;
+  close: boolean;
+}) {
+  if (option.detail) {
+    return (
+      <small className="truncate text-xs text-muted">{option.detail}</small>
+    );
+  }
+  return close ? <Badge variant="outline">close match</Badge> : null;
 }
 
 /** Whether an option's name is the typed name, ignoring case and surrounding spaces. */
@@ -342,11 +354,7 @@ export function TypeAhead<O extends TypeAheadOption>({
                   ) : (
                     <>
                       <span className="truncate">{row.option.name}</span>{" "}
-                      {pickDetail(row.option, row.close) && (
-                        <small className="truncate text-xs text-muted">
-                          {pickDetail(row.option, row.close)}
-                        </small>
-                      )}
+                      <PickDetail option={row.option} close={row.close} />
                     </>
                   )}
                 </CommandItem>
