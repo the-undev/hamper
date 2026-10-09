@@ -156,14 +156,16 @@ export async function editShopLine(
   });
 }
 
-/** Ticks a shop line, or unticks it when ticked is false. */
+/** Ticks a shop line, or unticks it when ticked is false, and says whether every line of its shop is now ticked. */
 export async function tickShopLine(
   w: Writer,
   lineId: string,
   ticked: boolean,
-): Promise<void> {
+): Promise<boolean> {
   const line = await requireLive(w, "shopLines", lineId);
   await w.put("shopLines", { ...line, ticked });
+  const shopLines = await liveWhere(w, "shopLines", "shopId", line.shopId);
+  return shopLines.every((shopLine) => shopLine.ticked);
 }
 
 /** Takes a line off a shop. */

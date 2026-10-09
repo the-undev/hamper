@@ -35,11 +35,6 @@ that day, and it reads as a change to the meal.
 The plan blurs day and meal. A day with any number of meals would also cover
 breakfast and lunch.
 
-### Shopping lists accumulate
-
-The Shop tab lets more lists be started, and each adds to the row at the top.
-Nothing nudges towards archiving or deleting.
-
 ## Parked
 
 ### Swap an item on a line

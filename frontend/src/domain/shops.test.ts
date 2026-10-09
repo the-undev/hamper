@@ -211,6 +211,26 @@ test("a_shop_lines_name_size_and_count_are_edited_on_the_shop_only", async () =>
   expect(await db.items.get(milk.id)).toEqual(milk);
 });
 
+test("a_tick_says_whether_every_line_of_its_shop_is_ticked", async () => {
+  const shop = aShop("Corner shop");
+  const otherShop = aShop("Market");
+  const milkLine = aShopLine(shop, milk, 1);
+  const riceLine = aShopLine(shop, rice, 1);
+  await seed(db, {
+    items: [milk, rice],
+    shops: [shop, otherShop],
+    shopLines: [milkLine, riceLine, aShopLine(otherShop, milk, 1)],
+  });
+
+  expect(await write(db, (w) => tickShopLine(w, milkLine.id, true))).toBe(
+    false,
+  );
+  expect(await write(db, (w) => tickShopLine(w, riceLine.id, true))).toBe(true);
+  expect(await write(db, (w) => tickShopLine(w, riceLine.id, false))).toBe(
+    false,
+  );
+});
+
 test("lines_can_be_ticked_and_removed", async () => {
   const shop = aShop("Corner shop");
   const milkLine = aShopLine(shop, milk, 1);

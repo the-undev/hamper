@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -7,14 +7,13 @@ import { hint, listBox, sectionLabel } from "@/components/styles";
 import { addToShop } from "@/domain/adds";
 import { useItemsById } from "@/hooks/data";
 import { nowIso } from "@/lib/dates";
-import { writeSetting } from "@/lib/settings";
 import type { Shop } from "@/store/types";
-import { lastShopSetting, useShop } from "./data";
+import { useTickLine } from "./archive";
+import { useShop } from "./data";
 import { LineEditor } from "./LineEditor";
 import { type ShopLineView, shopLineViews } from "./lineView";
 import { ShopActions } from "./ShopActions";
 import { ShopLineRow } from "./ShopLineRow";
-import { ShopSwitcher } from "./ShopSwitcher";
 
 /** The list's status: its name, how many meals it came from, and how many lines are in the trolley. */
 export function shopStatus(
@@ -28,22 +27,21 @@ export function shopStatus(
   return `${origin} ${tickedCount} of ${lineCount} in the trolley.`;
 }
 
-/** One open list: the switcher, the status, the type-ahead, the lines to get and those in the trolley, and the list's actions. */
+const back = { to: "/shop", label: "Lists" } as const;
+
+/** One open list: the back link to the lists, the status, the type-ahead, the lines to get and those in the trolley, and the list's actions. */
 export function ShopScreen({ shopId }: { shopId: string }) {
   const shopState = useShop(shopId);
   const itemsById = useItemsById();
   const [editedLineId, setEditedLineId] = useState<string | null>(null);
   const toGetId = useId();
   const trolleyId = useId();
-
-  useEffect(() => {
-    writeSetting(lastShopSetting, shopId);
-  }, [shopId]);
+  const tickLine = useTickLine();
 
   if (shopState === null) {
     return (
       <>
-        <ScreenHeader title="Shop" />
+        <ScreenHeader title="Shop" back={back} />
         <EmptyState>
           This list is closed.{" "}
           <Link to="/shop" className="font-semibold text-accent">
@@ -54,7 +52,7 @@ export function ShopScreen({ shopId }: { shopId: string }) {
     );
   }
   if (!shopState || !itemsById) {
-    return <ScreenHeader title="Shop" />;
+    return <ScreenHeader title="Shop" back={back} />;
   }
 
   const { shop, lines } = shopState;
@@ -73,6 +71,7 @@ export function ShopScreen({ shopId }: { shopId: string }) {
           <ShopLineRow
             view={view}
             onEdit={() => setEditedLineId(view.line.id)}
+            onTick={() => void tickLine(view.line, !view.line.ticked)}
           />
         </li>
       ))}
@@ -81,8 +80,7 @@ export function ShopScreen({ shopId }: { shopId: string }) {
 
   return (
     <>
-      <ScreenHeader title="Shop" />
-      <ShopSwitcher currentShopId={shop.id} />
+      <ScreenHeader title="Shop" back={back} />
       <p className={hint}>{shopStatus(shop, inTrolley.length, views.length)}</p>
       <ItemTypeAhead
         label="Add to this list"

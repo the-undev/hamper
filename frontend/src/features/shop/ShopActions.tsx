@@ -1,7 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { archiveShop, historyKey, RestError } from "@/api/rest";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { showToast } from "@/components/Toast";
 import { Button } from "@/components/ui/button";
@@ -12,6 +10,7 @@ import { useSecureContext } from "@/pwa/secure";
 import { useSyncLoop } from "@/store/provider";
 import type { Item, Shop, ShopLine } from "@/store/types";
 import { useSyncStatus } from "@/sync/loop";
+import { useArchiveShop } from "./archive";
 import { downloadText, shareText } from "./share";
 
 const shareResults = {
@@ -34,7 +33,7 @@ export function ShopActions({
   const navigate = useNavigate();
   const loop = useSyncLoop();
   const { online } = useSyncStatus(loop);
-  const queryClient = useQueryClient();
+  const archive = useArchiveShop();
   const secure = useSecureContext();
   const [confirming, setConfirming] = useState<"archive" | "delete" | null>(
     null,
@@ -46,22 +45,6 @@ export function ShopActions({
     const message = shareResults[await shareText(shop.name, text)];
     if (message) {
       showToast(message);
-    }
-  };
-
-  const archive = async (): Promise<void> => {
-    try {
-      // The server can only archive a shop it has; the push sends one made offline.
-      await loop.syncNow();
-      await archiveShop(shop.id);
-      await loop.syncNow();
-      await queryClient.invalidateQueries({ queryKey: historyKey });
-      await navigate({ to: "/shop" });
-    } catch (error) {
-      if (!(error instanceof RestError)) {
-        throw error;
-      }
-      showToast(error.title);
     }
   };
 
@@ -136,7 +119,7 @@ export function ShopActions({
         title={`Archive ${shop.name}?`}
         description="The list moves to history as it stands. The plan does not change."
         confirmLabel="Archive"
-        onConfirm={() => void archive()}
+        onConfirm={() => void archive(shop.id)}
       />
       <ConfirmDialog
         open={confirming === "delete"}

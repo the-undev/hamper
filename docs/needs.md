@@ -41,7 +41,8 @@ What hamper has to do, by flow. Each flow names the screens in
   unticked line at once when the trip is over.
 - Share the unticked lines to a messaging app from the phone's share sheet.
   Download them as a text file.
-- Archive the list when done, or delete it.
+- Archive the list when done, or delete it. Ticking the last line offers to
+  archive it.
 
 ## Mid-week trip
 

@@ -179,51 +179,63 @@ test("a_line_is_added_by_typing", async () => {
   ).toBeInTheDocument();
 });
 
-test("start_empty_makes_a_second_list_switchable_in_the_row", async () => {
-  const { user, router } = renderApp(`/shop/${shop.id}`, db, fakeLoop());
-
-  await user.click(
-    await screen.findByRole("button", { name: "Start another list" }),
-  );
-  await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
-      name: "Start empty",
-    }),
-  );
-
-  expect(
-    await screen.findByText("Nothing on this list yet"),
-  ).toBeInTheDocument();
-  const lists = screen.getByRole("navigation", { name: "Lists" });
-  await waitFor(() =>
-    expect(within(lists).getAllByRole("link")).toHaveLength(2),
-  );
-  const links = within(lists).getAllByRole("link");
-  expect(links[1]).toHaveAttribute("aria-current", "page");
-  expect(links[1]).toHaveTextContent(/^Quick shop .*0 to get$/);
-
-  await user.click(within(lists).getByRole("link", { name: /^Corner shop/ }));
-
-  expect(
-    await screen.findByRole("checkbox", { name: "Milk in the trolley" }),
-  ).toBeInTheDocument();
-  expect(router.state.location.pathname).toBe(`/shop/${shop.id}`);
-});
-
-test("the_shop_tab_opens_the_list_used_last", async () => {
-  const otherShop = {
+test("the_shop_tab_shows_a_card_per_open_list_newest_first_with_its_progress", async () => {
+  const market = {
     ...aShop("Market"),
     createdAt: "2026-06-02T09:00:00.000Z",
   };
-  await seed(db, { shops: [otherShop] });
+  const closed = { ...aShop("Closed"), deletedAt: "2026-06-02T10:00:00.000Z" };
+  await seed(db, {
+    shops: [market, closed],
+    shopLines: [{ ...milkLine, ticked: true }],
+  });
+  const { user, router } = renderApp("/shop", db, fakeLoop());
+
+  const cards = within(
+    await screen.findByRole("list", { name: "Open lists" }),
+  ).getAllByRole("link");
+  expect(cards.map((card) => card.textContent)).toEqual([
+    "Market0 of 0 gotMade Tue 2 Jun",
+    "Corner shop1 of 3 gotMade Mon 1 Jun",
+  ]);
+  expect(
+    screen.getByRole("button", { name: "Make from plan" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Start empty" }),
+  ).toBeInTheDocument();
+
+  await user.click(screen.getByRole("link", { name: /^Corner shop/ }));
+
+  expect(
+    await screen.findByRole("checkbox", { name: "Milk in the trolley" }),
+  ).toBeChecked();
+  expect(router.state.location.pathname).toBe(`/shop/${shop.id}`);
+});
+
+test("the_back_link_on_a_list_returns_to_the_open_lists", async () => {
   const { user, router } = renderApp(`/shop/${shop.id}`, db, fakeLoop());
-  await screen.findByRole("checkbox", { name: "Milk in the trolley" });
 
-  await user.click(screen.getByRole("link", { name: "More" }));
-  await screen.findByRole("heading", { name: "More" });
-  await user.click(screen.getByRole("link", { name: "Shop" }));
+  await user.click(await screen.findByRole("link", { name: "‹ Lists" }));
 
-  await waitFor(() =>
-    expect(router.state.location.pathname).toBe(`/shop/${shop.id}`),
-  );
+  expect(
+    await screen.findByRole("list", { name: "Open lists" }),
+  ).toBeInTheDocument();
+  expect(router.state.location.pathname).toBe("/shop");
+});
+
+test("start_empty_opens_a_new_list_that_joins_the_cards", async () => {
+  const { user } = renderApp("/shop", db, fakeLoop());
+
+  await user.click(await screen.findByRole("button", { name: "Start empty" }));
+  expect(
+    await screen.findByText("Nothing on this list yet"),
+  ).toBeInTheDocument();
+  await user.click(screen.getByRole("link", { name: "‹ Lists" }));
+
+  const cards = within(
+    await screen.findByRole("list", { name: "Open lists" }),
+  ).getAllByRole("link");
+  expect(cards).toHaveLength(2);
+  expect(cards[0]).toHaveTextContent(/^Quick shop .*0 of 0 got/);
 });

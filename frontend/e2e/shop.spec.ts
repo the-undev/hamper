@@ -33,6 +33,11 @@ async function startEmptyList(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
+/** The cards of the open lists on the Shop tab. */
+function listCards(page: Page): Locator {
+  return page.getByRole("list", { name: "Open lists" }).getByRole("link");
+}
+
 /** Deletes the open list after its confirm, and waits until the page has left it. */
 async function deleteList(page: Page): Promise<void> {
   const listUrl = page.url();
@@ -101,7 +106,7 @@ test("Make from plan edits the plan and generates a list with summed counts", as
   await removeExtra(page, extra);
 });
 
-test("a list's lines tick, count, edit, go to extras, and a second list opens beside it", async ({
+test("a list's lines tick, count, edit, go to extras, and a second list sits beside it", async ({
   page,
 }) => {
   const ticked = uniqueName("Apples");
@@ -151,18 +156,19 @@ test("a list's lines tick, count, edit, go to extras, and a second list opens be
   await expect(shopLine(page, renamed)).toHaveCount(0);
   await expect(shopLine(page, ticked)).toBeVisible();
 
-  await page.getByRole("button", { name: "Start another list" }).click();
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Start empty" })
-    .click();
-  const lists = page
-    .getByRole("navigation", { name: "Lists" })
-    .getByRole("link");
-  await expect(lists).toHaveCount(2);
+  await page.getByRole("link", { name: "‹ Lists" }).click();
+  await expect(listCards(page)).toHaveCount(1);
+  await expect(listCards(page)).toContainText("1 of 1 got");
+  await page.getByRole("button", { name: "Start empty" }).click();
+  await expect(page.getByText("Nothing on this list yet")).toBeVisible();
+  await page.getByRole("link", { name: "‹ Lists" }).click();
+  await expect(listCards(page)).toHaveCount(2);
+  await listCards(page).first().click();
   await deleteList(page);
-  await expect(lists).toHaveCount(1);
+  await expect(listCards(page)).toHaveCount(1);
+  await listCards(page).first().click();
   await deleteList(page);
+  await expect(listCards(page)).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Make from plan" }),
   ).toBeVisible();
@@ -235,7 +241,41 @@ test("a deleted list is gone", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Make from plan" }),
   ).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Lists" })).toHaveCount(0);
+  await expect(listCards(page)).toHaveCount(0);
+});
+
+test("ticking the last line offers Archive and the list leaves", async ({
+  page,
+}) => {
+  const first = uniqueName("Bread");
+  const last = uniqueName("Butter");
+  await startEmptyList(page);
+  for (const name of [first, last]) {
+    await page.getByRole("combobox", { name: "Add to this list" }).fill(name);
+    await page.getByRole("option", { name: `Add “${name}”` }).click();
+    await expect(shopLine(page, name)).toBeVisible();
+  }
+  const offer = page.getByText("Everything got. Archive the list?");
+
+  await page.getByRole("checkbox", { name: `${first} in the trolley` }).click();
+  await expect(
+    page.getByRole("checkbox", { name: `${first} in the trolley` }),
+  ).toBeChecked();
+  await expect(offer).toHaveCount(0);
+
+  await page.getByRole("checkbox", { name: `${last} in the trolley` }).click();
+  await expect(offer).toBeVisible();
+  const listPath = new URL(page.url()).pathname;
+  await page
+    .getByRole("region", { name: /^Notifications/ })
+    .getByRole("button", { name: "Archive" })
+    .click();
+
+  await expect(page).toHaveURL(/\/shop$/);
+  await expect(
+    page.getByRole("button", { name: "Make from plan" }),
+  ).toBeVisible();
+  await expect(page.locator(`a[href="${listPath}"]`)).toHaveCount(0);
 });
 
 test("Download saves the unticked lines as a text file", async ({ page }) => {

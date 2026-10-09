@@ -46,9 +46,11 @@ Once / Weekly toggle, + and −, and a swipe to remove.
 
 ## Shop
 
-With no list open: "Make from plan" and "Start empty". With lists open: a row
-at the top to switch between them and a + to start another, then the chosen
-list.
+The open lists as cards, newest first. Each card holds the list's name, how
+many of its lines are got ("3 of 12 got"), the day it was made, and a bar
+showing the same progress. Tapping a card opens the list. Under the cards,
+"Make from plan" and "Start empty". With no list open, a note says so above
+the two.
 
 **Breakdown.** Reached by "Make from plan". Every day with its lines, then the
 extras list, all editable with the same controls as the Day screen and the
@@ -56,10 +58,10 @@ Extras view, and every edit saved to the plan. "Generate the list" at the
 bottom, Cancel at the top. The list is named after the plan's start date, "Shop Mon 1 Jun"; an
 empty one is "Quick shop" and today's date.
 
-**List.** A line of status (name, how many meals it came from, how many of
-the lines are in the trolley: "Shop Mon 1 Jun, from 5 meals. 3 of 12 in the
-trolley."), the type-ahead to add a line, then the unticked lines and under
-them the ticked ones. Each line: a 44px tick box, the name, the size and
+**List.** The header's "‹ Lists" goes back to the cards. A line of status
+(name, how many meals it came from, how many of the lines are in the trolley:
+"Shop Mon 1 Jun, from 5 meals. 3 of 12 in the trolley."), the type-ahead to
+add a line, then the unticked lines and under them the ticked ones. Each line: a 44px tick box, the name, the size and
 sources in small text, and the count with − and +. Tapping the name opens the
 line editor: name, size, count, "To extras", Remove, Done.
 Swiping left reveals To extras and Remove. Under the list: Share, Download;
@@ -68,6 +70,11 @@ Rest to extras, Archive, Delete.
 Share opens the share sheet with the unticked lines as text; on a desktop it
 copies the text instead. Download saves the same as a text file. Archive
 needs the server, so it is disabled while offline.
+
+A tick that leaves no unticked line shows a toast, "Everything got. Archive
+the list?", for eight seconds. Its Archive archives at once, with no confirm,
+and goes back to the cards. While offline the toast says "Everything got" and
+has no action.
 
 ## Meals
 

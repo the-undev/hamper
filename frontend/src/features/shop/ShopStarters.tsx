@@ -5,7 +5,7 @@ import { useWrite } from "@/hooks/useWrite";
 import { formatDay, localIsoDate, nowIso } from "@/lib/dates";
 
 /** "Make from plan", which opens the breakdown, and "Start empty", which opens a new list for a quick trip. */
-export function ShopStarters({ onStarted }: { onStarted: () => void }) {
+export function ShopStarters() {
   const write = useWrite();
   const navigate = useNavigate();
   return (
@@ -15,10 +15,7 @@ export function ShopStarters({ onStarted }: { onStarted: () => void }) {
         variant="outline"
         size="lg"
         className="flex-1"
-        onClick={() => {
-          onStarted();
-          void navigate({ to: "/shop/breakdown" });
-        }}
+        onClick={() => void navigate({ to: "/shop/breakdown" })}
       >
         Make from plan
       </Button>
@@ -33,7 +30,6 @@ export function ShopStarters({ onStarted }: { onStarted: () => void }) {
           if (!shop) {
             return;
           }
-          onStarted();
           await navigate({ to: "/shop/$shopId", params: { shopId: shop.id } });
         }}
       >
