@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { Counter } from "@/components/Counter";
-import { textInput } from "@/components/styles";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { editShopLine, lineToWanted, removeShopLine } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
@@ -61,23 +62,21 @@ function LineEditorFields({
           : "Changes here are for this list only."}
       </SheetDescription>
       <div className="grid grid-cols-2 gap-2">
-        <label className="flex min-w-0 flex-col gap-1 text-[11px] font-semibold text-muted">
+        <Label className="min-w-0 flex-col items-stretch gap-1 text-[11px] leading-normal font-semibold text-muted">
           Name
-          <input
+          <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className={textInput}
           />
-        </label>
-        <label className="flex min-w-0 flex-col gap-1 text-[11px] font-semibold text-muted">
+        </Label>
+        <Label className="min-w-0 flex-col items-stretch gap-1 text-[11px] leading-normal font-semibold text-muted">
           Size
-          <input
+          <Input
             value={size}
             placeholder="e.g. small bag"
             onChange={(event) => setSize(event.target.value)}
-            className={textInput}
           />
-        </label>
+        </Label>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted">Count</span>

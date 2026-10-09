@@ -5,10 +5,10 @@ import { StoreProvider } from "@/store/provider";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import { SavedField } from "./SavedField";
-import { textInput } from "./styles";
 import { ToastProvider } from "./Toast";
 import { TypeAhead } from "./TypeAhead";
 import { buttonVariants } from "./ui/button";
+import { Input } from "./ui/input";
 
 let db: HamperDb | null = null;
 
@@ -22,8 +22,12 @@ test("a_large_button_is_a_44px_target", () => {
   expect(buttonVariants({ size: "lg" })).toContain("min-h-11");
 });
 
-test("text_input_uses_the_placeholder_colour", () => {
-  expect(textInput).toContain(placeholderClass);
+test("input_uses_the_placeholder_colour", () => {
+  render(<Input aria-label="Size" placeholder="e.g. tin" />);
+
+  expect(screen.getByRole("textbox", { name: "Size" }).className).toContain(
+    placeholderClass,
+  );
 });
 
 test("type_ahead_input_uses_the_placeholder_colour", () => {

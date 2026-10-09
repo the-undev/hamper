@@ -18,7 +18,7 @@ names (`--color-primary`, `--color-border` and the rest) map onto ours.
 | `ConfirmDialog` | Asks before an action that cannot be undone | AlertDialog | shadcn |
 | `Toast`, `ToastProvider` | One short message near the bottom, with an optional action such as Undo | Sonner | shadcn |
 | `Segmented` | The Plan's Meals and Items switch, radios underneath | Tabs | shadcn |
-| `SavedField` | A labelled text box saved on blur or Enter | Input and Label | shadcn |
+| `SavedField` | A labelled text box saved on blur or Enter | Input and Label | done |
 | `BottomSheet` | A sheet from the bottom of the column | Sheet | keep, no gain: already wraps shadcn's Sheet |
 | `Counter` | − count +, each a 44px button | none | keep |
 | `DoneButton` | Done in an editing screen's footer, which goes back | none | keep |
@@ -41,7 +41,7 @@ names (`--color-primary`, `--color-border` and the rest) map onto ours.
 | --- | --- | --- | --- |
 | `primaryButton` | A full-width call to action in the accent colour | Button, default variant | done |
 | `secondaryButton` | An outlined button beside or under a list, red for a delete | Button, outline variant | done |
-| `textInput` | A text box that fills its row | Input | shadcn |
+| `textInput` | A text box that fills its row | Input | done |
 | `sectionLabel` | The small uppercase heading over a list | none | keep |
 | `hint` | Small muted text under a control | none | keep |
 | `listBox` | The bordered box holding a list's rows | none | keep |

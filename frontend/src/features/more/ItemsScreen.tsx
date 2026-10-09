@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { listBox, textInput } from "@/components/styles";
+import { listBox } from "@/components/styles";
+import { Input } from "@/components/ui/input";
 import { useLiveItems } from "@/hooks/data";
 
 /** Every live item with its usual size, filtered by a search. */
@@ -20,13 +21,12 @@ export function ItemsScreen() {
   return (
     <>
       <ScreenHeader title="Items" back={back} />
-      <input
+      <Input
         type="search"
         aria-label="Find an item"
         placeholder="Find an item…"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className={textInput}
       />
       {shownItems.length === 0 ? (
         <EmptyState>

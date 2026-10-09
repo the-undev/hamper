@@ -3,8 +3,8 @@ import { useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { Picture } from "@/components/Picture";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { textInput } from "@/components/styles";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createMeal } from "@/domain/meals";
 import { useLiveMeals, useMealLinesByMeal } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
@@ -38,7 +38,7 @@ export function MealsScreen() {
   return (
     <>
       <ScreenHeader title="Meals" />
-      <input
+      <Input
         type="search"
         aria-label="Search or add a meal"
         placeholder="Search or add a meal…"
@@ -58,7 +58,6 @@ export function MealsScreen() {
           }
           void addMeal();
         }}
-        className={textInput}
       />
       {typedName !== "" && !exactMeal && (
         <Button

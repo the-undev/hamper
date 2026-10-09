@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useWrite } from "@/hooks/useWrite";
 import { cn } from "@/lib/utils";
 import type { Writer } from "@/store/write";
-import { textInput } from "./styles";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 function ignoreText(): void {}
 
@@ -38,9 +39,9 @@ export function SavedField({
     }
   };
   return (
-    <label className="flex flex-col gap-1 text-[11px] font-semibold text-muted">
+    <Label className="flex-col items-stretch gap-1 text-[11px] leading-normal font-semibold text-muted">
       <span className={cn(title && "sr-only")}>{label}</span>
-      <input
+      <Input
         value={text}
         placeholder={placeholder}
         onChange={(event) => {
@@ -53,12 +54,11 @@ export function SavedField({
             event.currentTarget.blur();
           }
         }}
-        className={
-          title
-            ? "min-h-11 w-full rounded-[10px] border border-line bg-transparent px-2 text-[22px] font-bold text-foreground placeholder:text-placeholder hover:border-muted focus:border-muted"
-            : textInput
-        }
+        className={cn(
+          title &&
+            "rounded-[10px] bg-transparent px-2 py-0 text-[22px] font-bold text-foreground hover:border-muted focus:border-muted",
+        )}
       />
-    </label>
+    </Label>
   );
 }

@@ -8,10 +8,9 @@ import {
   useState,
 } from "react";
 import { isCloseMatch } from "@/lib/distance";
-import { cn } from "@/lib/utils";
-import { textInput } from "./styles";
 import { Badge } from "./ui/badge";
 import { Command, CommandGroup, CommandItem, CommandList } from "./ui/command";
+import { Input } from "./ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
 
 /** Something the type-ahead can offer: a name, and small text beside it. */
@@ -278,7 +277,7 @@ export function TypeAhead<O extends TypeAheadOption>({
       }}
     >
       <PopoverAnchor asChild>
-        <input
+        <Input
           ref={inputRef}
           type="text"
           role="combobox"
@@ -299,10 +298,7 @@ export function TypeAhead<O extends TypeAheadOption>({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onClick={() => setOpen(true)}
-          className={cn(
-            textInput,
-            "scroll-mt-[calc(4.5rem+env(safe-area-inset-top,0px))]",
-          )}
+          className="scroll-mt-[calc(4.5rem+env(safe-area-inset-top,0px))]"
         />
       </PopoverAnchor>
       <PopoverContent

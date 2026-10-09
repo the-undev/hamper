@@ -5,10 +5,6 @@ export const sectionLabel =
 /** Small muted text under or beside a control. */
 export const hint = "text-xs text-muted";
 
-/** A text box that fills its row. */
-export const textInput =
-  "w-full min-h-11 rounded-[14px] border border-line bg-background px-3.5 py-2.5 text-base placeholder:text-placeholder";
-
 /** The bordered box that holds a list of rows. */
 export const listBox =
   "flex flex-col overflow-hidden rounded-[14px] border border-line";
