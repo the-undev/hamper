@@ -2,13 +2,18 @@ import type { Table } from "dexie";
 import { type HamperDb, outboxEntryFor } from "./db";
 import { type SyncTable, syncTables, type TableRows } from "./types";
 
-/** The foreign keys the store indexes. */
-type ForeignKey = "mealId" | "dayId" | "shopId" | "itemId";
+/** The columns the store indexes besides the id: the foreign keys and a planned meal's position. */
+type IndexedColumn =
+  | "mealId"
+  | "plannedMealId"
+  | "shopId"
+  | "itemId"
+  | "position";
 
-/** The indexed foreign keys a table's rows carry. */
+/** The indexed columns a table's rows carry. */
 export type IndexedKey<T extends SyncTable> = Extract<
   keyof TableRows[T],
-  ForeignKey
+  IndexedColumn
 >;
 
 /** Reads and writes inside one store transaction; every put also marks the row dirty in the outbox. */
@@ -18,11 +23,11 @@ export interface Writer {
     table: T,
     id: string,
   ): Promise<TableRows[T] | undefined>;
-  /** Reads every row whose foreign key holds the value, tombstones included. */
+  /** Reads every row whose indexed column holds the value, tombstones included. */
   where<T extends SyncTable>(
     table: T,
     key: IndexedKey<T>,
-    value: string,
+    value: string | number,
   ): Promise<TableRows[T][]>;
   /** Reads every row of a table, tombstones included. */
   all<T extends SyncTable>(table: T): Promise<TableRows[T][]>;

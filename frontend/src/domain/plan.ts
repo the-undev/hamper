@@ -1,6 +1,6 @@
-import { dayIdFor, newId, planId } from "@/store/ids";
+import { newId, planId } from "@/store/ids";
 import { liveRow, liveRows } from "@/store/live";
-import type { Day, Meal, Plan, ShopMeal } from "@/store/types";
+import type { Meal, Plan, PlannedMeal, ShopMeal } from "@/store/types";
 import type { Writer } from "@/store/write";
 import {
   DomainError,
@@ -11,7 +11,7 @@ import {
   requireName,
 } from "./checks";
 import type { CountStep } from "./counts";
-import { dayDate } from "./display";
+import { byPlanOrder, dayDate } from "./display";
 import { createMeal } from "./meals";
 
 /** The shortest plan the server accepts. */
@@ -20,7 +20,7 @@ export const minLengthDays = 1;
 /** The longest plan the server accepts. */
 export const maxLengthDays = 31;
 
-/** An item and a count to put on a day. */
+/** An item and a count to put on a planned meal. */
 interface LineContent {
   itemId: string;
   count: number;
@@ -63,160 +63,192 @@ export async function adjustPlanLength(
   await w.put("plan", { ...plan, lengthDays });
 }
 
-/** Reads the day at a position when it holds a planned meal. */
-export async function liveDay(
-  w: Writer,
-  position: number,
-): Promise<Day | undefined> {
-  return liveRow(await w.get("days", dayIdFor(position)));
+/** Refuses a position or rank that is not a whole number of 0 or more. */
+function requirePlace(place: number, what: string): number {
+  if (!Number.isInteger(place) || place < 0) {
+    throw new DomainError(`A ${what} must be a whole number of 0 or more`);
+  }
+  return place;
 }
 
-/** Writes the day at a position with a name and link, replacing its lines with copies of the given ones. */
-async function fillDay(
+/** Reads the live planned meals of the day at a position, in their order. */
+export async function plannedMealsOn(
+  w: Writer,
+  position: number,
+): Promise<PlannedMeal[]> {
+  return (await liveWhere(w, "plannedMeals", "position", position)).sort(
+    byPlanOrder,
+  );
+}
+
+/** Gives each planned meal its place in the list as its rank and the position, writing only those that change. */
+async function renumber(
+  w: Writer,
+  position: number,
+  plannedMeals: readonly PlannedMeal[],
+): Promise<void> {
+  for (const [rank, plannedMeal] of plannedMeals.entries()) {
+    if (plannedMeal.rank === rank && plannedMeal.position === position) {
+      continue;
+    }
+    await w.put("plannedMeals", { ...plannedMeal, position, rank });
+  }
+}
+
+/** Writes a new planned meal at the end of the day's list, with copies of the given lines. */
+async function appendPlannedMeal(
   w: Writer,
   position: number,
   name: string,
   mealId: string | null,
   lines: readonly LineContent[],
-  now: string,
-): Promise<void> {
-  const dayId = dayIdFor(position);
-  const storedDay = await w.get("days", dayId);
-  await w.put("days", {
-    id: dayId,
-    revision: storedDay?.revision ?? 0,
+): Promise<PlannedMeal> {
+  const dayMeals = await plannedMealsOn(w, requirePlace(position, "position"));
+  const plannedMeal: PlannedMeal = {
+    id: newId(),
+    revision: 0,
     deletedAt: null,
     position,
-    name: requireName(name, null),
+    rank: Math.max(-1, ...dayMeals.map((dayMeal) => dayMeal.rank)) + 1,
+    name: requireName(name, nameMaxLength),
     mealId,
-  });
-  await replaceDayLines(w, dayId, lines, now);
+  };
+  await w.put("plannedMeals", plannedMeal);
+  await addPlannedMealLines(w, plannedMeal.id, lines);
+  return plannedMeal;
 }
 
-async function replaceDayLines(
+async function addPlannedMealLines(
   w: Writer,
-  dayId: string,
+  plannedMealId: string,
   lines: readonly LineContent[],
-  now: string,
 ): Promise<void> {
-  for (const oldLine of await liveWhere(w, "dayLines", "dayId", dayId)) {
-    await w.tombstone("dayLines", oldLine.id, now);
-  }
   for (const { itemId, count } of lines) {
-    await w.put("dayLines", {
+    await w.put("plannedMealLines", {
       id: newId(),
       revision: 0,
       deletedAt: null,
-      dayId,
+      plannedMealId,
       itemId,
       count,
     });
   }
 }
 
-/** Copies a library meal's name and lines onto the day at a position and links the day to it. */
+async function removePlannedMealLines(
+  w: Writer,
+  plannedMealId: string,
+  now: string,
+): Promise<void> {
+  for (const line of await liveWhere(
+    w,
+    "plannedMealLines",
+    "plannedMealId",
+    plannedMealId,
+  )) {
+    await w.tombstone("plannedMealLines", line.id, now);
+  }
+}
+
+/** Copies a library meal's name and lines into a new planned meal at the end of the day's list, linked to the meal. */
 export async function placeMeal(
   w: Writer,
   position: number,
   mealId: string,
-  now: string,
-): Promise<void> {
+): Promise<PlannedMeal> {
   const meal = await requireLive(w, "meals", mealId);
   const mealLines = await liveWhere(w, "mealLines", "mealId", mealId);
-  await fillDay(w, position, meal.name, meal.id, mealLines, now);
+  return appendPlannedMeal(w, position, meal.name, meal.id, mealLines);
 }
 
-/** Makes the day at a position an ad-hoc day: a name, no link and no lines. */
+/** Puts an ad-hoc planned meal at the end of the day's list: a name, no link and no lines. */
 export async function placeAdHoc(
   w: Writer,
   position: number,
   name: string,
-  now: string,
-): Promise<void> {
-  await fillDay(w, position, name, null, [], now);
+): Promise<PlannedMeal> {
+  return appendPlannedMeal(w, position, name, null, []);
 }
 
-/** Renames the day at a position for that day only; the library meal and the link stay as they are. */
-export async function renameDay(
+/** Renames a planned meal for it only; the library meal and the link stay as they are. */
+export async function renamePlannedMeal(
   w: Writer,
-  position: number,
+  plannedMealId: string,
   name: string,
 ): Promise<void> {
-  const day = await liveDay(w, position);
-  if (!day) {
-    throw new DomainError(`Day ${position} holds no planned meal`);
-  }
-  await w.put("days", { ...day, name: requireName(name, nameMaxLength) });
+  const plannedMeal = await requireLive(w, "plannedMeals", plannedMealId);
+  await w.put("plannedMeals", {
+    ...plannedMeal,
+    name: requireName(name, nameMaxLength),
+  });
 }
 
-/** Sets the count of an item on a day for that day only, adding the line when missing and removing it at 0. */
-export async function setDayLine(
+/** Sets the count of an item on a planned meal for it only, adding the line when missing and removing it at 0. */
+export async function setPlannedMealLine(
   w: Writer,
-  position: number,
+  plannedMealId: string,
   itemId: string,
   count: number,
   now: string,
 ): Promise<void> {
   requireCount(count, 0);
-  const day = await liveDay(w, position);
-  if (!day) {
-    throw new DomainError(`Day ${position} holds no planned meal`);
-  }
-  const dayLines = await liveWhere(w, "dayLines", "dayId", day.id);
-  const existingLine = dayLines.find((line) => line.itemId === itemId);
+  await requireLive(w, "plannedMeals", plannedMealId);
+  const lines = await liveWhere(
+    w,
+    "plannedMealLines",
+    "plannedMealId",
+    plannedMealId,
+  );
+  const existingLine = lines.find((line) => line.itemId === itemId);
   if (count === 0) {
     if (existingLine) {
-      await w.tombstone("dayLines", existingLine.id, now);
+      await w.tombstone("plannedMealLines", existingLine.id, now);
     }
     return;
   }
   if (existingLine) {
-    await w.put("dayLines", { ...existingLine, count });
+    await w.put("plannedMealLines", { ...existingLine, count });
     return;
   }
-  await w.put("dayLines", {
-    id: newId(),
-    revision: 0,
-    deletedAt: null,
-    dayId: day.id,
-    itemId,
-    count,
-  });
+  await addPlannedMealLines(w, plannedMealId, [{ itemId, count }]);
 }
 
-/** Copies the linked meal's current lines back onto the day; does nothing when the meal is gone. */
-export async function resetDay(
+/** Copies the linked meal's current lines back onto the planned meal; does nothing when the meal is gone. */
+export async function resetPlannedMeal(
   w: Writer,
-  position: number,
+  plannedMealId: string,
   now: string,
 ): Promise<void> {
-  const day = await liveDay(w, position);
-  if (!day?.mealId) {
-    return;
-  }
-  const meal = liveRow(await w.get("meals", day.mealId));
+  const plannedMeal = await requireLive(w, "plannedMeals", plannedMealId);
+  const meal = plannedMeal.mealId
+    ? liveRow(await w.get("meals", plannedMeal.mealId))
+    : undefined;
   if (!meal) {
     return;
   }
-  const mealLines = await liveWhere(w, "mealLines", "mealId", meal.id);
-  await replaceDayLines(w, day.id, mealLines, now);
+  await removePlannedMealLines(w, plannedMeal.id, now);
+  await addPlannedMealLines(
+    w,
+    plannedMeal.id,
+    await liveWhere(w, "mealLines", "mealId", meal.id),
+  );
 }
 
-/** Puts the day into the library as a new meal with its name and lines, and links the day to it. */
-export async function saveDayAsMeal(
+/** Puts the planned meal into the library as a new meal with its name and lines, and links the planned meal to it. */
+export async function savePlannedMealAsMeal(
   w: Writer,
-  position: number,
+  plannedMealId: string,
 ): Promise<Meal> {
-  const day = await liveDay(w, position);
-  if (!day) {
-    throw new DomainError(`Day ${position} holds no planned meal`);
-  }
-  const savedMeal = await createMeal(w, requireName(day.name, nameMaxLength));
+  const plannedMeal = await requireLive(w, "plannedMeals", plannedMealId);
+  const savedMeal = await createMeal(
+    w,
+    requireName(plannedMeal.name, nameMaxLength),
+  );
   for (const { itemId, count } of await liveWhere(
     w,
-    "dayLines",
-    "dayId",
-    day.id,
+    "plannedMealLines",
+    "plannedMealId",
+    plannedMeal.id,
   )) {
     await w.put("mealLines", {
       id: newId(),
@@ -227,81 +259,64 @@ export async function saveDayAsMeal(
       count,
     });
   }
-  await w.put("days", { ...day, mealId: savedMeal.id });
+  await w.put("plannedMeals", { ...plannedMeal, mealId: savedMeal.id });
   return savedMeal;
 }
 
-/** Swaps two days' names, links and lines; a day swapped with an empty one becomes empty. */
-export async function swapDays(
+/** Moves a planned meal to a place in a day's list, its own or another; both days keep their meals numbered from 0 with no gaps, and a place past the end appends. */
+export async function movePlannedMeal(
   w: Writer,
-  firstPosition: number,
-  secondPosition: number,
-  now: string,
+  plannedMealId: string,
+  toPosition: number,
+  toRank: number,
 ): Promise<void> {
-  if (firstPosition === secondPosition) {
-    return;
+  requirePlace(toPosition, "position");
+  requirePlace(toRank, "rank");
+  const plannedMeal = await requireLive(w, "plannedMeals", plannedMealId);
+  const fromPosition = plannedMeal.position;
+  const others = (dayMeals: PlannedMeal[]) =>
+    dayMeals.filter((dayMeal) => dayMeal.id !== plannedMeal.id);
+  if (fromPosition !== toPosition) {
+    await renumber(
+      w,
+      fromPosition,
+      others(await plannedMealsOn(w, fromPosition)),
+    );
   }
-  const firstDay = await liveDay(w, firstPosition);
-  const secondDay = await liveDay(w, secondPosition);
-  const firstLines = firstDay
-    ? await liveWhere(w, "dayLines", "dayId", firstDay.id)
-    : [];
-  const secondLines = secondDay
-    ? await liveWhere(w, "dayLines", "dayId", secondDay.id)
-    : [];
-
-  await takeDayContent(w, secondPosition, firstDay, now);
-  await takeDayContent(w, firstPosition, secondDay, now);
-  for (const line of firstLines) {
-    await w.put("dayLines", { ...line, dayId: dayIdFor(secondPosition) });
-  }
-  for (const line of secondLines) {
-    await w.put("dayLines", { ...line, dayId: dayIdFor(firstPosition) });
-  }
+  const targetMeals = others(await plannedMealsOn(w, toPosition));
+  targetMeals.splice(Math.min(toRank, targetMeals.length), 0, plannedMeal);
+  await renumber(w, toPosition, targetMeals);
 }
 
-/** Gives the day at a position another day's name and link, or empties it when there is no other day. */
-async function takeDayContent(
+/** Removes a planned meal and its lines; the meals after it on its day move up. */
+export async function removePlannedMeal(
   w: Writer,
-  position: number,
-  sourceDay: Day | undefined,
+  plannedMealId: string,
   now: string,
 ): Promise<void> {
-  const dayId = dayIdFor(position);
-  const storedDay = await w.get("days", dayId);
-  if (!sourceDay) {
-    if (storedDay?.deletedAt === null) {
-      await w.tombstone("days", dayId, now);
-    }
-    return;
-  }
-  await w.put("days", {
-    id: dayId,
-    revision: storedDay?.revision ?? 0,
-    deletedAt: null,
-    position,
-    name: sourceDay.name,
-    mealId: sourceDay.mealId,
-  });
+  const plannedMeal = await requireLive(w, "plannedMeals", plannedMealId);
+  await removePlannedMealLines(w, plannedMeal.id, now);
+  await w.tombstone("plannedMeals", plannedMeal.id, now);
+  await renumber(
+    w,
+    plannedMeal.position,
+    await plannedMealsOn(w, plannedMeal.position),
+  );
 }
 
-/** Empties the day at a position: the day and its lines are removed. */
+/** Empties the day at a position: every planned meal on it and their lines are removed. */
 export async function clearDay(
   w: Writer,
   position: number,
   now: string,
 ): Promise<void> {
-  const day = await liveDay(w, position);
-  if (!day) {
-    return;
+  for (const plannedMeal of await plannedMealsOn(w, position)) {
+    await removePlannedMealLines(w, plannedMeal.id, now);
+    await w.tombstone("plannedMeals", plannedMeal.id, now);
   }
-  for (const line of await liveWhere(w, "dayLines", "dayId", day.id)) {
-    await w.tombstone("dayLines", line.id, now);
-  }
-  await w.tombstone("days", day.id, now);
 }
 
-/** Moves the start date on by the length and removes the Once extras lines; days and Weekly lines stay. */
+/** Moves the start date on by the length and removes the Once extras lines; planned meals and Weekly lines stay. */
 export async function startNewPlan(w: Writer, now: string): Promise<void> {
   const plan = await requirePlan(w);
   await w.put("plan", { ...plan, startDate: dayDate(plan, plan.lengthDays) });
@@ -312,28 +327,28 @@ export async function startNewPlan(w: Writer, now: string): Promise<void> {
   }
 }
 
-/** Fills the days by position from an archived shop's meals, replacing what was there and clearing days it does not mention. */
+/** Fills each day's list from an archived shop's meals in their order, replacing what was there and clearing the days it does not mention. */
 export async function copyMealsFromArchived(
   w: Writer,
   archivedMeals: readonly ShopMeal[],
   now: string,
 ): Promise<void> {
-  const archivedPositions = new Set(
-    archivedMeals.map((archivedMeal) => archivedMeal.position),
+  const positions = new Set(
+    liveRows(await w.all("plannedMeals")).map(
+      (plannedMeal) => plannedMeal.position,
+    ),
   );
-  for (const day of liveRows(await w.all("days"))) {
-    if (!archivedPositions.has(day.position)) {
-      await clearDay(w, day.position, now);
-    }
+  for (const position of positions) {
+    await clearDay(w, position, now);
   }
-  for (const archivedMeal of archivedMeals) {
+  for (const archivedMeal of [...archivedMeals].sort(byPlanOrder)) {
     const libraryMeal = archivedMeal.mealId
       ? liveRow(await w.get("meals", archivedMeal.mealId))
       : undefined;
     if (libraryMeal) {
-      await placeMeal(w, archivedMeal.position, libraryMeal.id, now);
+      await placeMeal(w, archivedMeal.position, libraryMeal.id);
       continue;
     }
-    await placeAdHoc(w, archivedMeal.position, archivedMeal.name, now);
+    await placeAdHoc(w, archivedMeal.position, archivedMeal.name);
   }
 }

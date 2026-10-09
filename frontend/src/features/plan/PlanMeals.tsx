@@ -12,11 +12,11 @@ import {
   startNewPlan,
 } from "@/domain/plan";
 import {
-  useDayLinesByDay,
   useItemsById,
   useMealsById,
   usePlan,
-  usePlannedDays,
+  usePlannedMealLinesByPlannedMeal,
+  usePlannedMealsByPosition,
 } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
@@ -26,8 +26,8 @@ import { DayList } from "./DayList";
 /** The plan's days: when they start and end, a slot per day, and Start new plan. */
 export function PlanMeals() {
   const plan = usePlan();
-  const days = usePlannedDays();
-  const linesByDay = useDayLinesByDay();
+  const days = usePlannedMealsByPosition();
+  const linesByDay = usePlannedMealLinesByPlannedMeal();
   const itemsById = useItemsById();
   const mealsById = useMealsById();
   const write = useWrite();

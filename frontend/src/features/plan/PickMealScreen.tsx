@@ -16,7 +16,7 @@ import {
   usePlan,
 } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
-import { formatDay, nowIso } from "@/lib/dates";
+import { formatDay } from "@/lib/dates";
 
 /** The screen the picker was opened from, which it goes back to. */
 export type PickOpener = "plan" | "day";
@@ -126,7 +126,7 @@ export function PickMealScreen({
 
   const pickMeal = async (row: MealRow): Promise<void> => {
     const placed = await write(async (w) => {
-      await placeMeal(w, position, row.id, nowIso());
+      await placeMeal(w, position, row.id);
       return true;
     });
     if (placed) {
@@ -136,7 +136,7 @@ export function PickMealScreen({
 
   const placeAsItIs = async (name: string): Promise<void> => {
     const placed = await write(async (w) => {
-      await placeAdHoc(w, position, name, nowIso());
+      await placeAdHoc(w, position, name);
       return true;
     });
     if (!placed) {

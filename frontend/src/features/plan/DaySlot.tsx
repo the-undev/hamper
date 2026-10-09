@@ -4,7 +4,7 @@ import { Picture } from "@/components/Picture";
 import { SwipeRow } from "@/components/SwipeRow";
 import { formatDay, formatDayOfMonth, formatWeekday } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import type { Day } from "@/store/types";
+import type { PlannedMeal } from "@/store/types";
 
 /** The drag and drop id of the slot at a position. */
 export function slotId(position: number): string {
@@ -51,7 +51,8 @@ export function DaySlot({
 }: {
   position: number;
   date: string;
-  day: Day | undefined;
+  /** The day's first planned meal; Part 2 shows every planned meal of the day. */
+  day: PlannedMeal | undefined;
   /** The picture of the library meal the day came from, or null. */
   imageId: string | null;
   /** The day's lines in one line. */

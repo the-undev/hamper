@@ -18,11 +18,17 @@ import {
 } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { dayDate } from "@/domain/display";
-import { clearDay, swapDays } from "@/domain/plan";
+import { clearDay, movePlannedMeal } from "@/domain/plan";
 import { lineNames } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
-import type { Day, DayLine, Item, Meal, Plan } from "@/store/types";
+import type {
+  Item,
+  Meal,
+  Plan,
+  PlannedMeal,
+  PlannedMealLine,
+} from "@/store/types";
 import { DaySlot, slotId } from "./DaySlot";
 
 /** A mouse lifts a day once it moves 8px; a finger lifts it after a 250ms hold, so a scroll that starts on the handle still scrolls. */
@@ -48,8 +54,8 @@ export function DayList({
   onPick,
 }: {
   plan: Plan;
-  days: ReadonlyMap<number, Day>;
-  linesByDay: ReadonlyMap<string, DayLine[]>;
+  days: ReadonlyMap<number, PlannedMeal[]>;
+  linesByDay: ReadonlyMap<string, PlannedMealLine[]>;
   itemsById: ReadonlyMap<string, Item>;
   mealsById: ReadonlyMap<string, Meal>;
   onPick: (position: number) => void;
@@ -80,6 +86,8 @@ export function DayList({
     onDragCancel: () => "Put back.",
   };
 
+  const firstMealOn = (position: number): PlannedMeal | undefined =>
+    days.get(position)?.[0];
   const putDown = (): void => {
     setDraggedPosition(null);
     setOverPosition(null);
@@ -91,18 +99,30 @@ export function DayList({
     }
     const from = positionOf(active.id);
     const to = positionOf(over.id);
+    // Each day shows its first planned meal, so a drop swaps the two first meals until Part 2 rewrites the Plan.
+    const movedMeal = firstMealOn(from);
+    const displacedMeal = firstMealOn(to);
     setSwappedPositions([from, to]);
-    void write((w) => swapDays(w, from, to, nowIso()));
+    void write(async (w) => {
+      if (movedMeal) {
+        await movePlannedMeal(w, movedMeal.id, to, 0);
+      }
+      if (displacedMeal) {
+        await movePlannedMeal(w, displacedMeal.id, from, 0);
+      }
+    });
   };
 
   const draggedDay =
-    draggedPosition === null ? undefined : days.get(draggedPosition);
+    draggedPosition === null ? undefined : firstMealOn(draggedPosition);
   const targetPosition =
     draggedPosition === null || overPosition === draggedPosition
       ? null
       : overPosition;
   const targetName =
-    targetPosition === null ? null : (days.get(targetPosition)?.name ?? null);
+    targetPosition === null
+      ? null
+      : (firstMealOn(targetPosition)?.name ?? null);
 
   return (
     <DndContext
@@ -122,7 +142,7 @@ export function DayList({
       <SortableContext items={positions.map(slotId)} strategy={holdStill}>
         <ol className="m-0 flex list-none flex-col gap-2 p-0">
           {positions.map((position) => {
-            const day = days.get(position);
+            const day = firstMealOn(position);
             return (
               <DaySlot
                 key={position}

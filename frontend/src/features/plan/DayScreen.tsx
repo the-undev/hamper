@@ -6,20 +6,24 @@ import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, sectionLabel } from "@/components/styles";
 import { Button } from "@/components/ui/button";
-import { dayDate } from "@/domain/display";
-import { clearDay, renameDay, resetDay, saveDayAsMeal } from "@/domain/plan";
+import { byPlanOrder, dayDate } from "@/domain/display";
+import {
+  clearDay,
+  renamePlannedMeal,
+  resetPlannedMeal,
+  savePlannedMealAsMeal,
+} from "@/domain/plan";
 import { useItemsById, usePlan } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
-import { dayIdFor } from "@/store/ids";
 import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
-import type { DayLine, Meal, MealLine } from "@/store/types";
+import type { Meal, MealLine, PlannedMealLine } from "@/store/types";
 import { DayLines } from "./DayLines";
 
 /** Whether the day's lines differ from the meal's, item by item and count by count. */
 function linesDiffer(
-  dayLines: readonly DayLine[],
+  dayLines: readonly PlannedMealLine[],
   mealLines: readonly MealLine[],
 ): boolean {
   const key = (lines: readonly { itemId: string; count: number }[]) =>
@@ -47,21 +51,22 @@ function originText(
     : `From the meal ${linkedMeal.name}`;
 }
 
-/** One day of the plan: its meal, where it came from, and its lines for this day only. */
+/** One day of the plan: its first planned meal, where it came from, and its lines for this day only; Part 2 turns this into the planned meal's screen. */
 export function DayScreen({ position }: { position: number }) {
   const db = useDb();
   const write = useWrite();
   const navigate = useNavigate();
   const plan = usePlan();
   const itemsById = useItemsById();
-  const dayId = dayIdFor(position);
   const dayState = useLive(async () => {
-    const day = liveRow(await db.days.get(dayId));
+    const [day] = liveRows(
+      await db.plannedMeals.where("position").equals(position).toArray(),
+    ).sort(byPlanOrder);
     if (!day) {
       return { day: null, dayLines: [], linkedMeal: undefined, mealLines: [] };
     }
     const dayLines = liveRows(
-      await db.dayLines.where("dayId").equals(dayId).toArray(),
+      await db.plannedMealLines.where("plannedMealId").equals(day.id).toArray(),
     );
     const linkedMeal = day.mealId
       ? liveRow(await db.meals.get(day.mealId))
@@ -72,7 +77,7 @@ export function DayScreen({ position }: { position: number }) {
         )
       : [];
     return { day, dayLines, linkedMeal, mealLines };
-  }, [db, dayId]);
+  }, [db, position]);
 
   const back = { to: "/plan", label: "Plan" } as const;
   if (plan === null) {
@@ -120,7 +125,7 @@ export function DayScreen({ position }: { position: number }) {
         label="Name"
         value={day.name}
         title
-        save={(w, name) => renameDay(w, position, name)}
+        save={(w, name) => renamePlannedMeal(w, day.id, name)}
       />
       <p className={hint}>{originText(day.mealId, linkedMeal, changed)}</p>
       {linkedMeal && (
@@ -130,7 +135,9 @@ export function DayScreen({ position }: { position: number }) {
           size="lg"
           className="flex-none"
           disabled={!changed}
-          onClick={() => void write((w) => resetDay(w, position, nowIso()))}
+          onClick={() =>
+            void write((w) => resetPlannedMeal(w, day.id, nowIso()))
+          }
         >
           Reset to the meal
         </Button>
@@ -141,7 +148,7 @@ export function DayScreen({ position }: { position: number }) {
           variant="outline"
           size="lg"
           className="flex-none"
-          onClick={() => void write((w) => saveDayAsMeal(w, position))}
+          onClick={() => void write((w) => savePlannedMealAsMeal(w, day.id))}
         >
           Save as a meal
         </Button>
@@ -153,7 +160,7 @@ export function DayScreen({ position }: { position: number }) {
         </span>
       </h3>
       <DayLines
-        position={position}
+        plannedMealId={day.id}
         lines={dayLines}
         itemsById={itemsById}
         typeAheadLabel="Add an item for this day"

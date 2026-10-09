@@ -3,11 +3,11 @@ import type { HamperDb } from "@/store/db";
 import { write } from "@/store/write";
 import { freshDb } from "@/test/db";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aShop,
   aShopLine,
   aWantedLine,
@@ -20,10 +20,10 @@ let db: HamperDb;
 
 const rice = anItem("Rice");
 const curry = aMeal("Curry");
-const curryDay = aDay(0, "Curry", curry);
+const curryDay = aPlannedMeal(0, "Curry", curry);
 const shop = aShop("Corner shop");
 const linesByTable = {
-  dayLines: aDayLine(curryDay, rice, 1),
+  plannedMealLines: aPlannedMealLine(curryDay, rice, 1),
   mealLines: aMealLine(curry, rice, 1),
   wantedLines: aWantedLine(rice, 1),
   shopLines: { ...aShopLine(shop, rice, 1), nameOverride: "Basmati" },
@@ -35,9 +35,9 @@ beforeEach(async () => {
   await seed(db, {
     items: [rice],
     meals: [curry],
-    days: [curryDay],
+    plannedMeals: [curryDay],
     shops: [shop],
-    dayLines: [linesByTable.dayLines],
+    plannedMealLines: [linesByTable.plannedMealLines],
     mealLines: [linesByTable.mealLines],
     wantedLines: [linesByTable.wantedLines],
     shopLines: [linesByTable.shopLines],

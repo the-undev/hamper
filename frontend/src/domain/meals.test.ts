@@ -109,7 +109,7 @@ test("changing_a_meal_changes_nothing_already_on_the_plan", async () => {
     mealLines: [aMealLine(curry, rice, 1)],
     plan: [thePlan()],
   });
-  await write(db, (w) => placeMeal(w, 0, curry.id, now));
+  await write(db, (w) => placeMeal(w, 0, curry.id));
 
   await write(db, async (w) => {
     await renameMeal(w, curry.id, "Thai curry");
@@ -117,15 +117,15 @@ test("changing_a_meal_changes_nothing_already_on_the_plan", async () => {
     await setMealLine(w, curry.id, naan.id, 1, now);
   });
 
-  expect(await live(db, "days")).toMatchObject([
+  expect(await live(db, "plannedMeals")).toMatchObject([
     { name: "Curry", mealId: curry.id },
   ]);
-  expect(await live(db, "dayLines")).toMatchObject([
+  expect(await live(db, "plannedMealLines")).toMatchObject([
     { itemId: rice.id, count: 1 },
   ]);
 });
 
-test("deleting_a_meal_removes_it_and_its_lines_and_days_keep_their_copy_and_link", async () => {
+test("deleting_a_meal_removes_it_and_its_lines_and_planned_meals_keep_their_copy_and_link", async () => {
   const rice = anItem("Rice");
   const curry = aMeal("Curry");
   await seed(db, {
@@ -134,16 +134,16 @@ test("deleting_a_meal_removes_it_and_its_lines_and_days_keep_their_copy_and_link
     mealLines: [aMealLine(curry, rice, 1)],
     plan: [thePlan()],
   });
-  await write(db, (w) => placeMeal(w, 0, curry.id, now));
+  await write(db, (w) => placeMeal(w, 0, curry.id));
 
   await write(db, (w) => deleteMeal(w, curry.id, now));
 
   expect(await live(db, "meals")).toEqual([]);
   expect(await live(db, "mealLines")).toEqual([]);
-  expect(await live(db, "days")).toMatchObject([
+  expect(await live(db, "plannedMeals")).toMatchObject([
     { name: "Curry", mealId: curry.id },
   ]);
-  expect(await live(db, "dayLines")).toMatchObject([
+  expect(await live(db, "plannedMealLines")).toMatchObject([
     { itemId: rice.id, count: 1 },
   ]);
 });

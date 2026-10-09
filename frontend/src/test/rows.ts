@@ -1,13 +1,13 @@
 import type { HamperDb } from "@/store/db";
-import { dayIdFor, newId, planId } from "@/store/ids";
+import { newId, planId } from "@/store/ids";
 import { liveRows } from "@/store/live";
 import {
-  type Day,
-  type DayLine,
   type Item,
   type Meal,
   type MealLine,
   type Plan,
+  type PlannedMeal,
+  type PlannedMealLine,
   type Shop,
   type ShopLine,
   type SyncTable,
@@ -42,24 +42,29 @@ export function thePlan(startDate = "2026-06-01", lengthDays = 7): Plan {
   return { id: planId, revision: 1, deletedAt: null, startDate, lengthDays };
 }
 
-/** A day row at a position. */
-export function aDay(
+/** A planned meal row on the day at a position, first in its order unless a rank is given. */
+export function aPlannedMeal(
   position: number,
   name: string,
   meal: Meal | null = null,
-): Day {
+  rank = 0,
+): PlannedMeal {
   return {
     ...synced(),
-    id: dayIdFor(position),
     position,
+    rank,
     name,
     mealId: meal?.id ?? null,
   };
 }
 
-/** A day line row. */
-export function aDayLine(day: Day, item: Item, count: number): DayLine {
-  return { ...synced(), dayId: day.id, itemId: item.id, count };
+/** A planned meal line row. */
+export function aPlannedMealLine(
+  plannedMeal: PlannedMeal,
+  item: Item,
+  count: number,
+): PlannedMealLine {
+  return { ...synced(), plannedMealId: plannedMeal.id, itemId: item.id, count };
 }
 
 /** An extras line row. */
@@ -121,4 +126,27 @@ export async function live<T extends SyncTable>(
   table: T,
 ): Promise<TableRows[T][]> {
   return liveRows(await db.table<TableRows[T], string>(table).toArray());
+}
+
+/** Reads the live planned meals of the day at a position, in their order. */
+export async function plannedMealsAt(
+  db: HamperDb,
+  position: number,
+): Promise<PlannedMeal[]> {
+  return (await live(db, "plannedMeals"))
+    .filter((plannedMeal) => plannedMeal.position === position)
+    .sort((first, second) => first.rank - second.rank);
+}
+
+/** Reads the live lines of the planned meals on the day at a position. */
+export async function linesOnDay(
+  db: HamperDb,
+  position: number,
+): Promise<PlannedMealLine[]> {
+  const plannedMealIds = new Set(
+    (await plannedMealsAt(db, position)).map((plannedMeal) => plannedMeal.id),
+  );
+  return (await live(db, "plannedMealLines")).filter((line) =>
+    plannedMealIds.has(line.plannedMealId),
+  );
 }

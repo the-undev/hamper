@@ -22,7 +22,7 @@ export async function createMeal(w: Writer, name: string): Promise<Meal> {
   return createdMeal;
 }
 
-/** Renames a library meal; days already planned keep the name they copied. */
+/** Renames a library meal; planned meals keep the name they copied. */
 export async function renameMeal(
   w: Writer,
   mealId: string,
@@ -80,7 +80,7 @@ export async function duplicateMeal(w: Writer, mealId: string): Promise<Meal> {
   return copiedMeal;
 }
 
-/** Removes a meal and its lines; days copied from it keep their copy and their link. */
+/** Removes a meal and its lines; planned meals copied from it keep their copy and their link. */
 export async function deleteMeal(
   w: Writer,
   mealId: string,

@@ -1,21 +1,21 @@
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
-import { addToDay } from "@/domain/adds";
+import { addToPlannedMeal } from "@/domain/adds";
 import { adjustLineCount } from "@/domain/counts";
-import { setDayLine } from "@/domain/plan";
+import { setPlannedMealLine } from "@/domain/plan";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
-import type { DayLine, Item } from "@/store/types";
+import type { Item, PlannedMealLine } from "@/store/types";
 
-/** A day's type-ahead and lines, each with + and − and a swipe to remove, edited for that day only. */
+/** A planned meal's type-ahead and lines, each with + and − and a swipe to remove, edited for it only. */
 export function DayLines({
-  position,
+  plannedMealId,
   lines,
   itemsById,
   typeAheadLabel,
 }: {
-  position: number;
-  lines: readonly DayLine[];
+  plannedMealId: string;
+  lines: readonly PlannedMealLine[];
   itemsById: ReadonlyMap<string, Item>;
   typeAheadLabel: string;
 }) {
@@ -25,16 +25,22 @@ export function DayLines({
       <ItemTypeAhead
         label={typeAheadLabel}
         placeholder={`${typeAheadLabel}…`}
-        addLine={(w, itemId) => addToDay(w, position, itemId, nowIso())}
+        addLine={(w, itemId) =>
+          addToPlannedMeal(w, plannedMealId, itemId, nowIso())
+        }
       />
       <LineList
         lines={lineViews(lines, itemsById)}
         empty="Nothing to buy for this day"
         onAdjust={(line, step) =>
-          void write((w) => adjustLineCount(w, "dayLines", line.id, step))
+          void write((w) =>
+            adjustLineCount(w, "plannedMealLines", line.id, step),
+          )
         }
         onRemove={(line) =>
-          void write((w) => setDayLine(w, position, line.itemId, 0, nowIso()))
+          void write((w) =>
+            setPlannedMealLine(w, plannedMealId, line.itemId, 0, nowIso()),
+          )
         }
       />
     </>

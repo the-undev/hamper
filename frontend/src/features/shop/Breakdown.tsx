@@ -4,27 +4,27 @@ import { WaitingForServer } from "@/components/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, sectionLabel } from "@/components/styles";
 import { Button } from "@/components/ui/button";
-import { dayDate } from "@/domain/display";
+import { byPlanOrder, dayDate } from "@/domain/display";
 import { generateShop } from "@/domain/shops";
 import { DayLines } from "@/features/plan/DayLines";
 import { WantedLines } from "@/features/plan/WantedLines";
 import {
-  useDayLinesByDay,
   useItemsById,
   usePlan,
-  usePlannedDays,
+  usePlannedMealLinesByPlannedMeal,
+  usePlannedMealsByPosition,
 } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
-import type { Day, DayLine, Item, Plan } from "@/store/types";
+import type { Item, Plan, PlannedMeal, PlannedMealLine } from "@/store/types";
 
 const back = { to: "/shop", label: "Cancel" } as const;
 
 /** Everything a list is made from, edited straight into the plan, then Generate. */
 export function Breakdown() {
   const plan = usePlan();
-  const days = usePlannedDays();
-  const linesByDay = useDayLinesByDay();
+  const days = usePlannedMealsByPosition();
+  const linesByDay = usePlannedMealLinesByPlannedMeal();
   const itemsById = useItemsById();
   const write = useWrite();
   const navigate = useNavigate();
@@ -42,9 +42,11 @@ export function Breakdown() {
     return <ScreenHeader title="Breakdown" back={back} />;
   }
 
+  // Each planned meal is listed on its own in plan order until Part 2 groups them by day.
   const plannedDays = [...days.values()]
+    .flat()
     .filter((day) => day.position < plan.lengthDays)
-    .sort((first, second) => first.position - second.position);
+    .sort(byPlanOrder);
 
   const generate = async (): Promise<void> => {
     const name = `Shop ${formatDay(plan.startDate)}`;
@@ -98,8 +100,8 @@ function BreakdownDay({
   itemsById,
 }: {
   plan: Plan;
-  day: Day;
-  lines: readonly DayLine[];
+  day: PlannedMeal;
+  lines: readonly PlannedMealLine[];
   itemsById: ReadonlyMap<string, Item>;
 }) {
   const headingId = useId();
@@ -113,7 +115,7 @@ function BreakdownDay({
         </span>
       </h2>
       <DayLines
-        position={day.position}
+        plannedMealId={day.id}
         lines={lines}
         itemsById={itemsById}
         typeAheadLabel={`Add an item for ${date}`}

@@ -3,17 +3,17 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { HistoryEntry } from "@/api/rest";
 import { formatDay, formatTimestampDay } from "@/lib/dates";
 import type { HamperDb } from "@/store/db";
-import { dayIdFor } from "@/store/ids";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeFetch } from "@/test/fake-fetch";
 import { fakeLoop, quietStatus } from "@/test/fake-loop";
 import {
-  aDay,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
   live,
+  plannedMealsAt,
   seed,
   thePlan,
 } from "@/test/rows";
@@ -36,6 +36,7 @@ function historyEntry(archivedAt: string, mealIds: string[]): HistoryEntry {
     planLengthDays: 7,
     meals: mealIds.map((mealId, position) => ({
       position,
+      rank: 0,
       name: "A meal",
       mealId,
     })),
@@ -136,7 +137,7 @@ test("delete_removes_the_meal_after_a_confirm", async () => {
 });
 
 test("add_to_the_next_empty_day_places_the_meal_and_then_says_it_is_on_the_plan", async () => {
-  await seed(db, { days: [aDay(0, "Fajitas")] });
+  await seed(db, { plannedMeals: [aPlannedMeal(0, "Fajitas")] });
   const { user } = renderApp(`/meals/${curry.id}`, db, fakeLoop());
 
   await user.click(
@@ -148,7 +149,7 @@ test("add_to_the_next_empty_day_places_the_meal_and_then_says_it_is_on_the_plan"
   expect(
     await screen.findByRole("button", { name: "On the plan" }),
   ).toBeDisabled();
-  expect(await db.days.get(dayIdFor(1))).toMatchObject({
+  expect((await plannedMealsAt(db, 1))[0]).toMatchObject({
     name: "Curry",
     mealId: curry.id,
   });

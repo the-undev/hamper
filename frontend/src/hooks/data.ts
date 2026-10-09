@@ -1,15 +1,16 @@
 import type { Table } from "dexie";
 import type { TypeAheadOption } from "@/components/TypeAhead";
+import { byPlanOrder } from "@/domain/display";
 import { planId } from "@/store/ids";
 import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
 import type {
-  Day,
-  DayLine,
   Item,
   Meal,
   MealLine,
   Plan,
+  PlannedMeal,
+  PlannedMealLine,
   SyncedRow,
 } from "@/store/types";
 
@@ -29,7 +30,7 @@ export function useItemsById(): Map<string, Item> | undefined {
   );
 }
 
-/** Every meal by id, deleted ones included, so a day linked to one can show its picture. */
+/** Every meal by id, deleted ones included, so a planned meal linked to one can show its picture. */
 export function useMealsById(): Map<string, Meal> | undefined {
   const db = useDb();
   return useLive(
@@ -63,27 +64,38 @@ export function useLiveMeals(): Meal[] | undefined {
   );
 }
 
-/** The days holding a planned meal, by position. */
-export function usePlannedDays(): Map<number, Day> | undefined {
-  const db = useDb();
-  return useLive(
-    async () =>
-      new Map(
-        liveRows(await db.days.toArray()).map((day) => [day.position, day]),
-      ),
-    [db],
-  );
-}
-
-/** The live lines of every day, grouped by day id. */
-export function useDayLinesByDay(): Map<string, DayLine[]> | undefined {
+/** The live planned meals by position, each day's in their order; a day with none has no entry. */
+export function usePlannedMealsByPosition():
+  | Map<number, PlannedMeal[]>
+  | undefined {
   const db = useDb();
   return useLive(async () => {
-    const linesByDay = new Map<string, DayLine[]>();
-    for (const line of liveRows(await db.dayLines.toArray())) {
-      linesByDay.set(line.dayId, [...(linesByDay.get(line.dayId) ?? []), line]);
+    const mealsByPosition = new Map<number, PlannedMeal[]>();
+    const plannedMeals = liveRows(await db.plannedMeals.toArray());
+    for (const plannedMeal of plannedMeals.sort(byPlanOrder)) {
+      mealsByPosition.set(plannedMeal.position, [
+        ...(mealsByPosition.get(plannedMeal.position) ?? []),
+        plannedMeal,
+      ]);
     }
-    return linesByDay;
+    return mealsByPosition;
+  }, [db]);
+}
+
+/** The live lines of every planned meal, grouped by planned meal id. */
+export function usePlannedMealLinesByPlannedMeal():
+  | Map<string, PlannedMealLine[]>
+  | undefined {
+  const db = useDb();
+  return useLive(async () => {
+    const linesByPlannedMeal = new Map<string, PlannedMealLine[]>();
+    for (const line of liveRows(await db.plannedMealLines.toArray())) {
+      linesByPlannedMeal.set(line.plannedMealId, [
+        ...(linesByPlannedMeal.get(line.plannedMealId) ?? []),
+        line,
+      ]);
+    }
+    return linesByPlannedMeal;
   }, [db]);
 }
 
@@ -135,7 +147,7 @@ function liveCount(rows: readonly (SyncedRow | undefined)[]): number {
   return rows.filter((row) => liveRow(row)).length;
 }
 
-/** Counts the live meals, days and open shops with a live line of the item, and the extras list when it has one. */
+/** Counts the live meals, the days with a live planned meal, and the open shops with a live line of the item, and the extras list when it has one. */
 export function useItemUsage(itemId: string): ItemUsage | undefined {
   const db = useDb();
   return useLive(async () => {
@@ -145,21 +157,26 @@ export function useItemUsage(itemId: string): ItemUsage | undefined {
       ...new Set(lines.map(parentId)),
     ];
     const mealLines = await linesOf(db.mealLines);
-    const dayLines = await linesOf(db.dayLines);
+    const plannedMealLines = await linesOf(db.plannedMealLines);
     const shopLines = await linesOf(db.shopLines);
     const wantedLines = await linesOf(db.wantedLines);
     const meals = await db.meals.bulkGet(
       parentIds(mealLines, (line) => line.mealId),
     );
-    const days = await db.days.bulkGet(
-      parentIds(dayLines, (line) => line.dayId),
+    const plannedMeals = await db.plannedMeals.bulkGet(
+      parentIds(plannedMealLines, (line) => line.plannedMealId),
+    );
+    const dayPositions = new Set(
+      plannedMeals
+        .filter((plannedMeal) => liveRow(plannedMeal))
+        .map((plannedMeal) => plannedMeal?.position),
     );
     const shops = await db.shops.bulkGet(
       parentIds(shopLines, (line) => line.shopId),
     );
     return {
       meals: liveCount(meals),
-      days: liveCount(days),
+      days: dayPositions.size,
       lists: liveCount(shops) + (wantedLines.length > 0 ? 1 : 0),
     };
   }, [db, itemId]);

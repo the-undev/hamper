@@ -8,10 +8,10 @@ import { freshDb } from "@/test/db";
 import { fakeFetch } from "@/test/fake-fetch";
 import { fakeLoop } from "@/test/fake-loop";
 import {
-  aDay,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
   live,
   seed,
   thePlan,
@@ -31,8 +31,8 @@ const archivedShop: ArchivedShop = {
   planStartDate: "2026-05-25",
   planLengthDays: 7,
   meals: [
-    { position: 0, name: "Curry", mealId: curry.id },
-    { position: 2, name: "Takeaway", mealId: null },
+    { position: 0, rank: 0, name: "Curry", mealId: curry.id },
+    { position: 2, rank: 0, name: "Takeaway", mealId: null },
   ],
   lines: [
     {
@@ -56,7 +56,7 @@ beforeEach(async () => {
     meals: [curry],
     mealLines: [aMealLine(curry, rice, 1)],
     plan: [thePlan("2026-06-01", 7)],
-    days: [aDay(5, "Roast")],
+    plannedMeals: [aPlannedMeal(5, "Roast")],
   });
   fakeFetch({
     "GET /api/history": () => Response.json([historyEntry]),
@@ -107,7 +107,7 @@ test("copy_these_meals_fills_the_plan_by_position_after_a_confirm", async () => 
   );
 
   await waitFor(() => expect(router.state.location.pathname).toBe("/plan"));
-  const days = (await live(db, "days")).sort(
+  const days = (await live(db, "plannedMeals")).sort(
     (first, second) => first.position - second.position,
   );
   expect(days.map((day) => [day.position, day.name, day.mealId])).toEqual([

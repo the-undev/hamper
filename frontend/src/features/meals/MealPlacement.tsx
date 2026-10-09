@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { dayDate } from "@/domain/display";
 import { placeMeal } from "@/domain/plan";
-import { usePlan, usePlannedDays } from "@/hooks/data";
+import { usePlan, usePlannedMealsByPosition } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
-import { formatDay, nowIso } from "@/lib/dates";
+import { formatDay } from "@/lib/dates";
 
 /** "Add to <next empty day>", or "On the plan" once a day within the length holds the meal. */
 export function MealPlacement({ mealId }: { mealId: string }) {
   const plan = usePlan();
-  const days = usePlannedDays();
+  const days = usePlannedMealsByPosition();
   const write = useWrite();
   if (plan === null) {
     return (
@@ -21,8 +21,9 @@ export function MealPlacement({ mealId }: { mealId: string }) {
     return null;
   }
   const positions = Array.from({ length: plan.lengthDays }, (_, at) => at);
-  const onPlan = positions.some(
-    (position) => days.get(position)?.mealId === mealId,
+  // Part 2 replaces this with "Add to a day"; until then any planned meal of the meal within the length counts.
+  const onPlan = positions.some((position) =>
+    days.get(position)?.some((plannedMeal) => plannedMeal.mealId === mealId),
   );
   if (onPlan) {
     return (
@@ -44,9 +45,7 @@ export function MealPlacement({ mealId }: { mealId: string }) {
       type="button"
       size="lg"
       className="w-full"
-      onClick={() =>
-        void write((w) => placeMeal(w, emptyPosition, mealId, nowIso()))
-      }
+      onClick={() => void write((w) => placeMeal(w, emptyPosition, mealId))}
     >
       Add to {formatDay(dayDate(plan, emptyPosition))}
     </Button>

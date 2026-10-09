@@ -7,7 +7,7 @@ export class DomainError extends Error {
   override name = "DomainError";
 }
 
-/** The longest item or meal name the server accepts. */
+/** The longest item, meal or planned meal name the server accepts. */
 export const nameMaxLength = 200;
 
 /** The longest item size the server accepts. */
@@ -63,12 +63,12 @@ export async function requireLive<T extends SyncTable>(
   return row;
 }
 
-/** Reads the live rows whose foreign key holds the value. */
+/** Reads the live rows whose indexed column holds the value. */
 export async function liveWhere<T extends SyncTable>(
   w: Writer,
   table: T,
   key: IndexedKey<T>,
-  value: string,
+  value: string | number,
 ): Promise<TableRows[T][]> {
   return liveRows(await w.where(table, key, value));
 }

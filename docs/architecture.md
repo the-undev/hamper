@@ -224,8 +224,9 @@ browser's; on reconnect the client pulls once, which covers anything missed.
 ### On the device
 
 Dexie holds a database named `hamper` with one table per synced table, keyed
-on `id` and indexed on the foreign keys `mealId`, `dayId`, `shopId` and
-`itemId`, plus `outbox` and `meta`. A row the server has not yet seen has
+on `id` and indexed on the foreign keys `mealId`, `plannedMealId`, `shopId`
+and `itemId`, with planned meals also indexed on `position`, plus `outbox` and
+`meta`. A row the server has not yet seen has
 revision 0.
 
 The outbox holds one entry per changed row: `seq` (its place in the queue),

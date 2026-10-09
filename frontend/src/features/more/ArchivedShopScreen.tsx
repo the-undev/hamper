@@ -45,7 +45,7 @@ export function ArchivedShopScreen({ archivedId }: { archivedId: string }) {
           <ul className={`${listBox} m-0 list-none p-0`}>
             {shop.meals.map((meal) => (
               <li
-                key={meal.position}
+                key={`${meal.position}-${meal.rank}`}
                 className="flex justify-between gap-3 border-line border-t px-3 py-2.5 text-sm first:border-t-0"
               >
                 <span className="text-muted">{dayLabel(meal.position)}</span>

@@ -2,18 +2,20 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { formatDay } from "@/lib/dates";
 import type { HamperDb } from "@/store/db";
-import { dayIdFor, planId } from "@/store/ids";
+import { planId } from "@/store/ids";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aWantedLine,
+  linesOnDay,
   live,
+  plannedMealsAt,
   seed,
   thePlan,
 } from "@/test/rows";
@@ -43,13 +45,13 @@ afterEach(async () => {
 });
 
 async function dayLinesAt(position: number) {
-  return (await live(db, "dayLines")).filter(
-    (line) => line.dayId === dayIdFor(position),
-  );
+  return await linesOnDay(db, position);
 }
 
 test("changing_the_length_hides_and_shows_days_without_disturbing_the_meals", async () => {
-  await seed(db, { days: [aDay(0, "Curry", curry), aDay(6, "Roast")] });
+  await seed(db, {
+    plannedMeals: [aPlannedMeal(0, "Curry", curry), aPlannedMeal(6, "Roast")],
+  });
   const { user } = renderApp("/plan", db, fakeLoop());
   const roastHandle = { name: `Move Roast from ${sunday}` };
   expect(await screen.findByRole("button", roastHandle)).toBeInTheDocument();
@@ -61,9 +63,9 @@ test("changing_the_length_hides_and_shows_days_without_disturbing_the_meals", as
   await waitFor(() =>
     expect(screen.queryByRole("button", roastHandle)).not.toBeInTheDocument(),
   );
-  expect((await live(db, "days")).map((day) => day.position).sort()).toEqual([
-    0, 6,
-  ]);
+  expect(
+    (await live(db, "plannedMeals")).map((day) => day.position).sort(),
+  ).toEqual([0, 6]);
 
   await user.click(screen.getByRole("button", { name: "One more day" }));
 
@@ -72,7 +74,7 @@ test("changing_the_length_hides_and_shows_days_without_disturbing_the_meals", as
 });
 
 test("the_start_date_input_moves_the_start_and_relabels_the_days", async () => {
-  await seed(db, { days: [aDay(0, "Curry", curry)] });
+  await seed(db, { plannedMeals: [aPlannedMeal(0, "Curry", curry)] });
   renderApp("/plan", db, fakeLoop());
 
   fireEvent.change(await screen.findByLabelText("Start date"), {
@@ -88,8 +90,11 @@ test("the_start_date_input_moves_the_start_and_relabels_the_days", async () => {
 });
 
 test("swiping_a_day_reveals_clear_which_empties_the_day", async () => {
-  const curryDay = aDay(0, "Curry", curry);
-  await seed(db, { days: [curryDay], dayLines: [aDayLine(curryDay, rice, 1)] });
+  const curryDay = aPlannedMeal(0, "Curry", curry);
+  await seed(db, {
+    plannedMeals: [curryDay],
+    plannedMealLines: [aPlannedMealLine(curryDay, rice, 1)],
+  });
   const { user } = renderApp("/plan", db, fakeLoop());
 
   await user.click(
@@ -99,13 +104,13 @@ test("swiping_a_day_reveals_clear_which_empties_the_day", async () => {
   expect(
     await screen.findByRole("button", { name: `Pick a meal for ${monday}` }),
   ).toBeInTheDocument();
-  expect(await live(db, "days")).toEqual([]);
+  expect(await live(db, "plannedMeals")).toEqual([]);
   expect(await dayLinesAt(0)).toEqual([]);
 });
 
 test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_cancel_does_nothing", async () => {
   await seed(db, {
-    days: [aDay(0, "Curry", curry)],
+    plannedMeals: [aPlannedMeal(0, "Curry", curry)],
     wantedLines: [aWantedLine(rice, 1, false), aWantedLine(naan, 1, true)],
   });
   const { user } = renderApp("/plan", db, fakeLoop());
@@ -136,7 +141,9 @@ test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_c
   expect((await live(db, "wantedLines")).map((line) => line.itemId)).toEqual([
     naan.id,
   ]);
-  expect((await live(db, "days")).map((day) => day.name)).toEqual(["Curry"]);
+  expect((await live(db, "plannedMeals")).map((day) => day.name)).toEqual([
+    "Curry",
+  ]);
 });
 
 test("the_plan_waits_for_the_server_until_the_first_pull_brings_it", async () => {
@@ -167,10 +174,10 @@ function laySlotsOut(): void {
 
 test("dragging_a_day_onto_another_with_the_keyboard_swaps_them", async () => {
   laySlotsOut();
-  const curryDay = aDay(0, "Curry", curry);
+  const curryDay = aPlannedMeal(0, "Curry", curry);
   await seed(db, {
-    days: [curryDay, aDay(1, "Fajitas")],
-    dayLines: [aDayLine(curryDay, rice, 1)],
+    plannedMeals: [curryDay, aPlannedMeal(1, "Fajitas")],
+    plannedMealLines: [aPlannedMealLine(curryDay, rice, 1)],
   });
   const { user } = renderApp("/plan", db, fakeLoop());
   const handle = await screen.findByRole("button", {
@@ -183,12 +190,12 @@ test("dragging_a_day_onto_another_with_the_keyboard_swaps_them", async () => {
   await user.keyboard("[Space]");
 
   await waitFor(async () =>
-    expect(await db.days.get(dayIdFor(1))).toMatchObject({
+    expect((await plannedMealsAt(db, 1))[0]).toMatchObject({
       name: "Curry",
       mealId: curry.id,
     }),
   );
-  expect(await db.days.get(dayIdFor(0))).toMatchObject({ name: "Fajitas" });
+  expect((await plannedMealsAt(db, 0))[0]).toMatchObject({ name: "Fajitas" });
   expect((await dayLinesAt(1)).map((line) => line.itemId)).toEqual([rice.id]);
   expect(
     await screen.findByRole("button", { name: `Move Curry from ${tuesday}` }),
@@ -197,7 +204,7 @@ test("dragging_a_day_onto_another_with_the_keyboard_swaps_them", async () => {
 
 test("dragging_a_day_onto_an_empty_day_moves_it_and_leaves_its_old_day_empty", async () => {
   laySlotsOut();
-  await seed(db, { days: [aDay(0, "Curry", curry)] });
+  await seed(db, { plannedMeals: [aPlannedMeal(0, "Curry", curry)] });
   const { user } = renderApp("/plan", db, fakeLoop());
 
   (
@@ -209,7 +216,9 @@ test("dragging_a_day_onto_an_empty_day_moves_it_and_leaves_its_old_day_empty", a
   await user.keyboard("[Space]");
 
   await waitFor(async () =>
-    expect((await live(db, "days")).map((day) => day.position)).toEqual([2]),
+    expect((await live(db, "plannedMeals")).map((day) => day.position)).toEqual(
+      [2],
+    ),
   );
 });
 
@@ -217,7 +226,10 @@ test("a_day_from_a_library_meal_shows_the_meals_picture", async () => {
   const pictured = { ...aMeal("Fajitas"), imageId: "fajitas-image" };
   await seed(db, {
     meals: [pictured],
-    days: [aDay(0, "Fajitas", pictured), aDay(1, "Takeaway")],
+    plannedMeals: [
+      aPlannedMeal(0, "Fajitas", pictured),
+      aPlannedMeal(1, "Takeaway"),
+    ],
   });
   renderApp("/plan", db, fakeLoop());
 
@@ -231,7 +243,7 @@ test("a_day_from_a_library_meal_shows_the_meals_picture", async () => {
 });
 
 test("a_filled_days_link_is_not_natively_draggable", async () => {
-  await seed(db, { days: [aDay(1, "Curry", curry)] });
+  await seed(db, { plannedMeals: [aPlannedMeal(1, "Curry", curry)] });
   renderApp("/plan", db, fakeLoop());
 
   expect(await screen.findByRole("link", { name: /Curry/ })).toHaveAttribute(
@@ -252,7 +264,9 @@ function slotAt(position: number): HTMLElement {
 
 test("mid_drag_the_target_says_what_a_drop_does_and_the_dragged_day_shows_the_name_it_would_take", async () => {
   laySlotsOut();
-  await seed(db, { days: [aDay(0, "Curry", curry), aDay(1, "Fajitas")] });
+  await seed(db, {
+    plannedMeals: [aPlannedMeal(0, "Curry", curry), aPlannedMeal(1, "Fajitas")],
+  });
   const { user } = renderApp("/plan", db, fakeLoop());
 
   (
@@ -276,5 +290,5 @@ test("mid_drag_the_target_says_what_a_drop_does_and_the_dragged_day_shows_the_na
   await user.keyboard("[Escape]");
 
   expect(screen.queryByText("Move here")).not.toBeInTheDocument();
-  expect(await db.days.get(dayIdFor(0))).toMatchObject({ name: "Curry" });
+  expect((await plannedMealsAt(db, 0))[0]).toMatchObject({ name: "Curry" });
 });

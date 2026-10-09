@@ -6,10 +6,10 @@ import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aWantedLine,
   live,
   seed,
@@ -22,9 +22,9 @@ const rice = anItem("Rice", "1kg bag");
 const naan = anItem("Naan");
 const milk = anItem("Milk", "4 pints");
 const curry = aMeal("Curry");
-const curryDay = aDay(0, "Curry", curry);
-const fajitasDay = aDay(2, "Fajitas");
-const curryRice = aDayLine(curryDay, rice, 1);
+const curryDay = aPlannedMeal(0, "Curry", curry);
+const fajitasDay = aPlannedMeal(2, "Fajitas");
+const curryRice = aPlannedMealLine(curryDay, rice, 1);
 
 beforeEach(async () => {
   db = freshDb();
@@ -32,11 +32,11 @@ beforeEach(async () => {
     items: [rice, naan, milk],
     meals: [curry],
     plan: [thePlan("2026-06-01", 7)],
-    days: [curryDay, fajitasDay, aDay(9, "Beyond the plan")],
-    dayLines: [
+    plannedMeals: [curryDay, fajitasDay, aPlannedMeal(9, "Beyond the plan")],
+    plannedMealLines: [
       curryRice,
-      aDayLine(curryDay, naan, 2),
-      aDayLine(fajitasDay, rice, 1),
+      aPlannedMealLine(curryDay, naan, 2),
+      aPlannedMealLine(fajitasDay, rice, 1),
     ],
     wantedLines: [aWantedLine(rice, 1), aWantedLine(milk, 2, true)],
   });
@@ -105,11 +105,11 @@ test("an_edit_in_the_breakdown_is_saved_to_the_plan", async () => {
   );
 
   await waitFor(async () =>
-    expect((await db.dayLines.get(curryRice.id))?.count).toBe(2),
+    expect((await db.plannedMealLines.get(curryRice.id))?.count).toBe(2),
   );
   expect(
-    (await live(db, "dayLines")).filter(
-      (line) => line.dayId === curryDay.id && line.itemId === milk.id,
+    (await live(db, "plannedMealLines")).filter(
+      (line) => line.plannedMealId === curryDay.id && line.itemId === milk.id,
     ),
   ).toHaveLength(1);
   expect((await live(db, "wantedLines")).map((line) => line.itemId)).toEqual([

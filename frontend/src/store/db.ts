@@ -1,15 +1,16 @@
 import { Dexie, type Table } from "dexie";
-import type {
-  Day,
-  DayLine,
-  Item,
-  Meal,
-  MealLine,
-  Plan,
-  Shop,
-  ShopLine,
-  SyncTable,
-  WantedLine,
+import {
+  type Item,
+  type Meal,
+  type MealLine,
+  type Plan,
+  type PlannedMeal,
+  type PlannedMealLine,
+  type Shop,
+  type ShopLine,
+  type SyncTable,
+  syncTables,
+  type WantedLine,
 } from "./types";
 
 /** A synced row changed on this device and not yet acknowledged by the server. */
@@ -33,8 +34,8 @@ export class HamperDb extends Dexie {
   declare meals: Table<Meal, string>;
   declare mealLines: Table<MealLine, string>;
   declare plan: Table<Plan, string>;
-  declare days: Table<Day, string>;
-  declare dayLines: Table<DayLine, string>;
+  declare plannedMeals: Table<PlannedMeal, string>;
+  declare plannedMealLines: Table<PlannedMealLine, string>;
   declare wantedLines: Table<WantedLine, string>;
   declare shops: Table<Shop, string>;
   declare shopLines: Table<ShopLine, string>;
@@ -56,17 +57,20 @@ export class HamperDb extends Dexie {
       outbox: "++seq, &[table+rowId]",
       meta: "key",
     });
-    // Items and meals stored before images existed have no imageId, which every push must carry.
-    this.version(2).upgrade(async (transaction) => {
-      for (const table of ["items", "meals"]) {
-        await transaction
-          .table(table)
-          .toCollection()
-          .modify((row: { imageId?: string | null }) => {
-            row.imageId ??= null;
-          });
-      }
-    });
+    // Days became planned meals: every synced row, the outbox and the cursor go, so the next pull loads the new shape from 0.
+    this.version(3)
+      .stores({
+        days: null,
+        dayLines: null,
+        plannedMeals: "id, position, mealId",
+        plannedMealLines: "id, plannedMealId, itemId",
+      })
+      .upgrade(async (transaction) => {
+        for (const table of [...syncTables, "outbox"]) {
+          await transaction.table(table).clear();
+        }
+        await transaction.table("meta").delete("cursor");
+      });
   }
 }
 

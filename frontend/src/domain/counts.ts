@@ -5,7 +5,11 @@ import { requireCount, requireLive } from "./checks";
 export type CountStep = 1 | -1;
 
 /** The tables whose rows are lines with a count. */
-export type LineTable = "dayLines" | "mealLines" | "wantedLines" | "shopLines";
+export type LineTable =
+  | "plannedMealLines"
+  | "mealLines"
+  | "wantedLines"
+  | "shopLines";
 
 /** Changes a line's stored count by one step, refusing a count below 1; the row still pushes the count it ends on. */
 export async function adjustLineCount(
