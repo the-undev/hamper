@@ -20,6 +20,47 @@ The dev and live-test instances are on the developer's machine. A phone needs
 to reach one over the LAN, or through a dev tunnel, to exercise offline and
 install before a release.
 
+## Reported
+
+Found by the owner using the app on a phone in Firefox over Tailscale on 9
+October 2026, each to be triaged.
+
+### Sheet under the keyboard
+
+Adding a meal to a day opens a bottom sheet and the phone keyboard together.
+The keyboard covers part of the sheet's text field and everything below it. The
+sheet is fine without the keyboard.
+
+### Meal suggestions blend into the picker
+
+The meal picker lists the library under its title. Nothing marks the rows as
+suggestions. It is worst with one result and before anything is typed.
+
+### Breakdown edits read as meal edits
+
+Make from plan shows each day's lines and lets items be added. The add changes
+that day, and it reads as a change to the meal.
+
+### The term wanted
+
+"Wanted" names the items beyond the meals. The word does not separate that
+list from the meals clearly.
+
+### A day holds one meal
+
+The plan blurs day and meal. A day with any number of meals would also cover
+breakfast and lunch.
+
+### Shopping lists accumulate
+
+The Shop tab lets more lists be started, and each adds to the row at the top.
+Nothing nudges towards archiving or deleting.
+
+### The keyboard moves the page
+
+Tapping a text field brings the keyboard up and the layout moves around it.
+This is the most jarring behaviour on the phone.
+
 ## Parked
 
 ### Swap an item on a line
