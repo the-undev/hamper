@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useToast } from "@/components/Toast";
+import { showToast } from "@/components/Toast";
 import { DomainError } from "@/domain/checks";
 import { useDb } from "@/store/provider";
 import { type Writer, write } from "@/store/write";
@@ -9,7 +9,6 @@ export function useWrite(): <R>(
   fn: (w: Writer) => Promise<R>,
 ) => Promise<R | undefined> {
   const db = useDb();
-  const showToast = useToast();
   return useCallback(
     async <R>(fn: (w: Writer) => Promise<R>): Promise<R | undefined> => {
       try {
@@ -22,6 +21,6 @@ export function useWrite(): <R>(
         return undefined;
       }
     },
-    [db, showToast],
+    [db],
   );
 }

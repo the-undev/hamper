@@ -33,5 +33,8 @@ test("an_add_shows_a_toast_whose_undo_takes_the_add_back", async () => {
 
   await waitFor(async () => expect(await live(db, "mealLines")).toEqual([]));
   expect(await live(db, "items")).toEqual([]);
-  expect(screen.queryByText("Added Coriander")).not.toBeInTheDocument();
+  // The toast leaves after its exit animation.
+  await waitFor(() =>
+    expect(screen.queryByText("Added Coriander")).not.toBeInTheDocument(),
+  );
 });

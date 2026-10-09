@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { archiveShop, historyKey, RestError } from "@/api/rest";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { useToast } from "@/components/Toast";
+import { showToast } from "@/components/Toast";
 import { Button } from "@/components/ui/button";
 import { deleteShop, restToWanted, shopText } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
@@ -32,7 +32,6 @@ export function ShopActions({
 }) {
   const write = useWrite();
   const navigate = useNavigate();
-  const showToast = useToast();
   const loop = useSyncLoop();
   const { online } = useSyncStatus(loop);
   const queryClient = useQueryClient();

@@ -9,7 +9,7 @@ import { itemOptions, useLiveItems } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import type { Writer } from "@/store/write";
-import { useToast } from "./Toast";
+import { showToast } from "./Toast";
 import { TypeAhead } from "./TypeAhead";
 
 /** How long the toast after an add offers Undo. */
@@ -27,7 +27,6 @@ export function ItemTypeAhead({
 }) {
   const items = useLiveItems();
   const write = useWrite();
-  const showToast = useToast();
 
   const add = async (
     name: string,

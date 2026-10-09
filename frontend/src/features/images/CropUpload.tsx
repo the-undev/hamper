@@ -13,7 +13,7 @@ import {
   uploadImage,
 } from "@/api/rest";
 import { hint } from "@/components/styles";
-import { useToast } from "@/components/Toast";
+import { showToast } from "@/components/Toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -92,7 +92,6 @@ export function CropUpload({
   const db = useDb();
   const loop = useSyncLoop();
   const { online } = useSyncStatus(loop);
-  const showToast = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
   const [source, setSource] = useState<ImageBitmap | null>(null);
 

@@ -5,7 +5,6 @@ import { StoreProvider } from "@/store/provider";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import { SavedField } from "./SavedField";
-import { ToastProvider } from "./Toast";
 import { TypeAhead } from "./TypeAhead";
 import { buttonVariants } from "./ui/button";
 import { Input } from "./ui/input";
@@ -49,21 +48,14 @@ test("saved_field_inputs_use_the_placeholder_colour", () => {
   db = freshDb();
   render(
     <StoreProvider db={db} loop={fakeLoop()}>
-      <ToastProvider>
-        <SavedField
-          label="Size"
-          value=""
-          placeholder="e.g. tin"
-          save={vi.fn()}
-        />
-        <SavedField
-          label="Name"
-          value=""
-          placeholder="Name"
-          save={vi.fn()}
-          title
-        />
-      </ToastProvider>
+      <SavedField label="Size" value="" placeholder="e.g. tin" save={vi.fn()} />
+      <SavedField
+        label="Name"
+        value=""
+        placeholder="Name"
+        save={vi.fn()}
+        title
+      />
     </StoreProvider>,
   );
 

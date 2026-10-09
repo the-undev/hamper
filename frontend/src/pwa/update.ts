@@ -4,7 +4,7 @@ import {
   useEffect,
   useSyncExternalStore,
 } from "react";
-import { useToast } from "@/components/Toast";
+import { showToast } from "@/components/Toast";
 
 /** Whether a new service worker is waiting, and the way to switch to it. */
 export interface AppUpdate {
@@ -35,7 +35,6 @@ export function useAppUpdate(): {
 /** Shows Update ready with a Reload action once, when a new version starts to wait. */
 export function useUpdateToast(): void {
   const { ready, reload } = useAppUpdate();
-  const showToast = useToast();
   useEffect(() => {
     if (!ready) {
       return;
@@ -45,5 +44,5 @@ export function useUpdateToast(): void {
       onAction: () => void reload(),
       closesAfterMs: null,
     });
-  }, [ready, reload, showToast]);
+  }, [ready, reload]);
 }

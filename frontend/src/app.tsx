@@ -4,7 +4,7 @@ import {
   type RouterHistory,
   RouterProvider,
 } from "@tanstack/react-router";
-import { ToastProvider } from "./components/Toast";
+import { Toaster } from "./components/ui/sonner";
 import { type AppUpdate, AppUpdateContext } from "./pwa/update";
 import { routeTree } from "./routeTree.gen";
 import type { HamperDb } from "./store/db";
@@ -43,9 +43,8 @@ export function App({
     <StoreProvider db={db} loop={loop}>
       <AppUpdateContext value={appUpdate}>
         <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <RouterProvider router={router} />
-          </ToastProvider>
+          <RouterProvider router={router} />
+          <Toaster />
         </QueryClientProvider>
       </AppUpdateContext>
     </StoreProvider>

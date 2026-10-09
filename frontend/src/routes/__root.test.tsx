@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { act, screen, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import { columnWidth } from "@/components/styles";
 import type { HamperDb } from "@/store/db";
@@ -68,11 +68,14 @@ test("an_update_shows_a_toast_whose_reload_switches_to_the_new_version", async (
   expect(screen.queryByText("Update ready")).not.toBeInTheDocument();
 
   act(() => appUpdate.makeReady());
-  expect(screen.getByText("Update ready")).toBeInTheDocument();
+  expect(await screen.findByText("Update ready")).toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "Reload" }));
   expect(appUpdate.reload).toHaveBeenCalledTimes(1);
-  expect(screen.queryByText("Update ready")).not.toBeInTheDocument();
+  // The toast leaves after its exit animation.
+  await waitFor(() =>
+    expect(screen.queryByText("Update ready")).not.toBeInTheDocument(),
+  );
 });
 
 test("the_shell_column_uses_the_shared_width_and_no_source_file_hardcodes_480px", async () => {
