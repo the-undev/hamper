@@ -38,8 +38,10 @@ push to `main` and when started by hand on any branch. It runs the CI workflow
 as its gates, then builds the image stamped `0.0.0-edge` and
 `0.0.0-edge+<short sha>`. It pushes three tags: `:edge`, `:sha-<short sha>` and
 `:<branch>`. `:edge` is set only on `main`, so it always points at the newest
-`main`. A manual run on a branch publishes that branch's `:<branch>` and
-`:sha-<short sha>` and leaves `:edge` alone.
+`main`. The CI workflow does not run on its own push trigger for `main`, so
+each push to `main` runs the gates once, inside this workflow. A manual run
+on a branch publishes that branch's `:<branch>` and `:sha-<short sha>` and
+leaves `:edge` alone.
 
 ## Running it
 
