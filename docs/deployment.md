@@ -58,21 +58,35 @@ Once it is up, `GET /health` on the mapped port answers `{"status":"ok"}`, or a
 
 ## Unraid
 
-`unraid/` holds two Docker templates. `hamper.xml` runs `:latest` and is for
-the household's data. `hamper-edge.xml` runs `:edge`, follows the newest `main`
-and is for trying changes. Each maps a port to `8080` and a directory to
-`/data`.
+`hamper-edge` runs `:edge`, which follows the newest `main` and is for trying
+changes. The stable container runs `:latest` and holds the household's data.
 
-To load them, add `https://github.com/the-undev/hamper` under Template
-repositories on the Docker tab, or copy a file to
-`/boot/config/plugins/dockerMan/templates-user/` on the flash drive.
+To create `hamper-edge`:
+
+1. On the Docker tab, choose Add Container and turn Advanced View on.
+2. Set Name to `hamper-edge`, Repository to `ghcr.io/the-undev/hamper:edge`,
+   Network Type to bridge, and WebUI to `http://[IP]:[PORT:8080]/`.
+3. Set Icon URL to
+   `https://raw.githubusercontent.com/the-undev/hamper/main/frontend/public/icon-192.png`.
+4. Add a Port mapping from a host port (`8781` by default) to container port
+   `8080`, TCP.
+5. Add a Path mapping from `/mnt/user/appdata/hamper-edge` to `/data`, read
+   and write.
+6. Choose Apply.
+7. Open `/health` on the host port. It answers ok.
+
+The stable container is the same with `:latest`, its own appdata folder and
+its own host port (`8780` by default).
+
+`unraid/hamper.xml` and `unraid/hamper-edge.xml` hold the same settings in
+Unraid's template form, for reference.
 
 The package must be public, or Unraid cannot pull it without a login. Change
 that in the package's settings on GitHub.
 
-The ports in the templates, `8780` and `8781`, are defaults the operator
-changes to suit the host. To update `hamper-edge`, use Docker, then Check for
-Updates, then apply the update. A restart alone does not pull the new image.
+The ports, `8780` and `8781`, are defaults the operator changes to suit the
+host. To update `hamper-edge`, use Docker, then Check for Updates, then apply
+the update. A restart alone does not pull the new image.
 
 ## What the host provides
 
