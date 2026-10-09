@@ -7,6 +7,7 @@
 | [needs.md](needs.md) | What it has to do, by flow |
 | [screens.md](screens.md) | The four screens, the paths through them, the gestures |
 | [architecture.md](architecture.md) | Stack, sync, images, export and import, the PWA |
-| [deployment.md](deployment.md) | The image, the container on the home server, the addresses |
+| [components.md](components.md) | Each UI component, the shadcn component that covers it, and the decision |
+| [deployment.md](deployment.md) | The image, the release workflow, running the container, what the host provides |
 | [roadmap.md](roadmap.md) | Parked work and open decisions |
 | [prototype.html](prototype.html) | Clickable sketch of the screens on sample data |

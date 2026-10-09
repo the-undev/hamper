@@ -1,0 +1,100 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* The prototype's tokens, light by default and dark when the system asks. */
+:root {
+  --column-max: 760px;
+  --background: #f3f4ef;
+  --surface: #ffffff;
+  --foreground: #1d221c;
+  --muted: #6b7266;
+  --placeholder: oklch(0.72 0 0);
+  --line: #dfe3d9;
+  --accent: #2f7d4a;
+  --accent-foreground: #ffffff;
+  --soft: #e6f1e9;
+  --warn: #b4621a;
+  --warn-soft: #fbeedd;
+  --danger: #c4423a;
+  --tick: #8d948a;
+  --shadow: 0 10px 30px rgba(30, 40, 30, 0.12);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #15181a;
+    --surface: #1f2326;
+    --foreground: #e8ebe5;
+    --muted: #9aa196;
+    --placeholder: oklch(0.5 0 0);
+    --line: #30363a;
+    --accent: #5fb57c;
+    --accent-foreground: #10211a;
+    --soft: #1f3328;
+    --warn: #e2954a;
+    --warn-soft: #3a2a18;
+    --danger: #e0675e;
+    --tick: #6d746b;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-placeholder: var(--placeholder);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-soft: var(--soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-tick: var(--tick);
+  /* The names shadcn's components use, mapped onto the tokens above. */
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-foreground);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--accent);
+  --color-destructive: var(--danger);
+  --radius: 0.875rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+@layer base {
+  * {
+    @apply border-line outline-accent;
+  }
+  html {
+    @apply font-sans;
+    /* A desktop's scrollbar takes width; reserving it keeps the column still whether or not the screen scrolls. */
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-surface text-foreground;
+    margin: 0;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline-width: 2px;
+    outline-style: solid;
+    outline-offset: 2px;
+  }
+}

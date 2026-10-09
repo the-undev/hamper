@@ -1,0 +1,27 @@
+# The dev database and data directory live inside the API project and never enter a build context.
+backend/src/Hamper.Api/hamper-data/
+hamper-data/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Build output and dependencies; every stage produces its own.
+**/bin/
+**/obj/
+**/node_modules/
+**/TestResults/
+frontend/dist/
+*.tsbuildinfo
+
+# Nothing the build reads.
+.git/
+.github/
+.claude/
+.vscode/
+.idea/
+docs/
+*.md
+LICENSE
+Makefile
+Dockerfile
+.dockerignore

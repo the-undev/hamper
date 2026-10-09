@@ -3,29 +3,7 @@
 Work identified and not done, and decisions still open. Each has its own
 heading so a document can link to it.
 
-## Build order
-
-1. Repo skeleton: backend, frontend, Makefile, Dockerfile, `make check` green
-   on an empty app.
-2. Domain and API: items, meals, plan, shops, history, export and import, with
-   integration tests.
-3. Sync: revisions, pull, push, SSE, the Dexie store and the outbox.
-4. Screens: Plan, Shop, Meals, More, against the synced store.
-5. Images: crop, upload, resize, serve.
-6. PWA: manifest, service worker, share, download.
-7. Release workflow, image on ghcr, the container on the server.
-
 ## Open decisions
-
-### Image library
-
-Magick.NET, which skarrow uses, or ImageSharp. Resizing JPEGs is all that is
-needed. `TBD`.
-
-### PWA tooling
-
-`vite-plugin-pwa` with Workbox, or a hand-written service worker. The shell
-precache and an image cache are small enough for either. `TBD`.
 
 ### Published port
 
@@ -43,6 +21,22 @@ to reach one over the LAN, or through a dev tunnel, to exercise offline and
 install before a release.
 
 ## Parked
+
+### Swap an item on a line
+
+Replacing one item with another on a meal, a day or the breakdown is done by
+adding the new item and removing the old. A single swap action is parked.
+
+### Tidy unused items
+
+More → Items could list the items used on no meal, day or list, each with
+Merge and Delete, for the mistakes nobody fixed at the time. Today each is
+found by hand.
+
+### Sweep orphaned images
+
+When an item or meal is deleted through sync, its image files stay under
+`/data/images`. Nothing removes them yet.
 
 ### Presets
 
