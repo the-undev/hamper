@@ -15,9 +15,14 @@ and during a swipe they follow the finger. The view last used is remembered.
 1 Jun, ends Sun 7 Jun", with dates in the browser's locale. Below it, one
 slot per day:
 
-- An empty day shows "Pick a meal". Tapping it opens the picker: a type-ahead
-  over the library, and for a name matching nothing, "Use as it is" for an
-  ad-hoc day.
+- An empty day shows "Pick a meal". Tapping it opens Pick a meal, a screen
+  titled with the day's date. The box sits at the top, focused, and under it
+  the library as a list: each meal with its picture, its name and its lines.
+  Typing filters the library and adds a row under "Or a day of its own",
+  "Use “Takeaway” as it is", for an ad-hoc day; a name that is a meal's,
+  ignoring case and spaces at the ends, has no such row. Enter picks the meal
+  of exactly that name, and otherwise uses the name as it is. Picking a meal
+  goes back to the Plan; an ad-hoc day opens in its place.
 - A filled day shows the meal's picture, its name and its lines in one line
   underneath. Tapping the name opens the day. A ≡ handle on the right drags
   the meal onto another day to swap. Swiping left reveals Clear.
@@ -27,9 +32,11 @@ slot per day:
 Until the first sync brings the plan, the plan's screens say they are waiting
 for the server.
 
-**Day.** The date, the planned meal's name, editable for this day, and a
-line saying which library meal it came from and whether it has been changed
-for this day, or that it is not a library meal. Reset to the meal, or Save as
+**Day.** An empty day says so and offers Pick a meal, which opens the same
+screen and comes back to the day. A filled day: the date, the planned meal's
+name, editable for this day, and a line saying which library meal it came
+from and whether it has been changed for this day, or that it is not a
+library meal. Reset to the meal, or Save as
 a meal for an ad-hoc day. Then the type-ahead and the day's lines, each with +
 and − and a swipe to remove.
 
@@ -131,9 +138,9 @@ History needs the server, and says so while offline.
   ignoring case and spaces at the ends, picks that item, and otherwise the
   create row runs. The arrow keys highlight a suggestion, wrapping at the
   ends, and Enter then takes it. Escape closes the suggestions first, with
-  their highlight, and clears the text second. Tab leaves without taking anything. The meal picker's "Use as
-  it is" row follows the same rules. Merge into has no create row, so Enter
-  there takes only an exact name or the highlighted row.
+  their highlight, and clears the text second. Tab leaves without taking
+  anything. Merge into has no create row, so Enter there takes only an exact
+  name or the highlighted row.
 - After an add, a toast says "Added Milk" with Undo for five seconds, which
   takes the line back off, or back to its count, and removes an item the add
   made when nothing else uses it.

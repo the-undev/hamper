@@ -145,15 +145,12 @@ export function TypeAhead<O extends TypeAheadOption>({
   options,
   onPick,
   create,
-  listWhenEmpty = false,
 }: {
   label: string;
   placeholder: string;
   options: readonly O[];
   onPick: (option: O) => void;
   create?: TypeAheadCreate;
-  /** Lists every option while nothing is typed, as the meal picker does. */
-  listWhenEmpty?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -169,10 +166,9 @@ export function TypeAhead<O extends TypeAheadOption>({
   const rows: Row<O>[] = [];
   const matches = rankedOptions(options, typedName);
   const exactMatch = options.find((option) => namesMatch(option, typedName));
-  if (typedName !== "" || listWhenEmpty) {
-    const shown = typedName === "" ? matches : matches.slice(0, matchLimit);
+  if (typedName !== "") {
     rows.push(
-      ...shown.map(({ option, rank }) => ({
+      ...matches.slice(0, matchLimit).map(({ option, rank }) => ({
         kind: "pick" as const,
         option,
         close: rank === closeRank,
@@ -295,7 +291,7 @@ export function TypeAhead<O extends TypeAheadOption>({
         align="start"
         sideOffset={4}
         collisionPadding={8}
-        // The sheet the meal picker sits in slides in after the box gains focus; the overlay follows it.
+        // A sheet slides in, and lifts above the keyboard, after the box gains focus; the overlay follows it.
         updatePositionStrategy="always"
         onOpenAutoFocus={(event) => event.preventDefault()}
         onEscapeKeyDown={(event) => event.preventDefault()}

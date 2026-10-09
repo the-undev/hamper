@@ -166,12 +166,15 @@ test("a_day_whose_meal_was_deleted_says_so_and_offers_no_reset", async () => {
   ).not.toBeInTheDocument();
 });
 
-test("an_empty_day_offers_the_meal_picker", async () => {
-  const { user } = renderApp("/plan/day/3", db, fakeLoop());
+test("an_empty_day_opens_the_picker_which_comes_back_to_the_day", async () => {
+  const { user, router } = renderApp("/plan/day/3", db, fakeLoop());
 
-  await user.type(await screen.findByLabelText("Meal"), "curry{Enter}");
+  await user.click(await screen.findByRole("link", { name: "Pick a meal" }));
+  expect(router.state.location.pathname).toBe("/plan/pick/3");
+  await user.click(await screen.findByRole("button", { name: /^Curry/ }));
 
   expect(await screen.findByText("From the meal Curry")).toBeInTheDocument();
+  expect(router.state.location.pathname).toBe("/plan/day/3");
   expect(await countsOnDay(3)).toEqual(
     new Map([
       [rice.id, 1],

@@ -48,57 +48,6 @@ async function dayLinesAt(position: number) {
   );
 }
 
-test("placing_a_library_meal_fills_the_day_and_copies_its_lines", async () => {
-  const { user } = renderApp("/plan", db, fakeLoop());
-
-  await user.click(
-    await screen.findByRole("button", { name: `Pick a meal for ${tuesday}` }),
-  );
-  const picker = await screen.findByRole("dialog");
-  await user.type(within(picker).getByLabelText("Meal"), "cur");
-  await user.click(screen.getByRole("option", { name: /^Curry/ }));
-
-  expect(
-    await screen.findByRole("link", { name: /Curry\s*Naan, Rice/ }),
-  ).toBeInTheDocument();
-  await waitFor(() =>
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
-  );
-  expect(await db.days.get(dayIdFor(1))).toMatchObject({
-    name: "Curry",
-    mealId: curry.id,
-  });
-  const countsByItem = new Map(
-    (await dayLinesAt(1)).map((line) => [line.itemId, line.count]),
-  );
-  expect(countsByItem).toEqual(
-    new Map([
-      [rice.id, 1],
-      [naan.id, 2],
-    ]),
-  );
-});
-
-test("an_ad_hoc_name_makes_a_day_with_no_lines_and_opens_it", async () => {
-  const { user, router } = renderApp("/plan", db, fakeLoop());
-
-  await user.click(
-    await screen.findByRole("button", { name: `Pick a meal for ${tuesday}` }),
-  );
-  const picker = await screen.findByRole("dialog");
-  await user.type(within(picker).getByLabelText("Meal"), "Takeaway{Enter}");
-
-  expect(await screen.findByLabelText("Name")).toHaveValue("Takeaway");
-  expect(router.state.location.pathname).toBe("/plan/day/1");
-  expect(screen.getByText("Not a meal in the library")).toBeInTheDocument();
-  expect(screen.getByText("Nothing to buy for this day")).toBeInTheDocument();
-  expect(await db.days.get(dayIdFor(1))).toMatchObject({
-    name: "Takeaway",
-    mealId: null,
-  });
-  expect(await dayLinesAt(1)).toEqual([]);
-});
-
 test("changing_the_length_hides_and_shows_days_without_disturbing_the_meals", async () => {
   await seed(db, { days: [aDay(0, "Curry", curry), aDay(6, "Roast")] });
   const { user } = renderApp("/plan", db, fakeLoop());
@@ -282,18 +231,13 @@ test("a_day_from_a_library_meal_shows_the_meals_picture", async () => {
 });
 
 test("a_filled_days_link_is_not_natively_draggable", async () => {
-  const { user } = renderApp("/plan", db, fakeLoop());
+  await seed(db, { days: [aDay(1, "Curry", curry)] });
+  renderApp("/plan", db, fakeLoop());
 
-  await user.click(
-    await screen.findByRole("button", { name: `Pick a meal for ${tuesday}` }),
+  expect(await screen.findByRole("link", { name: /Curry/ })).toHaveAttribute(
+    "draggable",
+    "false",
   );
-  const picker = await screen.findByRole("dialog");
-  await user.type(within(picker).getByLabelText("Meal"), "cur");
-  await user.click(screen.getByRole("option", { name: /^Curry/ }));
-
-  expect(
-    await screen.findByRole("link", { name: /Curry\s*Naan, Rice/ }),
-  ).toHaveAttribute("draggable", "false");
 });
 
 function slotAt(position: number): HTMLElement {

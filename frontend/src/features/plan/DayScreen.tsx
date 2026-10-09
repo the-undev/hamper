@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { DoneButton } from "@/components/DoneButton";
 import { EmptyState, WaitingForServer } from "@/components/EmptyState";
 import { SavedField } from "@/components/SavedField";
@@ -16,7 +16,6 @@ import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
 import type { DayLine, Meal, MealLine } from "@/store/types";
 import { DayLines } from "./DayLines";
-import { MealPicker } from "./MealPicker";
 
 /** Whether the day's lines differ from the meal's, item by item and count by count. */
 function linesDiffer(
@@ -94,8 +93,16 @@ export function DayScreen({ position }: { position: number }) {
     return (
       <>
         <ScreenHeader title={title} back={back} />
-        <EmptyState>Nothing planned for this day. Pick a meal.</EmptyState>
-        <MealPicker position={position} onPlaced={() => {}} />
+        <EmptyState>Nothing planned for this day.</EmptyState>
+        <Button asChild size="lg" className="flex-none">
+          <Link
+            to="/plan/pick/$position"
+            params={{ position: String(position) }}
+            search={{ from: "day" }}
+          >
+            Pick a meal
+          </Link>
+        </Button>
         <ScreenFooter>
           <DoneButton parent="/plan" />
         </ScreenFooter>

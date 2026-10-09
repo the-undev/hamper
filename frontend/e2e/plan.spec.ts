@@ -59,6 +59,56 @@ test("a meal placed on a day can be renamed, reset and cleared there", async ({
   ).toBeVisible();
 });
 
+test("picking a meal is a screen with the box at the top", async ({ page }) => {
+  const meal = uniqueName("Dhal");
+  const lentils = uniqueName("Lentils");
+  const adHoc = uniqueName("Takeaway");
+  await openApp(page, "/meals");
+  await addMeal(page, meal, [lentils]);
+  await page.goto("/plan");
+  await planView(page, "Meals");
+  const pick = page.getByRole("button", { name: /^Pick a meal for / }).first();
+  const day = (await pick.getAttribute("aria-label"))?.replace(
+    "Pick a meal for ",
+    "",
+  );
+
+  await pick.click();
+
+  await expect(page).toHaveURL(/\/plan\/pick\/\d+$/);
+  await expect(
+    page.getByRole("heading", { name: `Pick a meal for ${day}` }),
+  ).toBeVisible();
+  const box = page.getByRole("textbox", { name: "Meal" });
+  await expect(box).toBeFocused();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // The box sits at the top of the content, right under the header.
+  const headerBox = await page.getByRole("banner").boundingBox();
+  const boxBox = await box.boundingBox();
+  expect(boxBox?.y ?? 0).toBeLessThan((headerBox?.height ?? 0) + 24);
+  const library = page.getByRole("list", { name: "Library" });
+  await expect(
+    library.getByRole("button", { name: meal }).getByText(lentils),
+  ).toBeVisible();
+
+  await box.fill(adHoc);
+  await expect(library.getByRole("button", { name: meal })).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("list", { name: "Or a day of its own" })
+      .getByRole("button", { name: `Use “${adHoc}” as it is` }),
+  ).toBeVisible();
+  await box.press("Enter");
+
+  await expect(page).toHaveURL(/\/plan\/day\/\d+$/);
+  await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue(adHoc);
+  await page.getByRole("button", { name: "Clear day" }).click();
+  await expect(page).toHaveURL(/\/plan$/);
+
+  await placeOnFirstEmptyDay(page, meal);
+  await clearDay(page, day ?? "");
+});
+
 test("Done stays above the tabs on a long day and goes back", async ({
   page,
 }) => {

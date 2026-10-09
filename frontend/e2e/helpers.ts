@@ -101,7 +101,7 @@ export function line(scope: Page | Locator, itemName: string): Locator {
   });
 }
 
-/** Places a library meal on the plan's first empty day and returns that day's label, as "Thu 8 Oct". */
+/** Places a library meal on the plan's first empty day through the picker screen and returns that day's label, as "Thu 8 Oct". */
 export async function placeOnFirstEmptyDay(
   page: Page,
   mealName: string,
@@ -112,14 +112,14 @@ export async function placeOnFirstEmptyDay(
   const pickLabel = await pick.getAttribute("aria-label");
   const dayLabel = pickLabel?.replace("Pick a meal for ", "") ?? "";
   await pick.click();
-  await page.getByRole("combobox", { name: "Meal" }).fill(mealName);
+  await page.getByRole("textbox", { name: "Meal" }).fill(mealName);
   await page
-    .getByRole("listbox", { name: "Suggestions" })
-    .getByRole("option", { name: mealName })
+    .getByRole("list", { name: "Library" })
+    .getByRole("button", { name: mealName })
     .first()
     .click();
+  await expect(page).toHaveURL(/\/plan$/);
   await expect(dayHandle(page, mealName, dayLabel)).toBeVisible();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
   return dayLabel;
 }
 
