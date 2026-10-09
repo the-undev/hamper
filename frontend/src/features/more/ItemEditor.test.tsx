@@ -120,7 +120,7 @@ test("merge_repoints_and_combines_after_a_confirm", async () => {
   await user.type(await screen.findByLabelText("Merge into"), "pot");
   await user.click(screen.getByRole("option", { name: /^Potatoes/ }));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Merge",
     }),
   );
@@ -148,7 +148,7 @@ test("delete_removes_the_item_and_its_lines_after_a_confirm_and_open_lists_keep_
 
   await user.click(await screen.findByRole("button", { name: "Delete item" }));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Delete",
     }),
   );

@@ -38,7 +38,7 @@ async function deleteList(page: Page): Promise<void> {
   const listUrl = page.url();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Delete" })
     .click();
   await expect(page).not.toHaveURL(listUrl);
@@ -201,7 +201,7 @@ test("an archived list goes to History, which can copy its meals back", async ({
   await expect(shopLine(page, item)).toBeVisible();
   await page.getByRole("button", { name: "Archive" }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Archive" })
     .click();
   await expect(
@@ -221,7 +221,7 @@ test("an archived list goes to History, which can copy its meals back", async ({
   await expect(page.getByRole("main")).toContainText(item);
   await page.getByRole("button", { name: /^Copy the meals of / }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Copy meals" })
     .click();
 

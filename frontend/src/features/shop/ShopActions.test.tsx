@@ -127,7 +127,7 @@ test("archive_posts_after_a_confirm_and_the_pull_removes_the_shop", async () => 
 
   await user.click(await screen.findByRole("button", { name: "Archive" }));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Archive",
     }),
   );
@@ -149,7 +149,7 @@ test("archive_shows_the_problem_when_the_server_refuses", async () => {
 
   await user.click(await screen.findByRole("button", { name: "Archive" }));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Archive",
     }),
   );
@@ -176,7 +176,7 @@ test("delete_discards_the_list_after_a_confirm", async () => {
 
   await user.click(await screen.findByRole("button", { name: "Delete" }));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Cancel",
     }),
   );
@@ -184,7 +184,7 @@ test("delete_discards_the_list_after_a_confirm", async () => {
 
   await user.click(screen.getByRole("button", { name: "Delete" }));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Delete",
     }),
   );

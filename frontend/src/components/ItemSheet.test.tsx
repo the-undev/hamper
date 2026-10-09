@@ -131,7 +131,7 @@ test("delete_after_a_confirm_removes_the_item_and_its_lines", async () => {
   await user.click(within(sheet).getByRole("button", { name: "Delete item" }));
   await user.click(
     within(
-      await screen.findByRole("dialog", { name: "Delete banan?" }),
+      await screen.findByRole("alertdialog", { name: "Delete banan?" }),
     ).getByRole("button", { name: "Delete" }),
   );
 

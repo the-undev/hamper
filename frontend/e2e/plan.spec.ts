@@ -348,14 +348,14 @@ test("Start new plan moves the start and clears Once lines, after a confirm", as
 
   await startNewPlan.click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Cancel" })
     .click();
   await expect(startDate).toHaveValue(before);
 
   await startNewPlan.click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Start new plan" })
     .click();
   const expected = new Date(`${before}T00:00:00Z`);

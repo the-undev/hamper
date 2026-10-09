@@ -1,11 +1,11 @@
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /** Asks before an action that cannot be undone; Cancel and the confirm button both close it. */
 export function ConfirmDialog({
@@ -26,33 +26,31 @@ export function ConfirmDialog({
   danger?: boolean;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="bg-surface">
-        <DialogTitle className="text-lg font-bold">{title}</DialogTitle>
-        <DialogDescription className="text-sm text-muted">
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="bg-surface">
+        <AlertDialogTitle className="text-lg font-bold">
+          {title}
+        </AlertDialogTitle>
+        <AlertDialogDescription className="text-sm text-muted">
           {description}
-        </DialogDescription>
+        </AlertDialogDescription>
         <div className="flex gap-2">
-          <DialogClose className="min-h-11 flex-1 rounded-[10px] border border-line font-semibold">
+          <AlertDialogCancel
+            size="lg"
+            className="flex-1 rounded-[10px] text-base"
+          >
             Cancel
-          </DialogClose>
-          <button
-            type="button"
-            onClick={() => {
-              onOpenChange(false);
-              onConfirm();
-            }}
-            className={cn(
-              "min-h-11 flex-1 rounded-[10px] font-semibold",
-              danger
-                ? "bg-danger text-white"
-                : "bg-accent text-accent-foreground",
-            )}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant={danger ? "destructive" : "default"}
+            size="lg"
+            onClick={onConfirm}
+            className="flex-1 rounded-[10px] text-base font-semibold"
           >
             {confirmLabel}
-          </button>
+          </AlertDialogAction>
         </div>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

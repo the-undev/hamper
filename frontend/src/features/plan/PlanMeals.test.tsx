@@ -163,7 +163,7 @@ test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_c
 
   await user.click(await screen.findByRole("button", startNew));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Cancel",
     }),
   );
@@ -173,7 +173,7 @@ test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_c
 
   await user.click(screen.getByRole("button", startNew));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Start new plan",
     }),
   );

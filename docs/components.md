@@ -15,7 +15,7 @@ names (`--color-primary`, `--color-border` and the rest) map onto ours.
 | Component | What it is | shadcn | Decision |
 | --- | --- | --- | --- |
 | `TypeAhead` | The box for adding a line, with ranked suggestions floating under it | Popover and Command (cmdk) | done |
-| `ConfirmDialog` | Asks before an action that cannot be undone | AlertDialog | shadcn |
+| `ConfirmDialog` | Asks before an action that cannot be undone | AlertDialog | done: wraps AlertDialog |
 | `Toast`, `ToastProvider` | One short message near the bottom, with an optional action such as Undo | Sonner | shadcn |
 | `Segmented` | The Plan's Meals and Items switch, radios underneath | Tabs | shadcn |
 | `SavedField` | A labelled text box saved on blur or Enter | Input and Label | done |

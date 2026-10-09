@@ -79,7 +79,10 @@ test("merging an item moves its lines onto the other and combines counts", async
   await openItem(page, source);
   await page.getByRole("combobox", { name: "Merge into" }).fill(target);
   await page.getByRole("option", { name: target, exact: true }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Merge" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Merge" })
+    .click();
   await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue(target);
 
   await page.goto(mealUrl);
@@ -97,7 +100,7 @@ test("deleting an item removes its lines", async ({ page }) => {
   await openItem(page, item);
   await page.getByRole("button", { name: "Delete" }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Delete" })
     .click();
   await expect(page.getByRole("heading", { name: "Items" })).toBeVisible();

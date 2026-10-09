@@ -124,7 +124,7 @@ test("delete_removes_the_meal_after_a_confirm", async () => {
 
   await user.click(await screen.findByRole("button", { name: "Delete" }));
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Delete",
     }),
   );

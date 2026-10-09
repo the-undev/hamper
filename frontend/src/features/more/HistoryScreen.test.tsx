@@ -101,7 +101,7 @@ test("copy_these_meals_fills_the_plan_by_position_after_a_confirm", async () => 
     }),
   );
   await user.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
       name: "Copy meals",
     }),
   );
