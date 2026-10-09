@@ -59,7 +59,7 @@ internal static class WireRows
             ["count"] = count,
             ["nameOverride"] = "Semi-skimmed",
             ["sizeOverride"] = null,
-            ["sources"] = new JsonArray("Monday", "wanted"),
+            ["sources"] = new JsonArray("Monday", "extras"),
             ["ticked"] = true,
             ["createdAt"] = Morning.AddMinutes(5),
         };

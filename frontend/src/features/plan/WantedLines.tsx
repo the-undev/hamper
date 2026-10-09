@@ -10,7 +10,7 @@ import { liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
 import type { Item } from "@/store/types";
 
-/** The wanted list's type-ahead and lines, each with Once / Weekly, + and −, and a swipe to remove. */
+/** The extras list's type-ahead and lines, each with Once / Weekly, + and −, and a swipe to remove. */
 export function WantedLines({
   itemsById,
   typeAheadLabel,
@@ -34,7 +34,7 @@ export function WantedLines({
       {wantedLines && (
         <LineList
           lines={lineViews(wantedLines, itemsById)}
-          empty="Nothing wanted beyond the meals"
+          empty="No extras beyond the meals"
           onAdjust={(line, step) =>
             void write((w) => adjustLineCount(w, "wantedLines", line.id, step))
           }

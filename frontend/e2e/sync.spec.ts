@@ -38,8 +38,8 @@ test("the pending count shows after an edit and clears once sent", async ({
 }) => {
   const item = uniqueName("Tea");
   await openApp(page, "/plan");
-  await planView(page, "Items");
-  await page.getByRole("combobox", { name: "Add an item" }).fill(item);
+  await planView(page, "Extras");
+  await page.getByRole("combobox", { name: "Add to extras" }).fill(item);
   await page.getByRole("option", { name: `Add “${item}”` }).click();
 
   await expect
@@ -57,7 +57,7 @@ test("the header and the column stay put while changes wait and once they are se
 }) => {
   const item = uniqueName("Jam");
   await openApp(page, "/plan");
-  await planView(page, "Items");
+  await planView(page, "Extras");
   const geometry = () =>
     page.evaluate(() => ({
       state:
@@ -71,7 +71,7 @@ test("the header and the column stay put while changes wait and once they are se
   const before = await geometry();
   expect(before.state).toBeNull();
 
-  await page.getByRole("combobox", { name: "Add an item" }).fill(item);
+  await page.getByRole("combobox", { name: "Add to extras" }).fill(item);
   await page.getByRole("option", { name: `Add “${item}”` }).click();
   let waiting = before;
   await expect
@@ -105,12 +105,12 @@ test("an edit made offline shows at once and reaches another device on reconnect
   const other = await secondDevice(browser);
   const otherPage = await other.newPage();
   await openApp(otherPage, "/plan");
-  await planView(otherPage, "Items");
+  await planView(otherPage, "Extras");
 
   await openApp(page, "/plan");
-  await planView(page, "Items");
+  await planView(page, "Extras");
   await context.setOffline(true);
-  await addLine(page, "Add an item", item);
+  await addLine(page, "Add to extras", item);
   await expect
     .poll(() => syncState(page))
     .toBe("Offline. Changes are kept on this phone.");

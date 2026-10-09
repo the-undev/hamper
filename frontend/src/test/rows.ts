@@ -62,7 +62,7 @@ export function aDayLine(day: Day, item: Item, count: number): DayLine {
   return { ...synced(), dayId: day.id, itemId: item.id, count };
 }
 
-/** A wanted line row. */
+/** An extras line row. */
 export function aWantedLine(
   item: Item,
   count: number,

@@ -2,23 +2,29 @@ import { liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
 import type { Shop, ShopLine } from "@/store/types";
 
-/** The setting that remembers which list was open last. */
-export const lastShopSetting = "shopId";
+/** An open shop with how many of its lines are ticked, out of how many. */
+export interface OpenShop {
+  shop: Shop;
+  got: number;
+  lineCount: number;
+}
 
-/** The open shops, oldest first, each with how many of its lines are still to get. */
-export function useOpenShops(): { shop: Shop; toGet: number }[] | undefined {
+/** The open shops, newest first, each with how many of its lines are got. */
+export function useOpenShops(): OpenShop[] | undefined {
   const db = useDb();
   return useLive(async () => {
     const shops = liveRows(await db.shops.toArray()).sort((first, second) =>
-      first.createdAt.localeCompare(second.createdAt),
+      second.createdAt.localeCompare(first.createdAt),
     );
-    const unticked = liveRows(await db.shopLines.toArray()).filter(
-      (line) => !line.ticked,
-    );
-    return shops.map((shop) => ({
-      shop,
-      toGet: unticked.filter((line) => line.shopId === shop.id).length,
-    }));
+    const lines = liveRows(await db.shopLines.toArray());
+    return shops.map((shop) => {
+      const shopLines = lines.filter((line) => line.shopId === shop.id);
+      return {
+        shop,
+        got: shopLines.filter((line) => line.ticked).length,
+        lineCount: shopLines.length,
+      };
+    });
   }, [db]);
 }
 

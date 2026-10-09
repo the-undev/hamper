@@ -143,7 +143,7 @@ public sealed class ExportDataTests
         return await read(scope.ServiceProvider.GetRequiredService<HamperDbContext>());
     }
 
-    /// <summary>Puts a row in every exported table: items, a meal, two days, wanted lines, an open shop, an archived shop, and a moved plan.</summary>
+    /// <summary>Puts a row in every exported table: items, a meal, two days, extras lines, an open shop, an archived shop, and a moved plan.</summary>
     private static async Task SeedFullDatasetAsync(HamperApiFactory factory, HttpClient client, CancellationToken ct)
     {
         var milk = await TestData.AddItemAsync(factory, "Milk", "4 pints", ct);
@@ -159,8 +159,8 @@ public sealed class ExportDataTests
             factory,
             new ShopSeed("Big shop", FromPlan: true, PlanStartDate: new DateOnly(2026, 4, 20), PlanLengthDays: 7, Meals: meals),
             [
-                new ShopLineSeed(milk, 2, Sources: ["wanted"], Ticked: true),
-                new ShopLineSeed(rice, 3, NameOverride: "Basmati", SizeOverride: "2kg", Sources: ["Curry", "wanted"]),
+                new ShopLineSeed(milk, 2, Sources: ["extras"], Ticked: true),
+                new ShopLineSeed(rice, 3, NameOverride: "Basmati", SizeOverride: "2kg", Sources: ["Curry", "extras"]),
             ],
             ct);
         var archivedShop = await TestData.AddShopAsync(factory, new ShopSeed("Last week"), [new ShopLineSeed(milk, 1)], ct);

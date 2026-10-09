@@ -85,7 +85,7 @@ export async function addToDay(
   return lineAdd("dayLines", previousLine, await lineOfItem());
 }
 
-/** Adds one of an item to the wanted list. */
+/** Adds one of an item to the extras list. */
 export async function addToWanted(w: Writer, itemId: string): Promise<LineAdd> {
   const previousLine = liveRows(await w.all("wantedLines")).find(
     (line) => line.itemId === itemId,
@@ -132,7 +132,7 @@ export async function addNamed(
   };
 }
 
-/** Whether any live meal, day, wanted or shop line points at the item. */
+/** Whether any live meal, day, extras or shop line points at the item. */
 async function itemInUse(w: Writer, itemId: string): Promise<boolean> {
   for (const table of addedLineTables) {
     if ((await liveWhere(w, table, "itemId", itemId)).length > 0) {

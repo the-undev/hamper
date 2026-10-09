@@ -66,7 +66,7 @@ export async function setItemSize(
 /** The line tables where two lines for one item on one parent are combined. */
 type CombinedLineTable = "mealLines" | "dayLines" | "wantedLines";
 
-/** Repoints every live line of the source at the target, combines duplicates on one meal, day or the wanted list, and removes the source. */
+/** Repoints every live line of the source at the target, combines duplicates on one meal, day or the extras list, and removes the source. */
 export async function mergeItem(
   w: Writer,
   sourceId: string,
@@ -155,7 +155,7 @@ const deletedLineTables: readonly CombinedLineTable[] = [
   "wantedLines",
 ];
 
-/** Removes an item and its lines on meals, days and the wanted list; shop lines stay and show its last name. */
+/** Removes an item and its lines on meals, days and the extras list; shop lines stay and show its last name. */
 export async function deleteItem(
   w: Writer,
   itemId: string,

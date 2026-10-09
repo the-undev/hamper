@@ -4,7 +4,7 @@ import type { WantedLine } from "@/store/types";
 import type { Writer } from "@/store/write";
 import { requireCount, requireLive } from "./checks";
 
-/** Adds to the count of the item's wanted line, or puts the item on the list as Once with that count. */
+/** Adds to the count of the item's extras line, or puts the item on the list as Once with that count. */
 export async function addWanted(
   w: Writer,
   itemId: string,
@@ -34,7 +34,7 @@ export async function addWanted(
   return createdLine;
 }
 
-/** Marks a wanted line Weekly, or Once when weekly is false. */
+/** Marks an extras line Weekly, or Once when weekly is false. */
 export async function setWantedWeekly(
   w: Writer,
   lineId: string,
@@ -44,7 +44,7 @@ export async function setWantedWeekly(
   await w.put("wantedLines", { ...line, weekly });
 }
 
-/** Takes a line off the wanted list. */
+/** Takes a line off the extras list. */
 export async function removeWanted(
   w: Writer,
   lineId: string,

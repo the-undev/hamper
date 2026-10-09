@@ -62,7 +62,7 @@ function swipe(element: HTMLElement, movedX: number, ms: number): void {
 test("the_tabs_slide_the_track_to_the_chosen_view", async () => {
   const { user } = renderApp("/plan", db, fakeLoop());
 
-  await user.click(await screen.findByRole("tab", { name: "Items" }));
+  await user.click(await screen.findByRole("tab", { name: "Extras" }));
   expect(track().style.transform).toBe("translateX(-50%)");
   expect(track()).toHaveClass("transition-transform");
 
@@ -83,7 +83,7 @@ test("the_track_follows_a_sideways_swipe_and_a_swipe_past_a_third_switches_the_v
   clock.mockReturnValue(11_000);
   fireEvent.pointerUp(startLine, { clientX: 200, clientY: 305 });
 
-  expect(screen.getByRole("tab", { name: "Items" })).toHaveAttribute(
+  expect(screen.getByRole("tab", { name: "Extras" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
@@ -108,7 +108,7 @@ test("a_short_fast_swipe_switches_the_view", async () => {
 
   swipe(await screen.findByText(/^Starts/), -100, 50);
 
-  expect(screen.getByRole("tab", { name: "Items" })).toHaveAttribute(
+  expect(screen.getByRole("tab", { name: "Extras" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
@@ -138,15 +138,15 @@ test("the_inactive_view_is_inert", async () => {
   expect(pane("items")).toHaveAttribute("aria-hidden", "true");
   expect(pane("meals")).not.toHaveAttribute("inert");
   expect(
-    screen.queryByRole("combobox", { name: "Add an item" }),
+    screen.queryByRole("combobox", { name: "Add to extras" }),
   ).not.toBeInTheDocument();
 
-  await user.click(screen.getByRole("tab", { name: "Items" }));
+  await user.click(screen.getByRole("tab", { name: "Extras" }));
 
   expect(pane("meals")).toHaveAttribute("inert");
   expect(pane("items")).not.toHaveAttribute("inert");
   expect(
-    screen.getByRole("combobox", { name: "Add an item" }),
+    screen.getByRole("combobox", { name: "Add to extras" }),
   ).toBeInTheDocument();
 });
 
@@ -162,7 +162,7 @@ test("the_frame_is_as_tall_as_the_view_on_show_and_animates_only_on_a_switch", a
   expect(frame().style.height).toBe("520px");
   expect(frame().style.transitionProperty).toBe("none");
 
-  await user.click(screen.getByRole("tab", { name: "Items" }));
+  await user.click(screen.getByRole("tab", { name: "Extras" }));
   resizeTo(pane("items"), 300);
   expect(frame().style.height).toBe("300px");
   expect(frame().style.transitionProperty).toBe("");
@@ -172,10 +172,10 @@ test("the_frame_is_as_tall_as_the_view_on_show_and_animates_only_on_a_switch", a
   expect(frame().style.height).toBe("300px");
 });
 
-test("the_start_date_and_length_stay_in_the_header_on_items", async () => {
+test("the_start_date_and_length_stay_in_the_header_on_extras", async () => {
   const { user } = renderApp("/plan", db, fakeLoop());
 
-  await user.click(await screen.findByRole("tab", { name: "Items" }));
+  await user.click(await screen.findByRole("tab", { name: "Extras" }));
 
   expect(screen.getByLabelText("Start date")).toHaveValue("2026-06-01");
   expect(screen.getByText("7 days")).toBeInTheDocument();
@@ -189,10 +189,10 @@ test("the_shown_view_is_the_panel_of_its_tab_and_the_arrows_move_between_tabs", 
 
   mealsTab.focus();
   await user.keyboard("{ArrowRight}");
-  expect(screen.getByRole("tab", { name: "Items" })).toHaveAttribute(
+  expect(screen.getByRole("tab", { name: "Extras" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  expect(screen.getByRole("tabpanel", { name: "Items" })).toBe(pane("items"));
+  expect(screen.getByRole("tabpanel", { name: "Extras" })).toBe(pane("items"));
   expect(track().style.transform).toBe("translateX(-50%)");
 });

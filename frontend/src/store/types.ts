@@ -48,7 +48,7 @@ export interface DayLine extends SyncedRow {
   count: number;
 }
 
-/** An item and a count on the plan's wanted list, Once or Weekly. */
+/** An item and a count on the plan's extras list, Once or Weekly. */
 export interface WantedLine extends SyncedRow {
   itemId: string;
   count: number;

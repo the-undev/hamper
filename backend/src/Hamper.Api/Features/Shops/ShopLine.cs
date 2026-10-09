@@ -25,7 +25,7 @@ public sealed class ShopLine : ISynced
 
     public string? SizeOverride { get; set; }
 
-    /// <summary>The names of the days, and "wanted", that the count came from.</summary>
+    /// <summary>The names of the days, and "extras", that the count came from.</summary>
     public IReadOnlyList<string> Sources { get; set; } = [];
 
     public bool Ticked { get; set; }

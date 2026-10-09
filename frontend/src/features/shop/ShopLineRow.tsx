@@ -2,19 +2,21 @@ import { Counter } from "@/components/Counter";
 import { SwipeRow } from "@/components/SwipeRow";
 import { Checkbox } from "@/components/ui/checkbox";
 import { adjustLineCount } from "@/domain/counts";
-import { lineToWanted, removeShopLine, tickShopLine } from "@/domain/shops";
+import { lineToWanted, removeShopLine } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { ShopLineView } from "./lineView";
 
-/** One line of a list: a tick box, the name with size and sources, and − count +; swiping reveals To wanted and Remove. */
+/** One line of a list: a tick box, the name with size and sources, and − count +; swiping reveals To extras and Remove. */
 export function ShopLineRow({
   view,
   onEdit,
+  onTick,
 }: {
   view: ShopLineView;
   onEdit: () => void;
+  onTick: () => void;
 }) {
   const write = useWrite();
   const { line, name, size } = view;
@@ -26,7 +28,7 @@ export function ShopLineRow({
       subject={name}
       actions={[
         {
-          label: "To wanted",
+          label: "To extras",
           tone: "accent",
           onAction: () => void write((w) => lineToWanted(w, line.id, nowIso())),
         },
@@ -42,9 +44,7 @@ export function ShopLineRow({
         <Checkbox
           aria-label={`${name} in the trolley`}
           checked={line.ticked}
-          onCheckedChange={() =>
-            void write((w) => tickShopLine(w, line.id, !line.ticked))
-          }
+          onCheckedChange={onTick}
           // The box is 26px; its margin and the wider ::after make the 44px target.
           className="m-[9px] size-[26px] flex-none cursor-pointer rounded-lg after:-inset-[9px] data-checked:border-tick data-checked:bg-tick data-checked:text-white [&_svg]:size-4"
         />

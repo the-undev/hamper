@@ -50,7 +50,7 @@ export async function tab(page: Page, name: string): Promise<void> {
 /** Picks a view of the Plan screen by its tabs. */
 export async function planView(
   page: Page,
-  name: "Meals" | "Items",
+  name: "Meals" | "Extras",
 ): Promise<void> {
   const viewTab = page
     .getByRole("tablist", { name: "Plan view" })

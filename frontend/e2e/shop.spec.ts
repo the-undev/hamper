@@ -33,6 +33,11 @@ async function startEmptyList(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
+/** The cards of the open lists on the Shop tab. */
+function listCards(page: Page): Locator {
+  return page.getByRole("list", { name: "Open lists" }).getByRole("link");
+}
+
 /** Deletes the open list after its confirm, and waits until the page has left it. */
 async function deleteList(page: Page): Promise<void> {
   const listUrl = page.url();
@@ -44,10 +49,10 @@ async function deleteList(page: Page): Promise<void> {
   await expect(page).not.toHaveURL(listUrl);
 }
 
-/** Takes an item's line off the wanted list on the Plan's Items view. */
-async function removeWanted(page: Page, itemName: string): Promise<void> {
+/** Takes an item's line off the extras list on the Plan's Extras view. */
+async function removeExtra(page: Page, itemName: string): Promise<void> {
   await page.goto("/plan");
-  await planView(page, "Items");
+  await planView(page, "Extras");
   await swipeLeft(
     page,
     line(page, itemName).getByText(itemName, { exact: true }),
@@ -65,20 +70,20 @@ test("Make from plan edits the plan and generates a list with summed counts", as
   await openApp(page, "/meals");
   await addMeal(page, meal, [shared]);
   const day = await placeOnFirstEmptyDay(page, meal);
-  await planView(page, "Items");
-  const addWanted = page.getByRole("combobox", { name: "Add an item" });
-  await addWanted.fill(shared);
-  await addWanted.press("Enter");
+  await planView(page, "Extras");
+  const addExtra = page.getByRole("combobox", { name: "Add to extras" });
+  await addExtra.fill(shared);
+  await addExtra.press("Enter");
   await expect(line(page, shared)).toBeVisible();
-  await addLine(page, "Add an item", extra);
+  await addLine(page, "Add to extras", extra);
 
   await tab(page, "Shop");
   await page.getByRole("button", { name: "Make from plan" }).click();
   const daySection = page.getByRole("region", { name: new RegExp(meal) });
-  const wantedSection = page.getByRole("region", { name: "Wanted" });
+  const extrasSection = page.getByRole("region", { name: "Extras" });
   await expect(line(daySection, shared)).toBeVisible();
-  await expect(line(wantedSection, shared)).toBeVisible();
-  await expect(line(wantedSection, extra)).toBeVisible();
+  await expect(line(extrasSection, shared)).toBeVisible();
+  await expect(line(extrasSection, extra)).toBeVisible();
   await line(daySection, shared)
     .getByRole("button", { name: `One more ${shared}` })
     .click();
@@ -86,9 +91,9 @@ test("Make from plan edits the plan and generates a list with summed counts", as
 
   await page.getByRole("button", { name: "Generate the list" }).click();
   await expectCount(shopLine(page, shared), 3);
-  await expect(shopLine(page, shared)).toContainText(`${meal}, wanted`);
+  await expect(shopLine(page, shared)).toContainText(`${meal}, extras`);
   await expectCount(shopLine(page, extra), 1);
-  await expect(shopLine(page, extra)).toContainText("wanted");
+  await expect(shopLine(page, extra)).toContainText("extras");
   await deleteList(page);
 
   await page.goto("/plan");
@@ -97,11 +102,11 @@ test("Make from plan edits the plan and generates a list with summed counts", as
   await expectCount(line(page, shared), 2);
   await page.getByRole("button", { name: "Done" }).click();
   await clearDay(page, day);
-  await removeWanted(page, shared);
-  await removeWanted(page, extra);
+  await removeExtra(page, shared);
+  await removeExtra(page, extra);
 });
 
-test("a list's lines tick, count, edit, go to wanted, and a second list opens beside it", async ({
+test("a list's lines tick, count, edit, go to extras, and a second list sits beside it", async ({
   page,
 }) => {
   const ticked = uniqueName("Apples");
@@ -143,26 +148,27 @@ test("a list's lines tick, count, edit, go to wanted, and a second list opens be
     page,
     page.getByRole("button", { name: new RegExp(`^${swiped}`) }),
   );
-  await page.getByRole("button", { name: `To wanted ${swiped}` }).click();
+  await page.getByRole("button", { name: `To extras ${swiped}` }).click();
   await expect(shopLine(page, swiped)).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Rest to wanted" }).click();
+  await page.getByRole("button", { name: "Rest to extras" }).click();
   await expect(shopLine(page, rest)).toHaveCount(0);
   await expect(shopLine(page, renamed)).toHaveCount(0);
   await expect(shopLine(page, ticked)).toBeVisible();
 
-  await page.getByRole("button", { name: "Start another list" }).click();
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Start empty" })
-    .click();
-  const lists = page
-    .getByRole("navigation", { name: "Lists" })
-    .getByRole("link");
-  await expect(lists).toHaveCount(2);
+  await page.getByRole("link", { name: "‹ Lists" }).click();
+  await expect(listCards(page)).toHaveCount(1);
+  await expect(listCards(page)).toContainText("1 of 1 got");
+  await page.getByRole("button", { name: "Start empty" }).click();
+  await expect(page.getByText("Nothing on this list yet")).toBeVisible();
+  await page.getByRole("link", { name: "‹ Lists" }).click();
+  await expect(listCards(page)).toHaveCount(2);
+  await listCards(page).first().click();
   await deleteList(page);
-  await expect(lists).toHaveCount(1);
+  await expect(listCards(page)).toHaveCount(1);
+  await listCards(page).first().click();
   await deleteList(page);
+  await expect(listCards(page)).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Make from plan" }),
   ).toBeVisible();
@@ -177,12 +183,12 @@ test("a list's lines tick, count, edit, go to wanted, and a second list opens be
   ).toHaveCount(0);
 
   await page.goto("/plan");
-  await planView(page, "Items");
+  await planView(page, "Extras");
   for (const name of [swiped, rest, counted]) {
     await expect(line(page, name)).toBeVisible();
   }
   for (const name of [swiped, rest, counted]) {
-    await removeWanted(page, name);
+    await removeExtra(page, name);
   }
 });
 
@@ -235,14 +241,48 @@ test("a deleted list is gone", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Make from plan" }),
   ).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Lists" })).toHaveCount(0);
+  await expect(listCards(page)).toHaveCount(0);
+});
+
+test("ticking the last line offers Archive and the list leaves", async ({
+  page,
+}) => {
+  const first = uniqueName("Bread");
+  const last = uniqueName("Butter");
+  await startEmptyList(page);
+  for (const name of [first, last]) {
+    await page.getByRole("combobox", { name: "Add to this list" }).fill(name);
+    await page.getByRole("option", { name: `Add “${name}”` }).click();
+    await expect(shopLine(page, name)).toBeVisible();
+  }
+  const offer = page.getByText("Everything got. Archive the list?");
+
+  await page.getByRole("checkbox", { name: `${first} in the trolley` }).click();
+  await expect(
+    page.getByRole("checkbox", { name: `${first} in the trolley` }),
+  ).toBeChecked();
+  await expect(offer).toHaveCount(0);
+
+  await page.getByRole("checkbox", { name: `${last} in the trolley` }).click();
+  await expect(offer).toBeVisible();
+  const listPath = new URL(page.url()).pathname;
+  await page
+    .getByRole("region", { name: /^Notifications/ })
+    .getByRole("button", { name: "Archive" })
+    .click();
+
+  await expect(page).toHaveURL(/\/shop$/);
+  await expect(
+    page.getByRole("button", { name: "Make from plan" }),
+  ).toBeVisible();
+  await expect(page.locator(`a[href="${listPath}"]`)).toHaveCount(0);
 });
 
 test("Download saves the unticked lines as a text file", async ({ page }) => {
-  const wanted = uniqueName("Oats");
+  const toGet = uniqueName("Oats");
   const got = uniqueName("Honey");
   await startEmptyList(page);
-  for (const name of [wanted, got]) {
+  for (const name of [toGet, got]) {
     await page.getByRole("combobox", { name: "Add to this list" }).fill(name);
     await page.getByRole("option", { name: `Add “${name}”` }).click();
   }
@@ -259,7 +299,7 @@ test("Download saves the unticked lines as a text file", async ({ page }) => {
   const download = await downloading;
   expect(download.suggestedFilename()).toMatch(/\.txt$/);
   const text = await readFile(await download.path(), "utf8");
-  expect(text).toBe(`${wanted} ×1`);
+  expect(text).toBe(`${toGet} ×1`);
 
   await deleteList(page);
 });

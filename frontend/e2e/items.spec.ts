@@ -24,7 +24,7 @@ async function openItem(page: Page, itemName: string): Promise<void> {
   );
 }
 
-test("a renamed item shows its new name on a meal, a day and the wanted list", async ({
+test("a renamed item shows its new name on a meal, a day and the extras list", async ({
   page,
 }) => {
   const meal = uniqueName("Porridge");
@@ -34,10 +34,10 @@ test("a renamed item shows its new name on a meal, a day and the wanted list", a
   await addMeal(page, meal, [item]);
   const mealUrl = page.url();
   const day = await placeOnFirstEmptyDay(page, meal);
-  await planView(page, "Items");
-  const addWanted = page.getByRole("combobox", { name: "Add an item" });
-  await addWanted.fill(item);
-  await addWanted.press("Enter");
+  await planView(page, "Extras");
+  const addExtra = page.getByRole("combobox", { name: "Add to extras" });
+  await addExtra.fill(item);
+  await addExtra.press("Enter");
   await expect(line(page, item)).toBeVisible();
 
   await openItem(page, item);
@@ -54,7 +54,7 @@ test("a renamed item shows its new name on a meal, a day and the wanted list", a
   await page.goto("/plan");
   await planView(page, "Meals");
   await expect(page.getByRole("link", { name: meal })).toContainText(renamed);
-  await planView(page, "Items");
+  await planView(page, "Extras");
   await expect(line(page, renamed)).toBeVisible();
 
   await swipeLeft(
@@ -110,16 +110,16 @@ test("deleting an item removes its lines", async ({ page }) => {
   await expect(line(page, item)).toHaveCount(0);
 });
 
-test("a mistyped item is merged from its line on the wanted list", async ({
+test("a mistyped item is merged from its line on the extras list", async ({
   page,
 }) => {
   test.skip(!!test.info().project.use.hasTouch, "a desktop journey");
   const target = uniqueName("Banana");
   const typo = target.replace("Banana", "Banan");
   await openApp(page, "/plan");
-  await planView(page, "Items");
-  await addLine(page, "Add an item", target);
-  await addLine(page, "Add an item", typo);
+  await planView(page, "Extras");
+  await addLine(page, "Add to extras", target);
+  await addLine(page, "Add to extras", typo);
 
   await line(page, typo)
     .getByRole("button", { name: typo, exact: true })
@@ -137,7 +137,7 @@ test("a mistyped item is merged from its line on the wanted list", async ({
   await expect(page.getByText("No item has that name.")).toBeVisible();
 
   await page.goto("/plan");
-  await planView(page, "Items");
+  await planView(page, "Extras");
   await swipeLeft(page, line(page, target).getByText(target, { exact: true }));
   await page.getByRole("button", { name: `Remove ${target}` }).click();
   await expect(line(page, target)).toHaveCount(0);
@@ -148,10 +148,10 @@ test("a close match is offered for a mistyped name", async ({ page }) => {
   const target = uniqueName("Banana");
   const typo = target.replace("Banana", "Bananna");
   await openApp(page, "/plan");
-  await planView(page, "Items");
-  await addLine(page, "Add an item", target);
+  await planView(page, "Extras");
+  await addLine(page, "Add to extras", target);
 
-  const addItem = page.getByRole("combobox", { name: "Add an item" });
+  const addItem = page.getByRole("combobox", { name: "Add to extras" });
   await addItem.fill(typo);
   await expect(
     page.getByRole("option", { name: `${target} close match`, exact: true }),

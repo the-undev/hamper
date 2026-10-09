@@ -42,7 +42,7 @@ const archivedShop: ArchivedShop = {
       sources: ["Curry"],
       ticked: true,
     },
-    { name: "Milk", size: null, count: 1, sources: ["wanted"], ticked: false },
+    { name: "Milk", size: null, count: 1, sources: ["extras"], ticked: false },
   ],
 };
 

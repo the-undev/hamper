@@ -24,7 +24,7 @@ public sealed class PullTests
         await TestData.AddShopAsync(
             factory,
             new ShopSeed("Big shop", Meals: [new ShopMeal(0, "Curry", curry.Meal.Id)]),
-            [new ShopLineSeed(milk, 3, Sources: ["Monday", "wanted"])],
+            [new ShopLineSeed(milk, 3, Sources: ["Monday", "extras"])],
             ct);
 
         var pulled = await SyncApi.PullAsync(client, 0, ct);
@@ -40,7 +40,7 @@ public sealed class PullTests
         Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", (string?)pulled["plan"]![0]!["startDate"]);
         Assert.Equal(curry.Meal.Id.ToString(), (string?)pulled["shops"]![0]!["meals"]![0]!["mealId"]);
         Assert.Matches(@"^\d{4}-\d{2}-\d{2}T[\d:.]+[+-]\d{2}:\d{2}$", (string?)pulled["shops"]![0]!["createdAt"]);
-        Assert.Equal(["Monday", "wanted"], pulled["shopLines"]![0]!["sources"]!.AsArray().Select(source => (string?)source));
+        Assert.Equal(["Monday", "extras"], pulled["shopLines"]![0]!["sources"]!.AsArray().Select(source => (string?)source));
     }
 
     [Fact]

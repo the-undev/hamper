@@ -18,7 +18,7 @@ function editedText(
   return typed.trim() === (shown ?? "") ? override : typed;
 }
 
-/** Edits one line's name, size and count on this list only, or sends it to wanted or removes it. */
+/** Edits one line's name, size and count on this list only, or sends it to the extras list or removes it. */
 export function LineEditor({
   view,
   onClose,
@@ -92,7 +92,7 @@ function LineEditorFields({
           onClick={() => void close((w) => lineToWanted(w, line.id, nowIso()))}
           className="min-h-11 flex-1 rounded-[10px] border border-warn text-[13px] font-semibold text-warn"
         >
-          To wanted
+          To extras
         </button>
         <button
           type="button"

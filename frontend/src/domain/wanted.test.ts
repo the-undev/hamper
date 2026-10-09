@@ -15,7 +15,7 @@ afterEach(async () => {
   await db.delete();
 });
 
-test("adding_an_item_to_the_wanted_list_makes_a_once_line", async () => {
+test("adding_an_item_to_the_extras_list_makes_a_once_line", async () => {
   const milk = anItem("Milk");
   await seed(db, { items: [milk] });
 
@@ -26,7 +26,7 @@ test("adding_an_item_to_the_wanted_list_makes_a_once_line", async () => {
   ]);
 });
 
-test("adding_an_item_already_wanted_adds_to_its_count", async () => {
+test("adding_an_item_already_on_the_extras_list_adds_to_its_count", async () => {
   const milk = anItem("Milk");
   await seed(db, { items: [milk], wantedLines: [aWantedLine(milk, 2, true)] });
 
@@ -37,7 +37,7 @@ test("adding_an_item_already_wanted_adds_to_its_count", async () => {
   ]);
 });
 
-test("each_wanted_line_is_marked_once_or_weekly", async () => {
+test("each_extras_line_is_marked_once_or_weekly", async () => {
   const milk = anItem("Milk");
   const line = aWantedLine(milk, 1);
   await seed(db, { items: [milk], wantedLines: [line] });
@@ -49,7 +49,7 @@ test("each_wanted_line_is_marked_once_or_weekly", async () => {
   expect((await db.wantedLines.get(line.id))?.weekly).toBe(false);
 });
 
-test("a_wanted_line_is_removed", async () => {
+test("an_extras_line_is_removed", async () => {
   const milk = anItem("Milk");
   const line = aWantedLine(milk, 1);
   await seed(db, { items: [milk], wantedLines: [line] });

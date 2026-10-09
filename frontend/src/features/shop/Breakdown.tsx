@@ -28,7 +28,7 @@ export function Breakdown() {
   const itemsById = useItemsById();
   const write = useWrite();
   const navigate = useNavigate();
-  const wantedHeadingId = useId();
+  const extrasHeadingId = useId();
 
   if (plan === null) {
     return (
@@ -71,13 +71,13 @@ export function Breakdown() {
         />
       ))}
       <section
-        aria-labelledby={wantedHeadingId}
+        aria-labelledby={extrasHeadingId}
         className="flex flex-col gap-2"
       >
-        <h2 id={wantedHeadingId} className={sectionLabel}>
-          Wanted
+        <h2 id={extrasHeadingId} className={sectionLabel}>
+          Extras
         </h2>
-        <WantedLines itemsById={itemsById} typeAheadLabel="Add a wanted item" />
+        <WantedLines itemsById={itemsById} typeAheadLabel="Add to extras" />
       </section>
       <Button
         type="button"

@@ -123,7 +123,7 @@ export function lineNames(
     .join(", ");
 }
 
-/** Where an item is used: how many meals, days and lists, the wanted list counting as one, have a line of it. */
+/** Where an item is used: how many meals, days and lists, the extras list counting as one, have a line of it. */
 export interface ItemUsage {
   meals: number;
   days: number;
@@ -135,7 +135,7 @@ function liveCount(rows: readonly (SyncedRow | undefined)[]): number {
   return rows.filter((row) => liveRow(row)).length;
 }
 
-/** Counts the live meals, days and open shops with a live line of the item, and the wanted list when it has one. */
+/** Counts the live meals, days and open shops with a live line of the item, and the extras list when it has one. */
 export function useItemUsage(itemId: string): ItemUsage | undefined {
   const db = useDb();
   return useLive(async () => {

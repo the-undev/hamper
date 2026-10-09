@@ -193,3 +193,74 @@ test("delete_discards_the_list_after_a_confirm", async () => {
   expect(await live(db, "shops")).toEqual([]);
   expect(await live(db, "shopLines")).toEqual([]);
 });
+
+/** The toaster's region, where an offer's own Archive button sits apart from the list's. */
+function toasts(): HTMLElement {
+  return screen.getByRole("region", { name: /^Notifications/ });
+}
+
+test("ticking_the_last_line_offers_to_archive_and_the_offer_archives", async () => {
+  const eggs = anItem("Eggs");
+  const eggsLine = aShopLine(shop, eggs, 6);
+  await seed(db, { items: [eggs], shopLines: [eggsLine] });
+  let archived = false;
+  const calls = fakeFetch({
+    [`POST /api/shops/${shop.id}/archive`]: () => {
+      archived = true;
+      return Response.json({ id: shop.id });
+    },
+  });
+  const api = fakeSyncApi();
+  api.onPull = async (since) => ({
+    ...noRows(),
+    revision: since + 1,
+    shops: archived ? [{ ...shop, revision: 9, deletedAt: now }] : [],
+  });
+  const loop = createSyncLoop({
+    db,
+    api,
+    events: () => new FakeEventSource("/sync/events"),
+    now: () => now,
+    online: () => true,
+  });
+  const { user, router } = renderApp(`/shop/${shop.id}`, db, loop);
+
+  await user.click(
+    await screen.findByRole("checkbox", { name: "Milk in the trolley" }),
+  );
+  await waitFor(async () =>
+    expect((await db.shopLines.get(milkLine.id))?.ticked).toBe(true),
+  );
+  expect(
+    screen.queryByText("Everything got. Archive the list?"),
+  ).not.toBeInTheDocument();
+
+  await user.click(
+    screen.getByRole("checkbox", { name: "Eggs in the trolley" }),
+  );
+  await screen.findByText("Everything got. Archive the list?");
+  await user.click(within(toasts()).getByRole("button", { name: "Archive" }));
+
+  await waitFor(() => expect(router.state.location.pathname).toBe("/shop"));
+  expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([
+    `POST /api/shops/${shop.id}/archive`,
+  ]);
+  expect(await live(db, "shops")).toEqual([]);
+});
+
+test("offline_the_last_tick_says_everything_got_with_no_offer", async () => {
+  const { user } = renderApp(
+    `/shop/${shop.id}`,
+    db,
+    fakeLoop({ ...quietStatus, online: false }),
+  );
+
+  await user.click(
+    await screen.findByRole("checkbox", { name: "Milk in the trolley" }),
+  );
+
+  expect(await screen.findByText("Everything got")).toBeInTheDocument();
+  expect(
+    within(toasts()).queryByRole("button", { name: "Archive" }),
+  ).not.toBeInTheDocument();
+});

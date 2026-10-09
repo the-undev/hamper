@@ -96,7 +96,7 @@ and images.
 ### What is synced
 
 Items, meals and their lines, the plan with its days, planned meals and
-wanted lines, and open shops with their lines. History and images are not.
+extras lines, and open shops with their lines. History and images are not.
 
 ### Revisions and tombstones
 
@@ -335,7 +335,7 @@ exported item and meal with an image whose files exist.
 `POST /api/import` takes the same zip as the raw request body
 (`application/zip`) and writes it in one transaction: every row as it comes,
 `deletedAt` included, with new revisions, and the plan's start date and
-length. It refuses with 409 when any item, meal, day, wanted line, shop or
+length. It refuses with 409 when any item, meal, day, extras line, shop or
 archived shop exists, deleted ones included, and with 400 when the body is not
 a zip, the zip has no `data.json`, the format is not 1, or the JSON does not
 fit the schema. Import writes each image's two files from the zip into the

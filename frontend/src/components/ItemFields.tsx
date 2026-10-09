@@ -131,7 +131,7 @@ export function ItemFields({
           }
         }}
         title={`Merge ${item.name} into ${mergeTarget?.name ?? ""}?`}
-        description={`Every line of ${item.name} moves to ${mergeTarget?.name ?? ""} and ${item.name} is removed. Two lines on one meal, day or the wanted list become one.`}
+        description={`Every line of ${item.name} moves to ${mergeTarget?.name ?? ""} and ${item.name} is removed. Two lines on one meal, day or the extras list become one.`}
         confirmLabel="Merge"
         onConfirm={() => {
           if (mergeTarget) {
@@ -143,7 +143,7 @@ export function ItemFields({
         open={confirmingDelete}
         onOpenChange={setConfirmingDelete}
         title={`Delete ${item.name}?`}
-        description={`${item.name} and its lines leave every meal, day and the wanted list. Open lists keep their line under its name, and history does not change.`}
+        description={`${item.name} and its lines leave every meal, day and the extras list. Open lists keep their line under its name, and history does not change.`}
         confirmLabel="Delete"
         danger
         onConfirm={async () => {
