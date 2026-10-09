@@ -131,3 +131,45 @@ test.describe("the column grows with the viewport up to 760px", () => {
     expect(gutter).toBe("16px");
   });
 });
+
+test.describe("a placeholder is fainter than typed text", () => {
+  test.skip(({ hasTouch }) => !!hasTouch, "the desktop projects cover it");
+
+  for (const colorScheme of ["light", "dark"] as const) {
+    test(`the add box placeholder sits closer to the surface than its text in ${colorScheme} mode`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme });
+      await openApp(page, "/plan");
+      await planView(page, "Items");
+      const colours = await page
+        .getByRole("textbox", { name: "Add an item" })
+        .evaluate((input) => {
+          const pixel = document.createElement("canvas").getContext("2d", {
+            willReadFrequently: true,
+          }) as CanvasRenderingContext2D;
+          const luminance = (colour: string) => {
+            pixel.clearRect(0, 0, 1, 1);
+            pixel.fillStyle = colour;
+            pixel.fillRect(0, 0, 1, 1);
+            const [r = 0, g = 0, b = 0] = pixel.getImageData(0, 0, 1, 1).data;
+            return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          };
+          const typed = getComputedStyle(input).color;
+          const placeholder = getComputedStyle(input, "::placeholder").color;
+          const surface = getComputedStyle(input).backgroundColor;
+          return {
+            typed,
+            placeholder,
+            typedGap: Math.abs(luminance(typed) - luminance(surface)),
+            placeholderGap: Math.abs(
+              luminance(placeholder) - luminance(surface),
+            ),
+          };
+        });
+
+      expect(colours.placeholder).not.toBe(colours.typed);
+      expect(colours.placeholderGap).toBeLessThan(colours.typedGap);
+    });
+  }
+});

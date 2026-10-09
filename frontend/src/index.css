@@ -9,6 +9,7 @@
   --surface: #ffffff;
   --foreground: #1d221c;
   --muted: #6b7266;
+  --placeholder: oklch(0.72 0 0);
   --line: #dfe3d9;
   --accent: #2f7d4a;
   --accent-foreground: #ffffff;
@@ -26,6 +27,7 @@
     --surface: #1f2326;
     --foreground: #e8ebe5;
     --muted: #9aa196;
+    --placeholder: oklch(0.5 0 0);
     --line: #30363a;
     --accent: #5fb57c;
     --accent-foreground: #10211a;
@@ -46,6 +48,7 @@
   --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-placeholder: var(--placeholder);
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
