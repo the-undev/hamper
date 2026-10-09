@@ -112,6 +112,9 @@ History needs the server, and says so while offline.
   the ends, the name is not saved, a line says an item with that name exists,
   and Done becomes "Merge into Banana", which merges at once. A shop
   line's name opens the line editor instead.
+- A sheet stays above the phone's keyboard and is never taller than the part
+  of the screen left visible; when the keyboard comes up, the sheet scrolls
+  within itself to bring the focused field to its top.
 - Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
   press and hold on the handle on a phone, a plain drag with a mouse. The day
   under the finger is highlighted and says Swap, or Move here when it is
@@ -120,8 +123,7 @@ History needs the server, and says so while offline.
 - The type-ahead is the same control wherever a line is added: type, then
   pick an existing item or take the row that creates one. The suggestions
   float over the content under the box, about five rows high, and scroll; a
-  tap outside closes them. On a phone, focusing the box scrolls it to the top
-  so the suggestions have room above the keyboard. Matches come first,
+  tap outside closes them. Matches come first,
   the best at the top, and the create row comes last; when nothing matches it
   is the only row. Close matches, names within two typing slips of the text
   (one for four letters or fewer), come after the others and say "close

@@ -100,9 +100,6 @@ function namesMatch(option: TypeAheadOption, typedName: string): boolean {
 /** The value cmdk holds while no row is highlighted: it matches no row, so cmdk never highlights the first row by itself. */
 const noHighlight = "-";
 
-/** Below this width the screen is a phone's, where the keyboard covers the lower half. */
-const phoneWidth = 640;
-
 /** The value cmdk knows a row by. */
 function rowValue<O extends TypeAheadOption>(row: Row<O>): string {
   return row.kind === "create" ? "create" : `pick:${row.option.id}`;
@@ -259,14 +256,6 @@ export function TypeAhead<O extends TypeAheadOption>({
     takeTyped();
   };
 
-  const onFocus = (): void => {
-    setOpen(true);
-    // On a phone the keyboard covers the lower half; the box goes to the top so the suggestions have room under it.
-    if (window.innerWidth < phoneWidth) {
-      inputRef.current?.scrollIntoView({ block: "start" });
-    }
-  };
-
   return (
     <Popover
       open={listShown}
@@ -296,9 +285,8 @@ export function TypeAhead<O extends TypeAheadOption>({
             setOpen(true);
           }}
           onKeyDown={onKeyDown}
-          onFocus={onFocus}
+          onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
-          className="scroll-mt-[calc(4.5rem+env(safe-area-inset-top,0px))]"
         />
       </PopoverAnchor>
       <PopoverContent

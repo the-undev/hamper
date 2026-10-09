@@ -253,8 +253,6 @@ test("the suggestions float over the wanted list without moving it", async ({
   const wantedList = page.locator('[data-plan-view="items"]').getByRole("list");
   const firstRow = wantedList.getByRole("listitem").first();
 
-  // A fresh focus scrolls the box up on a phone; the row is measured after that.
-  await input.blur();
   await input.focus();
   const before = await centre(firstRow);
   await input.fill(first.slice(0, -1));
