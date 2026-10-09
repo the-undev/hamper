@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useId, useState } from "react";
+import { isCloseMatch } from "@/lib/distance";
 import { cn } from "@/lib/utils";
 import { textInput } from "./styles";
 
@@ -17,33 +18,58 @@ export interface TypeAheadCreate {
 
 const matchLimit = 6;
 
-/** Orders the options matching a query: an exact name, then names that start with it, then names that contain it, ignoring case. */
+/** How well an option's name matches the typed text: exact, prefix, substring, close, or no match. */
+type MatchRank = 0 | 1 | 2 | 3 | 4;
+
+/** The rank of a name that is only within a few edits of the typed text. */
+const closeRank: MatchRank = 3;
+
+/** Ranks a name against lower-cased typed text, ignoring case. */
+function matchRank(name: string, wanted: string): MatchRank {
+  const lowerName = name.toLowerCase();
+  if (lowerName === wanted) {
+    return 0;
+  }
+  if (lowerName.startsWith(wanted)) {
+    return 1;
+  }
+  if (lowerName.includes(wanted)) {
+    return 2;
+  }
+  return isCloseMatch(lowerName, wanted) ? closeRank : 4;
+}
+
+/** The options matching a query with their ranks, best first. */
+function rankedOptions<O extends TypeAheadOption>(
+  options: readonly O[],
+  query: string,
+): { option: O; rank: MatchRank }[] {
+  const wanted = query.trim().toLowerCase();
+  if (wanted === "") {
+    return options.map((option) => ({ option, rank: 0 }));
+  }
+  return options
+    .map((option) => ({ option, rank: matchRank(option.name, wanted) }))
+    .filter(({ rank }) => rank < 4)
+    .sort((first, second) => first.rank - second.rank);
+}
+
+/** Orders the options matching a query: an exact name, then names that start with it, then names that contain it, then names a few edits away, ignoring case. */
 export function rankOptions<O extends TypeAheadOption>(
   options: readonly O[],
   query: string,
 ): O[] {
-  const wanted = query.trim().toLowerCase();
-  if (wanted === "") {
-    return [...options];
-  }
-  const rankOf = (option: O): number => {
-    const name = option.name.toLowerCase();
-    if (name === wanted) {
-      return 0;
-    }
-    if (name.startsWith(wanted)) {
-      return 1;
-    }
-    return name.includes(wanted) ? 2 : 3;
-  };
-  return options
-    .map((option) => ({ option, rank: rankOf(option) }))
-    .filter(({ rank }) => rank < 3)
-    .sort((first, second) => first.rank - second.rank)
-    .map(({ option }) => option);
+  return rankedOptions(options, query).map(({ option }) => option);
 }
 
-type Row<O> = { kind: "pick"; option: O } | { kind: "create"; name: string };
+type Row<O> =
+  | { kind: "pick"; option: O; close: boolean }
+  | { kind: "create"; name: string };
+
+/** The small text beside a match: the option's own detail, else "close match" for a name a few edits away. */
+function pickDetail(option: TypeAheadOption, close: boolean): string | null {
+  return option.detail ?? (close ? "close match" : null);
+}
 
 /** Whether an option's name is the typed name, ignoring case and surrounding spaces. */
 function namesMatch(option: TypeAheadOption, typedName: string): boolean {
@@ -73,11 +99,17 @@ export function TypeAhead<O extends TypeAheadOption>({
   const typedName = query.trim();
 
   const rows: Row<O>[] = [];
-  const matches = rankOptions(options, typedName);
+  const matches = rankedOptions(options, typedName);
   const exactMatch = options.find((option) => namesMatch(option, typedName));
   if (typedName !== "" || listWhenEmpty) {
     const shown = typedName === "" ? matches : matches.slice(0, matchLimit);
-    rows.push(...shown.map((option) => ({ kind: "pick" as const, option })));
+    rows.push(
+      ...shown.map(({ option, rank }) => ({
+        kind: "pick" as const,
+        option,
+        close: rank === closeRank,
+      })),
+    );
   }
   if (create && typedName !== "" && !exactMatch) {
     rows.push({ kind: "create", name: typedName });
@@ -102,7 +134,7 @@ export function TypeAhead<O extends TypeAheadOption>({
 
   const takeTyped = (): void => {
     if (exactMatch) {
-      take({ kind: "pick", option: exactMatch });
+      take({ kind: "pick", option: exactMatch, close: false });
       return;
     }
     if (create && typedName !== "") {
@@ -192,9 +224,9 @@ export function TypeAhead<O extends TypeAheadOption>({
               ) : (
                 <>
                   <span className="truncate">{row.option.name}</span>{" "}
-                  {row.option.detail && (
+                  {pickDetail(row.option, row.close) && (
                     <small className="truncate text-xs text-muted">
-                      {row.option.detail}
+                      {pickDetail(row.option, row.close)}
                     </small>
                   )}
                 </>

@@ -47,6 +47,48 @@ function rowNames(): (string | undefined)[] {
   return screen.getAllByRole("option").map((row) => row.textContent?.trim());
 }
 
+test("a_name_two_edits_away_is_offered", async () => {
+  const user = userEvent.setup();
+  const { input } = renderTypeAhead();
+
+  await user.type(input, "panama");
+  expect(rowNames()).toEqual(["Banana close match", "Add “panama”"]);
+
+  await user.clear(input);
+  await user.type(input, "pajama");
+  expect(rowNames()).toEqual(["Add “pajama”"]);
+});
+
+test("a_short_name_allows_one_edit", () => {
+  expect(rankOptions(options, "rcie").map((ranked) => ranked.name)).toEqual([
+    "Rice",
+  ]);
+  expect(rankOptions(options, "rze")).toEqual([]);
+});
+
+test("loose_matches_rank_after_substring_matches", () => {
+  const riceOptions = [
+    option("Rich"),
+    option("Brown rice"),
+    option("Rice pudding"),
+    option("Rice"),
+  ];
+
+  expect(rankOptions(riceOptions, "rice").map((ranked) => ranked.name)).toEqual(
+    ["Rice", "Rice pudding", "Brown rice", "Rich"],
+  );
+});
+
+test("enter_takes_the_typed_name_over_a_close_match", async () => {
+  const user = userEvent.setup();
+  const { input, onPick, onCreate } = renderTypeAhead();
+
+  await user.type(input, "bananna{Enter}");
+
+  expect(onCreate).toHaveBeenCalledWith("bananna");
+  expect(onPick).not.toHaveBeenCalled();
+});
+
 test("matches_come_first_prefixes_before_substrings_and_the_create_row_last", async () => {
   const user = userEvent.setup();
   const { input } = renderTypeAhead();

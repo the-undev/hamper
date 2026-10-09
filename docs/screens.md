@@ -119,7 +119,9 @@ History needs the server, and says so while offline.
 - The type-ahead is the same control wherever a line is added: type, then
   pick an existing item or take the row that creates one. Matches come first,
   the best at the top, and the create row comes last; when nothing matches it
-  is the only row. Enter takes what was typed: a name that equals it,
+  is the only row. Close matches, names within two typing slips of the text
+  (one for four letters or fewer), come after the others and say "close
+  match": "bananna" offers Banana. Enter takes what was typed: a name that equals it,
   ignoring case and spaces at the ends, picks that item, and otherwise the
   create row runs. The arrow keys highlight a suggestion, wrapping at the
   ends, and Enter then takes it. Escape clears the highlight first and the

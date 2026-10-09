@@ -139,3 +139,23 @@ test("a mistyped item is merged from its line on the wanted list", async ({
   await page.getByRole("button", { name: `Remove ${target}` }).click();
   await expect(line(page, target)).toHaveCount(0);
 });
+
+test("a close match is offered for a mistyped name", async ({ page }) => {
+  test.skip(!!test.info().project.use.hasTouch, "a desktop journey");
+  const target = uniqueName("Banana");
+  const typo = target.replace("Banana", "Bananna");
+  await openApp(page, "/plan");
+  await planView(page, "Items");
+  await addLine(page, "Add an item", target);
+
+  const addItem = page.getByRole("textbox", { name: "Add an item" });
+  await addItem.fill(typo);
+  await expect(
+    page.getByRole("option", { name: `${target} close match`, exact: true }),
+  ).toBeVisible();
+  await addItem.fill("");
+
+  await swipeLeft(page, line(page, target).getByText(target, { exact: true }));
+  await page.getByRole("button", { name: `Remove ${target}` }).click();
+  await expect(line(page, target)).toHaveCount(0);
+});
