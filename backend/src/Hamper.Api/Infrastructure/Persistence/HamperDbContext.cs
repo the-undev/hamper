@@ -18,9 +18,9 @@ public sealed class HamperDbContext(DbContextOptions<HamperDbContext> options) :
 
     public DbSet<Plan> Plans => Set<Plan>();
 
-    public DbSet<Day> Days => Set<Day>();
+    public DbSet<PlannedMeal> PlannedMeals => Set<PlannedMeal>();
 
-    public DbSet<DayLine> DayLines => Set<DayLine>();
+    public DbSet<PlannedMealLine> PlannedMealLines => Set<PlannedMealLine>();
 
     public DbSet<WantedLine> WantedLines => Set<WantedLine>();
 

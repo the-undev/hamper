@@ -15,7 +15,7 @@ public sealed class ArchiveShopTests
     private static readonly DateTimeOffset Morning = new(2026, 6, 1, 9, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public async Task Archive_copies_the_shop_as_text_and_tombstones_it()
+    public async Task Archive_copies_the_shop_as_text_with_its_meals_in_plan_order_and_tombstones_it()
     {
         var time = new FakeTimeProvider(Morning);
         using var factory = new HamperApiFactory(services => services.AddSingleton<TimeProvider>(time));
@@ -25,7 +25,7 @@ public sealed class ArchiveShopTests
         var bread = await TestData.AddItemAsync(factory, "Bread", "loaf", ct);
         var eggs = await TestData.AddItemAsync(factory, "Eggs", null, ct);
         var curry = await TestData.AddMealAsync(factory, "Curry", [], ct);
-        var meals = new List<ShopMeal> { new(0, "Curry", curry.Meal.Id), new(1, "Takeaway", null) };
+        var meals = new List<ShopMeal> { new(1, 0, "Takeaway", null), new(0, 1, "Curry", curry.Meal.Id), new(0, 0, "Porridge", null) };
         var shop = await TestData.AddShopAsync(
             factory,
             new ShopSeed("Big shop", FromPlan: true, PlanStartDate: new DateOnly(2026, 6, 1), PlanLengthDays: 7, Meals: meals),
@@ -56,7 +56,7 @@ public sealed class ArchiveShopTests
         Assert.Equal(Morning.AddHours(3), archived.ArchivedAt);
         Assert.Equal(new DateOnly(2026, 6, 1), archived.PlanStartDate);
         Assert.Equal(7, archived.PlanLengthDays);
-        Assert.Equal(meals, archived.Meals);
+        Assert.Equal([meals[2], meals[1], meals[0]], archived.Meals);
         Assert.Collection(
             archived.Lines,
             line =>

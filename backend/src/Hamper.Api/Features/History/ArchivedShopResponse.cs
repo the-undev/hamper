@@ -14,5 +14,5 @@ public sealed record ArchivedShopResponse(
     IReadOnlyList<ArchivedShopLine> Lines)
 {
     public static ArchivedShopResponse From(ArchivedShop shop) =>
-        new(shop.Id, shop.Name, shop.CreatedAt, shop.ArchivedAt, shop.PlanStartDate, shop.PlanLengthDays, shop.Meals, shop.Lines);
+        new(shop.Id, shop.Name, shop.CreatedAt, shop.ArchivedAt, shop.PlanStartDate, shop.PlanLengthDays, ShopMeal.InPlanOrder(shop.Meals), shop.Lines);
 }

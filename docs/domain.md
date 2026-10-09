@@ -13,8 +13,8 @@ A thing you buy. A name, an optional usual size as free text ("1kg bag",
 - Renaming an item changes it everywhere it is referenced: meals, the plan,
   open shops still pointing at it. Archived shops hold text and do not change.
 - Merging an item into another repoints every reference at the target and
-  removes the source. Lines that would then be duplicates on one meal, one day
-  or the extras list are combined by adding their counts. Lines on open shops
+  removes the source. Lines that would then be duplicates on one meal, one
+  planned meal or the extras list are combined by adding their counts. Lines on open shops
   are repointed and not combined.
 - Deleting an item removes its lines from meals and the plan. Archived shops
   keep their text.
@@ -23,7 +23,7 @@ A thing you buy. A name, an optional usual size as free text ("1kg bag",
 
 An item and a count. A count is a whole number, at least 1, and one means one
 meal's worth. There are no units; size belongs to the item. Lines live on
-meals, on days of the plan, and on the extras list. + and − change the stored
+meals, on planned meals, and on the extras list. + and − change the stored
 count by one inside one write, so a fast double tap never loses one.
 
 ## Meal
@@ -35,8 +35,8 @@ A name, an optional image, and lines. Not a recipe: no method, no servings.
 - A meal's "last shopped" date is read from history: the most recent archived
   shop made from a plan that had it on a day.
 - Changing a meal changes nothing already on the plan.
-- Deleting a meal removes it and its lines. Days copied from it keep their
-  name, lines and link, so Reset can tell the meal is gone.
+- Deleting a meal removes it and its lines. Planned meals copied from it keep
+  their name, lines and link, so Reset can tell the meal is gone.
 
 ## Plan
 
@@ -48,54 +48,62 @@ over from week to week and nothing changes it except a person.
   moving the start relabels every day and moves nothing. A day at a position
   beyond the length is kept but hidden, and shows again when the length grows.
 - The first plan starts today with seven days.
-- One day holds at most one planned meal. A day can be empty.
+- A day holds an ordered list of planned meals: none, one or several. Meals
+  have no type such as breakfast or dinner, only their order in the day.
 - An extras list: lines for things beyond what the days need, milk, loo roll,
   a cereal someone fancies. Each extras line is marked Once or Weekly. The
   extras list is `wantedLines` in the code and on the wire.
 - "Start new plan" moves the start date on by the length and removes the
-  Once lines. Days and Weekly lines stay as they are. It asks for a confirm.
-- "Copy meals from a past week" fills the days from an archived shop's meals,
-  by position, replacing what was there. A day whose library meal still
-  exists is placed from that meal; one whose meal has been deleted, or had
-  none, becomes an ad-hoc day with the archived name. Positions beyond the
-  length are filled too. Days the archived shop does not mention are cleared.
+  Once lines. Planned meals and Weekly lines stay as they are. It asks for a
+  confirm.
+- Clearing a day removes all its planned meals.
+- "Copy meals from a past week" fills each day's list from an archived shop's
+  meals, by position and in their order, replacing what was there. A planned
+  meal whose library meal still exists is placed from that meal; one whose
+  meal has been deleted, or had none, becomes an ad-hoc planned meal with the
+  archived name. Positions beyond the length are filled too. Days the archived
+  shop does not mention are cleared.
 
 ### Planned meal
 
-What a day holds: a name, an optional link to a library meal, and lines of its
-own.
+A meal on a day: a name, an optional link to a library meal, lines of its own,
+the day it is on, and its place in that day's order.
 
-- Picking a library meal for a day copies the meal's name and lines onto the
-  day and keeps the link.
-- Typing a name that matches no meal makes an ad-hoc day with that name, the
-  link empty and no lines: "Takeaway", "Out for dinner", "Leftovers and garlic
-  bread". Lines can be added to it.
-- The day's lines are edited for that day only. The library meal never changes
-  from the plan.
-- A day's name can be edited, for that day only.
-- Reset copies the linked meal's current lines back onto the day. If the meal
-  has been deleted, the day keeps its copy and Reset is gone.
-- Save as a meal puts an ad-hoc day into the library and links the day to it.
-- Days swap by dragging one onto another. Swapping with an empty day moves
-  the planned meal across and leaves its old day empty. A day is cleared by
-  swiping it.
-- One meal placed on two days is two independent copies, and a shop counts it
+- Placing a library meal on a day copies the meal's name and lines into a new
+  planned meal at the end of that day's list and keeps the link.
+- Typing a name that matches no meal places an ad-hoc planned meal with that
+  name, the link empty and no lines, at the end of the day's list:
+  "Takeaway", "Out for dinner", "Leftovers and garlic bread". Lines can be
+  added to it.
+- A planned meal's lines are edited for it only. The library meal never
+  changes from the plan.
+- A planned meal's name can be edited, for it only.
+- Reset copies the linked meal's current lines back onto the planned meal. If
+  the meal has been deleted, the planned meal keeps its copy and Reset is
+  gone.
+- Save as a meal puts an ad-hoc planned meal into the library and links the
+  planned meal to it.
+- A planned meal moves within its day or to another day, between the meals
+  already there. The meals of both days keep their order with no gaps.
+- Removing a planned meal removes its lines, and the meals after it on that
+  day move up.
+- One meal placed twice is two independent copies, and a shop counts it
   twice.
-- Days are identified by position, so two devices placing a meal on the same
-  day edit the same day.
+- Two devices placing a meal on one day at once both keep theirs. Two planned
+  meals with the same place in a day are ordered by id.
 
 ## Shop
 
 A shopping list. Any number can be open at once.
 
 - Made from the plan, or started empty for a quick trip.
-- Making one from the plan goes through the breakdown: every day's lines and
-  the extras list, editable, with every change saved to the plan. Generate
-  then produces the shop.
-- Generating sums counts per item across the days within the length and the
-  extras list. A shop line is one item: a link to the item, the summed count,
-  the names of the days in day order and then "extras" it came from, and a
-  ticked flag.
+- Making one from the plan goes through the breakdown: every planned meal's
+  lines and the extras list, editable, with every change saved to the plan.
+  Generate then produces the shop.
+- Generating sums counts per item across every planned meal on the days
+  within the length and the extras list. A shop line is one item: a link to
+  the item, the summed count, the names of the planned meals it came from by
+  day and in their order, then "extras", and a ticked flag.
 - A shop line's name, size and count are edited on the shop only. The plan
   and the item do not change.
 - A shop line points at its item and shows the item's name and size until
@@ -118,12 +126,12 @@ A shopping list. Any number can be open at once.
 
 Archived shops, read only. Each holds the shop's name, when it was made and
 archived, its lines as text, and for a shop made from the plan the start date,
-the length and the planned meals' names by day. It is held as text so that
-renaming, merging or deleting items and meals afterwards changes nothing in
-it.
+the length and each day's planned meals' names in their order. It is held as
+text so that renaming, merging or deleting items and meals afterwards changes
+nothing in it.
 
-Each day's library meal id is kept with its name, so "last shopped" is found
-by id after a rename.
+Each planned meal's library meal id is kept with its name, so "last shopped"
+is found by id after a rename.
 
 ## Images
 

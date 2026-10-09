@@ -146,17 +146,32 @@ public sealed class PushTests
         await AssertNothingWrittenAsync(factory, startRevision, ct);
     }
 
-    [Fact]
-    public async Task Push_rejects_a_day_with_the_wrong_id()
+    [Theory]
+    [InlineData(-1, 0, "position is below 0")]
+    [InlineData(0, -1, "rank is below 0")]
+    public async Task Push_rejects_a_planned_meal_with_a_negative_position_or_rank(int position, int rank, string reason)
     {
         using var factory = new HamperApiFactory();
         using var client = factory.CreateClient();
         var ct = TestContext.Current.CancellationToken;
 
         var response = await SyncApi.PushAsync(
-            client, [new SyncChange("c1", "days", WireRows.Day(1, "Takeaway", id: Day.IdFor(2)))], ct);
+            client, [new SyncChange("c1", "plannedMeals", WireRows.PlannedMeal(Guid.NewGuid(), position, rank, "Takeaway"))], ct);
 
-        await AssertRejectedAsync(response, $"Change c1: a day at position 1 has the id {Day.IdFor(1)}", ct);
+        await AssertRejectedAsync(response, $"Change c1: {reason}", ct);
+    }
+
+    [Fact]
+    public async Task Push_rejects_a_planned_meal_name_over_200_characters()
+    {
+        using var factory = new HamperApiFactory();
+        using var client = factory.CreateClient();
+        var ct = TestContext.Current.CancellationToken;
+
+        var response = await SyncApi.PushAsync(
+            client, [new SyncChange("c1", "plannedMeals", WireRows.PlannedMeal(Guid.NewGuid(), 0, 0, new string('a', 201)))], ct);
+
+        await AssertRejectedAsync(response, "Change c1: name is over 200 characters", ct);
     }
 
     [Fact]
@@ -231,14 +246,15 @@ public sealed class PushTests
         var milkId = Guid.NewGuid();
         var curryId = Guid.NewGuid();
         var shopId = Guid.NewGuid();
+        var plannedMealId = Guid.NewGuid();
         var pushedRows = new Dictionary<string, JsonObject>
         {
             ["items"] = WireRows.Item(milkId, "Milk", "4 pints"),
             ["meals"] = WireRows.Meal(curryId, "Curry"),
             ["mealLines"] = WireRows.MealLine(Guid.NewGuid(), curryId, milkId, 1),
             ["plan"] = WireRows.Plan(WireRows.PlanId, 14),
-            ["days"] = WireRows.Day(0, "Curry", curryId),
-            ["dayLines"] = WireRows.DayLine(Guid.NewGuid(), Day.IdFor(0), milkId, 2),
+            ["plannedMeals"] = WireRows.PlannedMeal(plannedMealId, 2, 1, "Curry", curryId),
+            ["plannedMealLines"] = WireRows.PlannedMealLine(Guid.NewGuid(), plannedMealId, milkId, 2),
             ["wantedLines"] = WireRows.WantedLine(Guid.NewGuid(), milkId, 1, weekly: true),
             ["shops"] = WireRows.Shop(shopId, "Big shop", curryId),
             ["shopLines"] = WireRows.ShopLine(Guid.NewGuid(), shopId, milkId, 3),

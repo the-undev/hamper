@@ -36,9 +36,9 @@ public sealed class ExportDataTests
         Assert.Equal(HttpStatusCode.NoContent, importResponse.StatusCode);
         var sourceData = TransferZip.ReadDataJson(sourceZip);
         var targetData = TransferZip.ReadDataJson(targetZip);
-        Assert.Equal(1, (int)sourceData["format"]!);
+        Assert.Equal(2, (int)sourceData["format"]!);
         Assert.Equal("2026-04-20", (string?)sourceData["plan"]!["startDate"]);
-        foreach (var table in new[] { "items", "meals", "mealLines", "days", "dayLines", "wantedLines", "shops", "shopLines", "archivedShops" })
+        foreach (var table in new[] { "items", "meals", "mealLines", "plannedMeals", "plannedMealLines", "wantedLines", "shops", "shopLines", "archivedShops" })
         {
             Assert.NotEmpty(sourceData[table]!.AsArray());
         }
@@ -108,7 +108,7 @@ public sealed class ExportDataTests
     }
 
     [Fact]
-    public async Task Export_keeps_deleted_meals_that_days_link_to()
+    public async Task Export_keeps_deleted_meals_that_planned_meals_link_to()
     {
         using var source = new HamperApiFactory();
         using var target = new HamperApiFactory();
@@ -116,7 +116,7 @@ public sealed class ExportDataTests
         using var targetClient = target.CreateClient();
         var ct = TestContext.Current.CancellationToken;
         var deletedMeal = (await TestData.AddMealAsync(source, "Old stew", [], ct)).Meal;
-        await TestData.AddDayAsync(source, 0, "Old stew", deletedMeal.Id, [], ct);
+        await TestData.AddPlannedMealAsync(source, 0, 0, "Old stew", deletedMeal.Id, [], ct);
         await TestData.WriteAsync(source, (db, now) =>
         {
             db.Meals.Attach(deletedMeal);
@@ -131,9 +131,9 @@ public sealed class ExportDataTests
         Assert.Equal(deletedMeal.Id.ToString(), (string?)exportedMeal!["id"]);
         Assert.NotNull(exportedMeal["deletedAt"]);
         Assert.Equal(HttpStatusCode.NoContent, importResponse.StatusCode);
-        var importedDay = await ReadAsync(target, db => db.Days.AsNoTracking().SingleAsync(ct));
+        var importedPlannedMeal = await ReadAsync(target, db => db.PlannedMeals.AsNoTracking().SingleAsync(ct));
         var importedMeal = await ReadAsync(target, db => db.Meals.AsNoTracking().SingleAsync(meal => meal.Id == deletedMeal.Id, ct));
-        Assert.Equal(deletedMeal.Id, importedDay.MealId);
+        Assert.Equal(deletedMeal.Id, importedPlannedMeal.MealId);
         Assert.NotNull(importedMeal.DeletedAt);
     }
 
@@ -143,18 +143,19 @@ public sealed class ExportDataTests
         return await read(scope.ServiceProvider.GetRequiredService<HamperDbContext>());
     }
 
-    /// <summary>Puts a row in every exported table: items, a meal, two days, extras lines, an open shop, an archived shop, and a moved plan.</summary>
+    /// <summary>Puts a row in every exported table: items, a meal, three planned meals on two days, extras lines, an open shop, an archived shop, and a moved plan.</summary>
     private static async Task SeedFullDatasetAsync(HamperApiFactory factory, HttpClient client, CancellationToken ct)
     {
         var milk = await TestData.AddItemAsync(factory, "Milk", "4 pints", ct);
         var rice = await TestData.AddItemAsync(factory, "Rice", "1kg bag", ct);
         var chicken = await TestData.AddItemAsync(factory, "Chicken thighs", null, ct);
         var curry = await TestData.AddMealAsync(factory, "Curry", [(chicken, 1), (rice, 1)], ct);
-        await TestData.AddDayAsync(factory, 0, "Curry", curry.Meal.Id, [(chicken, 1), (rice, 2)], ct);
-        await TestData.AddDayAsync(factory, 1, "Takeaway", null, [], ct);
+        await TestData.AddPlannedMealAsync(factory, 0, 0, "Curry", curry.Meal.Id, [(chicken, 1), (rice, 2)], ct);
+        await TestData.AddPlannedMealAsync(factory, 0, 1, "Porridge", null, [(milk, 1)], ct);
+        await TestData.AddPlannedMealAsync(factory, 1, 0, "Takeaway", null, [], ct);
         await TestData.AddWantedLineAsync(factory, milk, 2, weekly: true, ct);
         await TestData.AddWantedLineAsync(factory, rice, 1, weekly: false, ct);
-        var meals = new List<ShopMeal> { new(0, "Curry", curry.Meal.Id), new(1, "Takeaway", null) };
+        var meals = new List<ShopMeal> { new(0, 0, "Curry", curry.Meal.Id), new(0, 1, "Porridge", null), new(1, 0, "Takeaway", null) };
         await TestData.AddShopAsync(
             factory,
             new ShopSeed("Big shop", FromPlan: true, PlanStartDate: new DateOnly(2026, 4, 20), PlanLengthDays: 7, Meals: meals),

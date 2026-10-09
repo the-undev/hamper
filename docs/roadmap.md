@@ -30,11 +30,6 @@ October 2026, each to be triaged.
 Make from plan shows each day's lines and lets items be added. The add changes
 that day, and it reads as a change to the meal.
 
-### A day holds one meal
-
-The plan blurs day and meal. A day with any number of meals would also cover
-breakfast and lunch.
-
 ## Parked
 
 ### Swap an item on a line
