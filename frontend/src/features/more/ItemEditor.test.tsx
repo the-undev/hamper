@@ -73,10 +73,12 @@ test("a_rename_shows_everywhere_the_item_is_used", async () => {
 
   const name = await screen.findByLabelText("Name");
   await user.clear(name);
-  await user.type(name, "Maris Pipers{Enter}");
+  await user.type(name, "Maris Pipers");
   const size = screen.getByLabelText("Usual size");
   await user.clear(size);
-  await user.type(size, "2kg bag{Enter}");
+  await user.type(size, "2kg bag");
+  const footer = screen.getByRole("group", { name: "Screen actions" });
+  await user.click(within(footer).getByRole("button", { name: "Done" }));
   await waitFor(async () =>
     expect(await db.items.get(potatoes.id)).toMatchObject({
       name: "Maris Pipers",
@@ -125,7 +127,7 @@ test("merge_repoints_and_combines_after_a_confirm", async () => {
 test("delete_removes_the_item_and_its_lines_after_a_confirm_and_open_lists_keep_theirs", async () => {
   const { user, router } = renderApp(`/more/items/${spuds.id}`, db, fakeLoop());
 
-  await user.click(await screen.findByRole("button", { name: "Delete" }));
+  await user.click(await screen.findByRole("button", { name: "Delete item" }));
   await user.click(
     within(await screen.findByRole("dialog")).getByRole("button", {
       name: "Delete",

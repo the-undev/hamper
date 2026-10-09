@@ -1,8 +1,17 @@
+import type { Table } from "dexie";
 import type { TypeAheadOption } from "@/components/TypeAhead";
 import { planId } from "@/store/ids";
 import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
-import type { Day, DayLine, Item, Meal, MealLine, Plan } from "@/store/types";
+import type {
+  Day,
+  DayLine,
+  Item,
+  Meal,
+  MealLine,
+  Plan,
+  SyncedRow,
+} from "@/store/types";
 
 /** The plan; null until the first pull brings it, undefined while the store is read. */
 export function usePlan(): Plan | null | undefined {
@@ -112,4 +121,46 @@ export function lineNames(
     .filter((name) => name !== undefined)
     .sort((first, second) => first.localeCompare(second))
     .join(", ");
+}
+
+/** Where an item is used: how many meals, days and lists, the wanted list counting as one, have a line of it. */
+export interface ItemUsage {
+  meals: number;
+  days: number;
+  lists: number;
+}
+
+/** How many of the rows are live. */
+function liveCount(rows: readonly (SyncedRow | undefined)[]): number {
+  return rows.filter((row) => liveRow(row)).length;
+}
+
+/** Counts the live meals, days and open shops with a live line of the item, and the wanted list when it has one. */
+export function useItemUsage(itemId: string): ItemUsage | undefined {
+  const db = useDb();
+  return useLive(async () => {
+    const linesOf = <L extends SyncedRow>(table: Table<L, string>) =>
+      table.where("itemId").equals(itemId).toArray().then(liveRows);
+    const parentIds = <L>(lines: L[], parentId: (line: L) => string) => [
+      ...new Set(lines.map(parentId)),
+    ];
+    const mealLines = await linesOf(db.mealLines);
+    const dayLines = await linesOf(db.dayLines);
+    const shopLines = await linesOf(db.shopLines);
+    const wantedLines = await linesOf(db.wantedLines);
+    const meals = await db.meals.bulkGet(
+      parentIds(mealLines, (line) => line.mealId),
+    );
+    const days = await db.days.bulkGet(
+      parentIds(dayLines, (line) => line.dayId),
+    );
+    const shops = await db.shops.bulkGet(
+      parentIds(shopLines, (line) => line.shopId),
+    );
+    return {
+      meals: liveCount(meals),
+      days: liveCount(days),
+      lists: liveCount(shops) + (wantedLines.length > 0 ? 1 : 0),
+    };
+  }, [db, itemId]);
 }

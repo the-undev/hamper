@@ -1,29 +1,21 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { DoneButton } from "@/components/DoneButton";
+import { useLeave } from "@/components/DoneButton";
 import { EmptyState } from "@/components/EmptyState";
+import { ItemFields, ItemUsageText } from "@/components/ItemFields";
 import { Picture } from "@/components/Picture";
-import { SavedField } from "@/components/SavedField";
 import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { secondaryButton, sectionLabel } from "@/components/styles";
-import { TypeAhead, type TypeAheadOption } from "@/components/TypeAhead";
-import { deleteItem, mergeItem, renameItem, setItemSize } from "@/domain/items";
+import { hint } from "@/components/styles";
 import { CropUpload } from "@/features/images/CropUpload";
-import { itemOptions, useLiveItems } from "@/hooks/data";
-import { useWrite } from "@/hooks/useWrite";
-import { nowIso } from "@/lib/dates";
+import { useLiveItems } from "@/hooks/data";
 
 const back = { to: "/more/items", label: "Items" } as const;
 
-/** One item: its name, usual size and picture, merging it into another, and deleting it. */
+/** One item: its picture, then the fields the item sheet shows, with Done in the footer. */
 export function ItemEditor({ itemId }: { itemId: string }) {
   const items = useLiveItems();
-  const write = useWrite();
   const navigate = useNavigate();
-  const [mergeTarget, setMergeTarget] = useState<TypeAheadOption | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const leave = useLeave("/more/items");
 
   if (!items) {
     return <ScreenHeader title="Item" back={back} />;
@@ -37,7 +29,6 @@ export function ItemEditor({ itemId }: { itemId: string }) {
       </>
     );
   }
-  const otherItems = items.filter((candidate) => candidate.id !== itemId);
 
   return (
     <>
@@ -52,68 +43,22 @@ export function ItemEditor({ itemId }: { itemId: string }) {
           />
         </div>
       </div>
-      <SavedField
-        key={`name-${item.name}`}
-        label="Name"
-        value={item.name}
-        save={(w, name) => renameItem(w, item.id, name)}
-      />
-      <SavedField
-        key={`size-${item.size}`}
-        label="Usual size"
-        value={item.size ?? ""}
-        placeholder="e.g. 1kg bag, 4 pints, tin"
-        save={(w, size) => setItemSize(w, item.id, size)}
-      />
-      <h2 className={sectionLabel}>Merge into another item</h2>
-      <TypeAhead
-        label="Merge into"
-        placeholder="Another item…"
-        options={itemOptions(otherItems)}
-        onPick={setMergeTarget}
-      />
-      <button
-        type="button"
-        className={`${secondaryButton} text-danger`}
-        onClick={() => setConfirmingDelete(true)}
-      >
-        Delete
-      </button>
-      <ScreenFooter>
-        <DoneButton parent="/more/items" />
-      </ScreenFooter>
-      <ConfirmDialog
-        open={mergeTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setMergeTarget(null);
-          }
-        }}
-        title={`Merge ${item.name} into ${mergeTarget?.name ?? ""}?`}
-        description={`Every line of ${item.name} moves to ${mergeTarget?.name ?? ""} and ${item.name} is removed. Two lines on one meal, day or the wanted list become one.`}
-        confirmLabel="Merge"
-        onConfirm={async () => {
-          if (!mergeTarget) {
-            return;
-          }
-          await write((w) => mergeItem(w, item.id, mergeTarget.id, nowIso()));
-          await navigate({
+      <p className={hint}>
+        <ItemUsageText itemId={item.id} />
+      </p>
+      <ItemFields
+        key={item.id}
+        item={item}
+        items={items}
+        onDone={leave}
+        onMerged={(targetId) =>
+          void navigate({
             to: "/more/items/$itemId",
-            params: { itemId: mergeTarget.id },
-          });
-        }}
-      />
-      <ConfirmDialog
-        open={confirmingDelete}
-        onOpenChange={setConfirmingDelete}
-        title={`Delete ${item.name}?`}
-        description="It leaves every meal, day and the wanted list. Open lists keep their line, and history does not change."
-        confirmLabel="Delete"
-        danger
-        onConfirm={async () => {
-          await write((w) => deleteItem(w, item.id, nowIso()));
-          await navigate({ to: "/more/items" });
-        }}
+            params: { itemId: targetId },
+          })
+        }
+        onDeleted={() => void navigate({ to: "/more/items" })}
+        footer={(primary) => <ScreenFooter>{primary}</ScreenFooter>}
       />
     </>
   );

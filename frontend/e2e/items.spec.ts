@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
+  addLine,
   addMeal,
   clearDay,
   expect,
@@ -104,4 +105,37 @@ test("deleting an item removes its lines", async ({ page }) => {
   await page.goto(mealUrl);
   await expect(page.getByText("No items on this meal yet")).toBeVisible();
   await expect(line(page, item)).toHaveCount(0);
+});
+
+test("a mistyped item is merged from its line on the wanted list", async ({
+  page,
+}) => {
+  test.skip(!!test.info().project.use.hasTouch, "a desktop journey");
+  const target = uniqueName("Banana");
+  const typo = target.replace("Banana", "Banan");
+  await openApp(page, "/plan");
+  await planView(page, "Items");
+  await addLine(page, "Add an item", target);
+  await addLine(page, "Add an item", typo);
+
+  await line(page, typo)
+    .getByRole("button", { name: typo, exact: true })
+    .click();
+  const sheet = page.getByRole("dialog", { name: typo });
+  await sheet.getByRole("textbox", { name: "Name" }).fill(target.toLowerCase());
+  await sheet.getByRole("button", { name: `Merge into ${target}` }).click();
+
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(line(page, typo)).toHaveCount(0);
+  await expectCount(line(page, target), 2);
+
+  await page.goto("/more/items");
+  await page.getByRole("searchbox", { name: "Find an item" }).fill(typo);
+  await expect(page.getByText("No item has that name.")).toBeVisible();
+
+  await page.goto("/plan");
+  await planView(page, "Items");
+  await swipeLeft(page, line(page, target).getByText(target, { exact: true }));
+  await page.getByRole("button", { name: `Remove ${target}` }).click();
+  await expect(line(page, target)).toHaveCount(0);
 });

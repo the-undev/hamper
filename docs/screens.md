@@ -82,8 +82,8 @@ file.
 
 **Items.** A search, then every item with its usual size. Tapping one opens
 the editor: the picture with Change photo and Remove photo as on the Meal
-screen, name, usual size, Merge into another item (a type-ahead over the
-rest), Delete.
+screen, then the same fields as the item sheet (see Everywhere), with Done or
+the merge offer in the footer.
 
 **History.** Archived shops by date, each with its meals and a count of lines.
 Tapping one opens it read only. "Copy these meals to the plan" on each.
@@ -100,9 +100,17 @@ History needs the server, and says so while offline.
   others.
 - When a new version is ready, a toast says "Update ready" with Reload, once
   per update.
-- Every edit is saved as it is made. Day, Meal and the item editor have a
-  footer that stays above the tabs, holding Done, which goes back, and on a
-  Day, Clear day.
+- Every edit is saved as it is made, except in the line editor, the item
+  sheet and the item editor, which save on Done. Day, Meal and the item
+  editor have a footer that stays above the tabs, holding Done, which goes
+  back, and on a Day, Clear day.
+- Tapping a line's name on a meal, a day or the wanted list opens its item in
+  a sheet: the name and usual size, saved on Done; where it is used, "Used on
+  2 meals, 1 day, 1 list", with the wanted list counted as a list; Merge into
+  another item (a type-ahead over the rest); and Delete item, which asks
+  first. When the typed name is another item's, ignoring case and spaces at
+  the ends, Done becomes "Merge into Banana", which merges at once. A shop
+  line's name opens the line editor instead.
 - Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
   press and hold on the handle on a phone, a plain drag with a mouse. The day
   under the finger is highlighted and says Swap, or Move here when it is

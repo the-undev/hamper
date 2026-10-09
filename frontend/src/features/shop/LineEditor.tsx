@@ -1,12 +1,8 @@
 import { useState } from "react";
+import { BottomSheet } from "@/components/BottomSheet";
 import { Counter } from "@/components/Counter";
 import { textInput } from "@/components/styles";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { editShopLine, lineToWanted, removeShopLine } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
@@ -30,24 +26,11 @@ export function LineEditor({
   onClose: () => void;
 }) {
   return (
-    <Sheet
-      open={view !== null}
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-    >
-      <SheetContent
-        side="bottom"
-        showCloseButton={false}
-        className="mx-auto max-w-(--column-max) rounded-t-2xl bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
-      >
-        {view && (
-          <LineEditorFields key={view.line.id} view={view} onClose={onClose} />
-        )}
-      </SheetContent>
-    </Sheet>
+    <BottomSheet open={view !== null} onClose={onClose}>
+      {view && (
+        <LineEditorFields key={view.line.id} view={view} onClose={onClose} />
+      )}
+    </BottomSheet>
   );
 }
 
