@@ -3,12 +3,6 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Counter } from "@/components/Counter";
 import { WaitingForServer } from "@/components/EmptyState";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { dayDate } from "@/domain/display";
 import {
   adjustPlanLength,
@@ -28,7 +22,6 @@ import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
 import type { Plan } from "@/store/types";
 import { DayList } from "./DayList";
-import { MealPicker } from "./MealPicker";
 
 /** The plan's days: when they start and end, a slot per day, and Start new plan. */
 export function PlanMeals() {
@@ -39,7 +32,6 @@ export function PlanMeals() {
   const mealsById = useMealsById();
   const write = useWrite();
   const navigate = useNavigate();
-  const [pickingPosition, setPickingPosition] = useState<number | null>(null);
   const [confirmingNewPlan, setConfirmingNewPlan] = useState(false);
 
   if (plan === null) {
@@ -50,8 +42,6 @@ export function PlanMeals() {
   }
 
   const nextStart = formatDay(dayDate(plan, plan.lengthDays));
-  const pickingLabel =
-    pickingPosition === null ? "" : formatDay(dayDate(plan, pickingPosition));
 
   return (
     <>
@@ -69,7 +59,12 @@ export function PlanMeals() {
           linesByDay={linesByDay}
           itemsById={itemsById}
           mealsById={mealsById}
-          onPick={setPickingPosition}
+          onPick={(position) =>
+            void navigate({
+              to: "/plan/pick/$position",
+              params: { position: String(position) },
+            })
+          }
         />
         <button
           type="button"
@@ -87,42 +82,6 @@ export function PlanMeals() {
         confirmLabel="Start new plan"
         onConfirm={() => void write((w) => startNewPlan(w, nowIso()))}
       />
-      <Sheet
-        open={pickingPosition !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPickingPosition(null);
-          }
-        }}
-      >
-        <SheetContent
-          side="bottom"
-          showCloseButton={false}
-          className="mx-auto max-h-[85dvh] max-w-(--column-max) overflow-y-auto rounded-t-2xl bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
-        >
-          <SheetTitle className="text-lg font-bold">
-            Pick a meal for {pickingLabel}
-          </SheetTitle>
-          <SheetDescription className="text-xs text-muted">
-            A meal from the library, or any name for a day that is not one.
-          </SheetDescription>
-          {pickingPosition !== null && (
-            <MealPicker
-              position={pickingPosition}
-              onPlaced={(placement) => {
-                const placedPosition = pickingPosition;
-                setPickingPosition(null);
-                if (placement === "adHoc") {
-                  void navigate({
-                    to: "/plan/day/$position",
-                    params: { position: String(placedPosition) },
-                  });
-                }
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
     </>
   );
 }

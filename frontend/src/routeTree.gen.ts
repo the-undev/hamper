@@ -22,6 +22,7 @@ import { Route as MoreHistoryArchivedIdRouteImport } from './routes/more.history
 import { Route as MoreItemsIndexRouteImport } from './routes/more.items.index'
 import { Route as MoreItemsItemIdRouteImport } from './routes/more.items.$itemId'
 import { Route as PlanDayPositionRouteImport } from './routes/plan.day.$position'
+import { Route as PlanPickPositionRouteImport } from './routes/plan.pick.$position'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +89,11 @@ const PlanDayPositionRoute = PlanDayPositionRouteImport.update({
   path: '/plan/day/$position',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanPickPositionRoute = PlanPickPositionRouteImport.update({
+  id: '/plan/pick/$position',
+  path: '/plan/pick/$position',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
   '/more/items/$itemId': typeof MoreItemsItemIdRoute
   '/plan/day/$position': typeof PlanDayPositionRoute
+  '/plan/pick/$position': typeof PlanPickPositionRoute
   '/more/history/': typeof MoreHistoryIndexRoute
   '/more/items/': typeof MoreItemsIndexRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
   '/more/items/$itemId': typeof MoreItemsItemIdRoute
   '/plan/day/$position': typeof PlanDayPositionRoute
+  '/plan/pick/$position': typeof PlanPickPositionRoute
   '/more/history': typeof MoreHistoryIndexRoute
   '/more/items': typeof MoreItemsIndexRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
   '/more/items/$itemId': typeof MoreItemsItemIdRoute
   '/plan/day/$position': typeof PlanDayPositionRoute
+  '/plan/pick/$position': typeof PlanPickPositionRoute
   '/more/history/': typeof MoreHistoryIndexRoute
   '/more/items/': typeof MoreItemsIndexRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/more/history/$archivedId'
     | '/more/items/$itemId'
     | '/plan/day/$position'
+    | '/plan/pick/$position'
     | '/more/history/'
     | '/more/items/'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/more/history/$archivedId'
     | '/more/items/$itemId'
     | '/plan/day/$position'
+    | '/plan/pick/$position'
     | '/more/history'
     | '/more/items'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/more/history/$archivedId'
     | '/more/items/$itemId'
     | '/plan/day/$position'
+    | '/plan/pick/$position'
     | '/more/history/'
     | '/more/items/'
   fileRoutesById: FileRoutesById
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   MoreHistoryArchivedIdRoute: typeof MoreHistoryArchivedIdRoute
   MoreItemsItemIdRoute: typeof MoreItemsItemIdRoute
   PlanDayPositionRoute: typeof PlanDayPositionRoute
+  PlanPickPositionRoute: typeof PlanPickPositionRoute
   MoreHistoryIndexRoute: typeof MoreHistoryIndexRoute
   MoreItemsIndexRoute: typeof MoreItemsIndexRoute
 }
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlanDayPositionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plan/pick/$position': {
+      id: '/plan/pick/$position'
+      path: '/plan/pick/$position'
+      fullPath: '/plan/pick/$position'
+      preLoaderRoute: typeof PlanPickPositionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   MoreHistoryArchivedIdRoute: MoreHistoryArchivedIdRoute,
   MoreItemsItemIdRoute: MoreItemsItemIdRoute,
   PlanDayPositionRoute: PlanDayPositionRoute,
+  PlanPickPositionRoute: PlanPickPositionRoute,
   MoreHistoryIndexRoute: MoreHistoryIndexRoute,
   MoreItemsIndexRoute: MoreItemsIndexRoute,
 }
