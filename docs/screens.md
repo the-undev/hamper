@@ -118,6 +118,9 @@ History needs the server, and says so while offline.
   text second. Tab leaves without taking anything. The meal picker's "Use as
   it is" row follows the same rules. Merge into has no create row, so Enter
   there takes only an exact name or the highlighted row.
+- After an add, a toast says "Added Milk" with Undo for five seconds, which
+  takes the line back off, or back to its count, and removes an item the add
+  made when nothing else uses it.
 - A picture with no image, or one that cannot load, offline for example, is
   a coloured block with the name's first letter.
 - The same screens render in a centred column up to 760px wide, so a tablet

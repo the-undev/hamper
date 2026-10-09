@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, listBox, sectionLabel } from "@/components/styles";
-import { addShopLine } from "@/domain/shops";
+import { addToShop } from "@/domain/adds";
 import { useItemsById } from "@/hooks/data";
 import { nowIso } from "@/lib/dates";
 import { writeSetting } from "@/lib/settings";
@@ -87,9 +87,7 @@ export function ShopScreen({ shopId }: { shopId: string }) {
       <ItemTypeAhead
         label="Add to this list"
         placeholder="Add something to this list…"
-        addLine={async (w, itemId) => {
-          await addShopLine(w, shop.id, itemId, nowIso());
-        }}
+        addLine={(w, itemId) => addToShop(w, shop.id, itemId, nowIso())}
       />
       <section aria-labelledby={toGetId} className="flex flex-col gap-2">
         <h2 id={toGetId} className="sr-only">

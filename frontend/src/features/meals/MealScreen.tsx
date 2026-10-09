@@ -10,7 +10,7 @@ import { SavedField } from "@/components/SavedField";
 import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, secondaryButton, sectionLabel } from "@/components/styles";
-import { liveWhere } from "@/domain/checks";
+import { addToMeal } from "@/domain/adds";
 import {
   deleteMeal,
   duplicateMeal,
@@ -93,17 +93,7 @@ export function MealScreen({ mealId }: { mealId: string }) {
       <ItemTypeAhead
         label="Add an item to this meal"
         placeholder="Add an item to this meal…"
-        addLine={async (w, itemId) => {
-          const currentLines = await liveWhere(
-            w,
-            "mealLines",
-            "mealId",
-            mealId,
-          );
-          const currentCount =
-            currentLines.find((line) => line.itemId === itemId)?.count ?? 0;
-          await setMealLine(w, mealId, itemId, currentCount + 1, nowIso());
-        }}
+        addLine={(w, itemId) => addToMeal(w, mealId, itemId, nowIso())}
       />
       <LineList
         lines={lineViews(lines, itemsById)}

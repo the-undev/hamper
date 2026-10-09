@@ -36,8 +36,11 @@ afterEach(async () => {
 });
 
 test("an_item_comes_into_being_by_typing_a_name", async () => {
-  const milk = await write(db, (w) => ensureItem(w, "  Milk "));
+  const { item: milk, created } = await write(db, (w) =>
+    ensureItem(w, "  Milk "),
+  );
 
+  expect(created).toBe(true);
   expect(await live(db, "items")).toEqual([milk]);
   expect(milk.name).toBe("Milk");
   expect(await db.outbox.toArray()).toMatchObject([
@@ -49,9 +52,12 @@ test("typing_a_name_already_used_finds_that_item_ignoring_case_and_spaces", asyn
   const milk = anItem("Milk");
   await seed(db, { items: [milk] });
 
-  const foundItem = await write(db, (w) => ensureItem(w, " milk"));
+  const { item: foundItem, created } = await write(db, (w) =>
+    ensureItem(w, " milk"),
+  );
 
   expect(foundItem.id).toBe(milk.id);
+  expect(created).toBe(false);
   expect(await db.items.count()).toBe(1);
 });
 
@@ -59,7 +65,7 @@ test("typing_the_name_of_a_deleted_item_makes_a_new_item", async () => {
   const deletedMilk = { ...anItem("Milk"), deletedAt: now };
   await seed(db, { items: [deletedMilk] });
 
-  const milk = await write(db, (w) => ensureItem(w, "Milk"));
+  const { item: milk } = await write(db, (w) => ensureItem(w, "Milk"));
 
   expect(milk.id).not.toBe(deletedMilk.id);
 });

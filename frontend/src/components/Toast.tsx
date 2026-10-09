@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 export interface ToastAction {
   label: string;
   onAction: () => void;
+  /** How long the toast stays untouched before it closes; null keeps it until it is taken or replaced. */
+  closesAfterMs: number | null;
 }
 
 type ShowToast = (message: string, action?: ToastAction) => void;
@@ -26,7 +28,7 @@ const ToastContext = createContext<ShowToast | null>(null);
 
 const toastMilliseconds = 2500;
 
-/** Shows one short message at a time near the bottom of the screen; a message with an action stays until it is taken or replaced. */
+/** Shows one short message at a time near the bottom of the screen; a message with an action stays as long as the action says. */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,10 +39,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       timer.current = null;
     }
     setToast({ message, action });
-    if (action) {
+    const lifetime = action ? action.closesAfterMs : toastMilliseconds;
+    if (lifetime === null) {
       return;
     }
-    timer.current = setTimeout(() => setToast(null), toastMilliseconds);
+    timer.current = setTimeout(() => setToast(null), lifetime);
   }, []);
 
   useEffect(

@@ -1,10 +1,9 @@
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
-import { liveWhere } from "@/domain/checks";
+import { addToDay } from "@/domain/adds";
 import { setDayLine } from "@/domain/plan";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
-import { dayIdFor } from "@/store/ids";
 import type { DayLine, Item } from "@/store/types";
 
 /** A day's type-ahead and lines, each with + and − and a swipe to remove, edited for that day only. */
@@ -25,17 +24,7 @@ export function DayLines({
       <ItemTypeAhead
         label={typeAheadLabel}
         placeholder={`${typeAheadLabel}…`}
-        addLine={async (w, itemId) => {
-          const currentLines = await liveWhere(
-            w,
-            "dayLines",
-            "dayId",
-            dayIdFor(position),
-          );
-          const currentCount =
-            currentLines.find((line) => line.itemId === itemId)?.count ?? 0;
-          await setDayLine(w, position, itemId, currentCount + 1, nowIso());
-        }}
+        addLine={(w, itemId) => addToDay(w, position, itemId, nowIso())}
       />
       <LineList
         lines={lineViews(lines, itemsById)}

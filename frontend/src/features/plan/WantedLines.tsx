@@ -1,11 +1,7 @@
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
-import {
-  addWanted,
-  removeWanted,
-  setWantedCount,
-  setWantedWeekly,
-} from "@/domain/wanted";
+import { addToWanted } from "@/domain/adds";
+import { removeWanted, setWantedCount, setWantedWeekly } from "@/domain/wanted";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -32,9 +28,7 @@ export function WantedLines({
       <ItemTypeAhead
         label={typeAheadLabel}
         placeholder={`${typeAheadLabel}…`}
-        addLine={async (w, itemId) => {
-          await addWanted(w, itemId, 1);
-        }}
+        addLine={addToWanted}
       />
       {wantedLines && (
         <LineList

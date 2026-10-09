@@ -11,8 +11,17 @@ import {
   sizeMaxLength,
 } from "./checks";
 
+/** An item found or made by name, and whether it was made. */
+export interface EnsuredItem {
+  item: Item;
+  created: boolean;
+}
+
 /** Finds a live item by its trimmed name, ignoring case, or makes one. */
-export async function ensureItem(w: Writer, name: string): Promise<Item> {
+export async function ensureItem(
+  w: Writer,
+  name: string,
+): Promise<EnsuredItem> {
   const trimmedName = requireName(name, nameMaxLength);
   const wantedKey = trimmedName.toLowerCase();
   const items = liveRows(await w.all("items"));
@@ -20,7 +29,7 @@ export async function ensureItem(w: Writer, name: string): Promise<Item> {
     (item) => item.name.toLowerCase() === wantedKey,
   );
   if (existingItem) {
-    return existingItem;
+    return { item: existingItem, created: false };
   }
   const createdItem: Item = {
     id: newId(),
@@ -31,7 +40,7 @@ export async function ensureItem(w: Writer, name: string): Promise<Item> {
     imageId: null,
   };
   await w.put("items", createdItem);
-  return createdItem;
+  return { item: createdItem, created: true };
 }
 
 /** Renames an item; every line shows the new name through its item id. */

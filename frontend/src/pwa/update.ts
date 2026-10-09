@@ -43,6 +43,7 @@ export function useUpdateToast(): void {
     showToast("Update ready", {
       label: "Reload",
       onAction: () => void reload(),
+      closesAfterMs: null,
     });
   }, [ready, reload, showToast]);
 }
