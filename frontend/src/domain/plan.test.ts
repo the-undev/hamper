@@ -18,6 +18,7 @@ import { DomainError } from "./checks";
 import { dayDate } from "./display";
 import { deleteMeal, setMealLine } from "./meals";
 import {
+  adjustPlanLength,
   clearDay,
   copyMealsFromArchived,
   placeAdHoc,
@@ -26,7 +27,6 @@ import {
   resetDay,
   saveDayAsMeal,
   setDayLine,
-  setPlanLength,
   setPlanStart,
   startNewPlan,
   swapDays,
@@ -89,22 +89,37 @@ test("moving_the_start_date_relabels_every_day_and_moves_nothing", async () => {
   });
 });
 
-test("the_length_is_editable_from_1_to_31_days", async () => {
-  await write(db, (w) => setPlanLength(w, 31));
+test("the_length_moves_a_day_at_a_time_from_1_to_31_days", async () => {
+  await seed(db, { plan: [thePlan("2026-06-01", 30)] });
+  await write(db, (w) => adjustPlanLength(w, 1));
   expect((await db.plan.get(planId))?.lengthDays).toBe(31);
-
-  await expect(write(db, (w) => setPlanLength(w, 0))).rejects.toThrow(
+  await expect(write(db, (w) => adjustPlanLength(w, 1))).rejects.toThrow(
     DomainError,
   );
-  await expect(write(db, (w) => setPlanLength(w, 32))).rejects.toThrow(
+
+  await seed(db, { plan: [thePlan("2026-06-01", 1)] });
+  await expect(write(db, (w) => adjustPlanLength(w, -1))).rejects.toThrow(
     DomainError,
+  );
+});
+
+test("two_length_steps_from_one_shown_length_both_land", async () => {
+  const shownPlan = await db.plan.get(planId);
+
+  await Promise.all([
+    write(db, (w) => adjustPlanLength(w, 1)),
+    write(db, (w) => adjustPlanLength(w, 1)),
+  ]);
+
+  expect((await db.plan.get(planId))?.lengthDays).toBe(
+    (shownPlan?.lengthDays ?? 0) + 2,
   );
 });
 
 test("plan_operations_wait_for_the_plan_to_arrive_from_the_server", async () => {
   await db.plan.clear();
 
-  await expect(write(db, (w) => setPlanLength(w, 5))).rejects.toThrow(
+  await expect(write(db, (w) => adjustPlanLength(w, 1))).rejects.toThrow(
     DomainError,
   );
 });
@@ -372,7 +387,7 @@ test("copying_a_meal_since_deleted_makes_an_ad_hoc_day_with_its_archived_name", 
 });
 
 test("copying_fills_positions_beyond_the_length_too", async () => {
-  await write(db, (w) => setPlanLength(w, 3));
+  await seed(db, { plan: [thePlan("2026-06-01", 3)] });
 
   await write(db, (w) =>
     copyMealsFromArchived(

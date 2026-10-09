@@ -10,6 +10,7 @@ import {
   requireLive,
   requireName,
 } from "./checks";
+import type { CountStep } from "./counts";
 import { dayDate } from "./display";
 import { createMeal } from "./meals";
 
@@ -49,16 +50,16 @@ export async function setPlanStart(
   await w.put("plan", { ...plan, startDate });
 }
 
-/** Sets the number of days the plan covers, from 1 to 31. */
-export async function setPlanLength(
+/** Changes the number of days the plan covers by one step, keeping it from 1 to 31. */
+export async function adjustPlanLength(
   w: Writer,
-  lengthDays: number,
+  step: CountStep,
 ): Promise<void> {
-  requireCount(lengthDays, minLengthDays);
+  const plan = await requirePlan(w);
+  const lengthDays = requireCount(plan.lengthDays + step, minLengthDays);
   if (lengthDays > maxLengthDays) {
     throw new DomainError(`A plan is at most ${maxLengthDays} days`);
   }
-  const plan = await requirePlan(w);
   await w.put("plan", { ...plan, lengthDays });
 }
 

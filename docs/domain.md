@@ -23,7 +23,8 @@ A thing you buy. A name, an optional usual size as free text ("1kg bag",
 
 An item and a count. A count is a whole number, at least 1, and one means one
 meal's worth. There are no units; size belongs to the item. Lines live on
-meals, on days of the plan, and on the wanted list.
+meals, on days of the plan, and on the wanted list. + and − change the stored
+count by one inside one write, so a fast double tap never loses one.
 
 ## Meal
 

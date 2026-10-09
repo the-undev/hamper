@@ -12,6 +12,7 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, sectionLabel } from "@/components/styles";
 import { Button } from "@/components/ui/button";
 import { addToMeal } from "@/domain/adds";
+import { adjustLineCount } from "@/domain/counts";
 import {
   deleteMeal,
   duplicateMeal,
@@ -99,10 +100,8 @@ export function MealScreen({ mealId }: { mealId: string }) {
       <LineList
         lines={lineViews(lines, itemsById)}
         empty="No items on this meal yet"
-        onCount={(line, count) =>
-          void write((w) =>
-            setMealLine(w, mealId, line.itemId, count, nowIso()),
-          )
+        onAdjust={(line, step) =>
+          void write((w) => adjustLineCount(w, "mealLines", line.id, step))
         }
         onRemove={(line) =>
           void write((w) => setMealLine(w, mealId, line.itemId, 0, nowIso()))

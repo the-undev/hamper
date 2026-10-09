@@ -1,6 +1,7 @@
 import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
 import { addToDay } from "@/domain/adds";
+import { adjustLineCount } from "@/domain/counts";
 import { setDayLine } from "@/domain/plan";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
@@ -29,10 +30,8 @@ export function DayLines({
       <LineList
         lines={lineViews(lines, itemsById)}
         empty="Nothing to buy for this day"
-        onCount={(line, count) =>
-          void write((w) =>
-            setDayLine(w, position, line.itemId, count, nowIso()),
-          )
+        onAdjust={(line, step) =>
+          void write((w) => adjustLineCount(w, "dayLines", line.id, step))
         }
         onRemove={(line) =>
           void write((w) => setDayLine(w, position, line.itemId, 0, nowIso()))

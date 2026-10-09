@@ -22,7 +22,7 @@ function renderLines(): void {
     <LineList
       lines={lines}
       empty="Nothing here"
-      onCount={() => {}}
+      onAdjust={() => {}}
       onRemove={() => {}}
     />,
   );

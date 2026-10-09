@@ -108,7 +108,10 @@ test("changing_the_length_hides_and_shows_days_without_disturbing_the_meals", as
   await user.click(screen.getByRole("button", { name: "One fewer day" }));
 
   expect(await screen.findByText("6 days")).toBeInTheDocument();
-  expect(screen.queryByRole("button", roastHandle)).not.toBeInTheDocument();
+  // The header and the day list read the plan through separate live queries, which re-render apart.
+  await waitFor(() =>
+    expect(screen.queryByRole("button", roastHandle)).not.toBeInTheDocument(),
+  );
   expect((await live(db, "days")).map((day) => day.position).sort()).toEqual([
     0, 6,
   ]);

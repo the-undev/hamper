@@ -80,7 +80,11 @@ function LineEditorFields({
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted">Count</span>
-        <Counter count={count} subject={view.name} onChange={setCount} />
+        <Counter
+          count={count}
+          subject={view.name}
+          onAdjust={(step) => setCount((shownCount) => shownCount + step)}
+        />
       </div>
       <div className="flex gap-2">
         <button

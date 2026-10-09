@@ -34,16 +34,6 @@ export async function addWanted(
   return createdLine;
 }
 
-/** Sets a wanted line's count. */
-export async function setWantedCount(
-  w: Writer,
-  lineId: string,
-  count: number,
-): Promise<void> {
-  const line = await requireLive(w, "wantedLines", lineId);
-  await w.put("wantedLines", { ...line, count: requireCount(count, 1) });
-}
-
 /** Marks a wanted line Weekly, or Once when weekly is false. */
 export async function setWantedWeekly(
   w: Writer,
