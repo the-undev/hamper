@@ -27,6 +27,12 @@ install before a release.
 Replacing one item with another on a meal, a day or the breakdown is done by
 adding the new item and removing the old. A single swap action is parked.
 
+### Tidy unused items
+
+More → Items could list the items used on no meal, day or list, each with
+Merge and Delete, for the mistakes nobody fixed at the time. Today each is
+found by hand.
+
 ### Sweep orphaned images
 
 When an item or meal is deleted through sync, its image files stay under
