@@ -143,7 +143,7 @@ test.describe("a placeholder is fainter than typed text", () => {
       await openApp(page, "/plan");
       await planView(page, "Items");
       const colours = await page
-        .getByRole("textbox", { name: "Add an item" })
+        .getByRole("combobox", { name: "Add an item" })
         .evaluate((input) => {
           const pixel = document.createElement("canvas").getContext("2d", {
             willReadFrequently: true,

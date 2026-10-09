@@ -237,6 +237,49 @@ test("the views slide and the wanted list is edited on Items", async ({
   await expect(track).not.toHaveAttribute("style", /translateX/);
 });
 
+test("the suggestions float over the wanted list without moving it", async ({
+  page,
+}) => {
+  const first = uniqueName("Olive");
+  const second = uniqueName("Olive");
+  await openApp(page, "/plan");
+  await planView(page, "Items");
+  await addLine(page, "Add an item", first);
+  await addLine(page, "Add an item", second);
+  const input = page.getByRole("combobox", { name: "Add an item" });
+  const wantedList = page.locator('[data-plan-view="items"]').getByRole("list");
+  const firstRow = wantedList.getByRole("listitem").first();
+
+  // A fresh focus scrolls the box up on a phone; the row is measured after that.
+  await input.blur();
+  await input.focus();
+  const before = await centre(firstRow);
+  await input.fill(first.slice(0, -1));
+  const suggestions = page.getByRole("listbox", { name: "Suggestions" });
+  await expect(suggestions.getByRole("option").first()).toBeVisible();
+
+  expect(await centre(firstRow)).toEqual(before);
+  const suggestionsBox = await suggestions.boundingBox();
+  const listBox = await wantedList.boundingBox();
+  if (!suggestionsBox || !listBox) {
+    throw new Error("The suggestions or the list has no box");
+  }
+  expect(suggestionsBox.y).toBeLessThan(listBox.y + listBox.height);
+  expect(suggestionsBox.y + suggestionsBox.height).toBeGreaterThan(listBox.y);
+
+  await page.keyboard.press("Escape");
+  await expect(suggestions).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(input).toHaveValue("");
+  for (const name of [first, second]) {
+    await swipeLeft(page, line(page, name).getByText(name, { exact: true }));
+    await page
+      .getByRole("button", { name: `Remove ${name}`, exact: true })
+      .click();
+    await expect(line(page, name)).toHaveCount(0);
+  }
+});
+
 test("Enter adds what was typed beside a longer name it is a prefix of", async ({
   page,
 }) => {
@@ -247,7 +290,7 @@ test("Enter adds what was typed beside a longer name it is a prefix of", async (
   await planView(page, "Items");
   await addLine(page, "Add an item", longer);
 
-  await page.getByRole("textbox", { name: "Add an item" }).fill(typed);
+  await page.getByRole("combobox", { name: "Add an item" }).fill(typed);
   await page.keyboard.press("Enter");
 
   await expect(line(page, typed)).toBeVisible();

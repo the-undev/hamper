@@ -29,7 +29,7 @@ async function startEmptyList(page: Page): Promise<void> {
   await openApp(page, "/shop");
   await page.getByRole("button", { name: "Start empty" }).click();
   await expect(
-    page.getByRole("textbox", { name: "Add to this list" }),
+    page.getByRole("combobox", { name: "Add to this list" }),
   ).toBeVisible();
 }
 
@@ -66,7 +66,7 @@ test("Make from plan edits the plan and generates a list with summed counts", as
   await addMeal(page, meal, [shared]);
   const day = await placeOnFirstEmptyDay(page, meal);
   await planView(page, "Items");
-  const addWanted = page.getByRole("textbox", { name: "Add an item" });
+  const addWanted = page.getByRole("combobox", { name: "Add an item" });
   await addWanted.fill(shared);
   await addWanted.press("Enter");
   await expect(line(page, shared)).toBeVisible();
@@ -110,7 +110,7 @@ test("a list's lines tick, count, edit, go to wanted, and a second list opens be
   const rest = uniqueName("Sugar");
   await startEmptyList(page);
   for (const name of [ticked, counted, swiped, rest]) {
-    await page.getByRole("textbox", { name: "Add to this list" }).fill(name);
+    await page.getByRole("combobox", { name: "Add to this list" }).fill(name);
     await page.getByRole("option", { name: `Add “${name}”` }).click();
     await expect(shopLine(page, name)).toBeVisible();
   }
@@ -243,7 +243,7 @@ test("Download saves the unticked lines as a text file", async ({ page }) => {
   const got = uniqueName("Honey");
   await startEmptyList(page);
   for (const name of [wanted, got]) {
-    await page.getByRole("textbox", { name: "Add to this list" }).fill(name);
+    await page.getByRole("combobox", { name: "Add to this list" }).fill(name);
     await page.getByRole("option", { name: `Add “${name}”` }).click();
   }
   await page.getByRole("checkbox", { name: `${got} in the trolley` }).click();

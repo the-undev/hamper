@@ -1,7 +1,17 @@
-import { type KeyboardEvent, useId, useState } from "react";
+import {
+  type Dispatch,
+  type KeyboardEvent,
+  type RefObject,
+  type SetStateAction,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { isCloseMatch } from "@/lib/distance";
 import { cn } from "@/lib/utils";
 import { textInput } from "./styles";
+import { Command, CommandGroup, CommandItem, CommandList } from "./ui/command";
+import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
 
 /** Something the type-ahead can offer: a name, and small text beside it. */
 export interface TypeAheadOption {
@@ -76,7 +86,51 @@ function namesMatch(option: TypeAheadOption, typedName: string): boolean {
   return option.name.trim().toLowerCase() === typedName.toLowerCase();
 }
 
-/** The one control for adding a line: type, then pick a match or take the create row under them; Enter takes what was typed, or the row the arrows highlight. */
+/** The value cmdk holds while no row is highlighted: it matches no row, so cmdk never highlights the first row by itself. */
+const noHighlight = "-";
+
+/** Below this width the screen is a phone's, where the keyboard covers the lower half. */
+const phoneWidth = 640;
+
+/** The value cmdk knows a row by. */
+function rowValue<O extends TypeAheadOption>(row: Row<O>): string {
+  return row.kind === "create" ? "create" : `pick:${row.option.id}`;
+}
+
+/** The ids cmdk gives the list and the highlighted row, which the input points at. */
+interface ListIds {
+  list: string | undefined;
+  active: string | undefined;
+}
+
+/** Reads the ids cmdk gave the list and the highlighted row, and keeps that row in view. */
+function ListIdReader({
+  listRef,
+  highlightValue,
+  onRead,
+}: {
+  listRef: RefObject<HTMLDivElement | null>;
+  highlightValue: string;
+  onRead: Dispatch<SetStateAction<ListIds>>;
+}) {
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const rowElements = list?.querySelectorAll<HTMLElement>("[cmdk-item]");
+    const active = [...(rowElements ?? [])].find(
+      (rowElement) => rowElement.dataset.value === highlightValue,
+    );
+    active?.scrollIntoView({ block: "nearest" });
+    const ids = { list: list?.id, active: active?.id };
+    onRead((current) =>
+      current.list === ids.list && current.active === ids.active
+        ? current
+        : ids,
+    );
+  }, [listRef, highlightValue, onRead]);
+  return null;
+}
+
+/** The one control for adding a line: type, then pick a match or take the create row from the suggestions floating under the box; Enter takes what was typed, or the row the arrows highlight. */
 export function TypeAhead<O extends TypeAheadOption>({
   label,
   placeholder,
@@ -94,8 +148,14 @@ export function TypeAhead<O extends TypeAheadOption>({
   listWhenEmpty?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
-  const listId = useId();
+  const [listIds, setListIds] = useState<ListIds>({
+    list: undefined,
+    active: undefined,
+  });
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const typedName = query.trim();
 
   const rows: Row<O>[] = [];
@@ -116,7 +176,15 @@ export function TypeAhead<O extends TypeAheadOption>({
   }
   const highlightedRow =
     highlightIndex === null ? undefined : rows[highlightIndex];
-  const optionId = (index: number): string => `${listId}-${index}`;
+  const listShown = open && rows.length > 0;
+  const highlightValue = highlightedRow
+    ? rowValue(highlightedRow)
+    : noHighlight;
+
+  const close = (): void => {
+    setOpen(false);
+    setHighlightIndex(null);
+  };
 
   const changeQuery = (nextQuery: string): void => {
     setQuery(nextQuery);
@@ -125,6 +193,7 @@ export function TypeAhead<O extends TypeAheadOption>({
 
   const take = (row: Row<O>): void => {
     changeQuery("");
+    setOpen(false);
     if (row.kind === "create") {
       create?.onCreate(row.name);
       return;
@@ -143,10 +212,11 @@ export function TypeAhead<O extends TypeAheadOption>({
   };
 
   const moveHighlight = (step: 1 | -1): void => {
+    setOpen(true);
     if (rows.length === 0) {
       return;
     }
-    if (!highlightedRow || highlightIndex === null) {
+    if (!listShown || !highlightedRow || highlightIndex === null) {
       setHighlightIndex(step === 1 ? 0 : rows.length - 1);
       return;
     }
@@ -160,8 +230,8 @@ export function TypeAhead<O extends TypeAheadOption>({
       return;
     }
     if (event.key === "Escape") {
-      if (highlightedRow) {
-        setHighlightIndex(null);
+      if (listShown) {
+        close();
         return;
       }
       changeQuery("");
@@ -171,70 +241,125 @@ export function TypeAhead<O extends TypeAheadOption>({
       return;
     }
     event.preventDefault();
-    if (highlightedRow) {
+    if (listShown && highlightedRow) {
       take(highlightedRow);
       return;
     }
     takeTyped();
   };
 
+  const onFocus = (): void => {
+    setOpen(true);
+    // On a phone the keyboard covers the lower half; the box goes to the top so the suggestions have room under it.
+    if (window.innerWidth < phoneWidth) {
+      inputRef.current?.scrollIntoView({ block: "start" });
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-1">
-      <input
-        type="text"
-        aria-label={label}
-        aria-controls={rows.length > 0 ? listId : undefined}
-        aria-activedescendant={
-          highlightedRow && highlightIndex !== null
-            ? optionId(highlightIndex)
-            : undefined
+    <Popover
+      open={listShown}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          close();
         }
-        placeholder={placeholder}
-        autoComplete="off"
-        value={query}
-        onChange={(event) => changeQuery(event.target.value)}
-        onKeyDown={onKeyDown}
-        className={textInput}
-      />
-      {rows.length > 0 && (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label="Suggestions"
-          className="flex flex-col overflow-hidden rounded-[14px] border border-line bg-surface shadow-sm"
+      }}
+    >
+      <PopoverAnchor asChild>
+        <input
+          ref={inputRef}
+          type="text"
+          role="combobox"
+          aria-label={label}
+          aria-autocomplete="list"
+          aria-expanded={listShown}
+          aria-controls={listShown ? listIds.list : undefined}
+          aria-activedescendant={
+            listShown && highlightedRow ? listIds.active : undefined
+          }
+          placeholder={placeholder}
+          autoComplete="off"
+          value={query}
+          onChange={(event) => {
+            changeQuery(event.target.value);
+            setOpen(true);
+          }}
+          onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onClick={() => setOpen(true)}
+          className={cn(
+            textInput,
+            "scroll-mt-[calc(4.5rem+env(safe-area-inset-top,0px))]",
+          )}
+        />
+      </PopoverAnchor>
+      <PopoverContent
+        // The listbox inside is the popup the input controls; the wrapper adds nothing for a screen reader.
+        role="presentation"
+        align="start"
+        sideOffset={4}
+        collisionPadding={8}
+        // The sheet the meal picker sits in slides in after the box gains focus; the overlay follows it.
+        updatePositionStrategy="always"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onInteractOutside={(event) => {
+          if (inputRef.current?.contains(event.target as Node)) {
+            event.preventDefault();
+          }
+        }}
+        // A press on a row keeps the focus, and a phone's keyboard, in the box.
+        onMouseDown={(event) => event.preventDefault()}
+        className="w-(--radix-popover-trigger-width) gap-0 overflow-hidden rounded-[14px] border border-line bg-surface p-0 shadow-(--shadow) ring-0"
+      >
+        {/* A new query starts a new list, so a highlight never outlives the text it was made for. */}
+        <Command
+          key={query}
+          shouldFilter={false}
+          disablePointerSelection
+          value={highlightValue}
+          onValueChange={(value) => {
+            const index = rows.findIndex((row) => rowValue(row) === value);
+            setHighlightIndex(index === -1 ? null : index);
+          }}
         >
-          {rows.map((row, index) => (
-            // biome-ignore lint/a11y/useKeyWithClickEvents: the input handles the keys for every option
-            <div
-              key={row.kind === "create" ? "create" : row.option.id}
-              id={optionId(index)}
-              role="option"
-              tabIndex={-1}
-              aria-selected={highlightedRow === row}
-              onClick={() => take(row)}
-              className={cn(
-                "flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 border-line border-t px-3.5 py-2 text-left text-[15px] first:border-t-0 hover:bg-soft",
-                highlightedRow === row && "bg-soft",
-              )}
-            >
-              {row.kind === "create" ? (
-                <span className="font-semibold text-accent">
-                  {create?.label(row.name)}
-                </span>
-              ) : (
-                <>
-                  <span className="truncate">{row.option.name}</span>{" "}
-                  {pickDetail(row.option, row.close) && (
-                    <small className="truncate text-xs text-muted">
-                      {pickDetail(row.option, row.close)}
-                    </small>
+          <CommandList
+            ref={listRef}
+            className="max-h-[min(15.5rem,var(--radix-popover-content-available-height))]"
+          >
+            <CommandGroup>
+              {rows.map((row) => (
+                <CommandItem
+                  key={rowValue(row)}
+                  value={rowValue(row)}
+                  onSelect={() => take(row)}
+                  className="min-h-11 w-full justify-between gap-3 border-line border-t px-3.5 py-2 text-left text-[15px] first:border-t-0 hover:bg-soft"
+                >
+                  {row.kind === "create" ? (
+                    <span className="font-semibold text-accent">
+                      {create?.label(row.name)}
+                    </span>
+                  ) : (
+                    <>
+                      <span className="truncate">{row.option.name}</span>{" "}
+                      {pickDetail(row.option, row.close) && (
+                        <small className="truncate text-xs text-muted">
+                          {pickDetail(row.option, row.close)}
+                        </small>
+                      )}
+                    </>
                   )}
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+          <ListIdReader
+            listRef={listRef}
+            highlightValue={highlightValue}
+            onRead={setListIds}
+          />
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

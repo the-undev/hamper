@@ -32,7 +32,11 @@ function renderTypeAhead() {
       create={{ label: (name) => `Add “${name}”`, onCreate }}
     />,
   );
-  return { onPick, onCreate, input: screen.getByLabelText("Add an item") };
+  return {
+    onPick,
+    onCreate,
+    input: screen.getByRole("combobox", { name: "Add an item" }),
+  };
 }
 
 test("ranking_puts_the_exact_name_then_prefixes_then_substrings_ignoring_case", () => {
@@ -200,6 +204,25 @@ test("tab_leaves_without_taking_anything", async () => {
   expect(input).toHaveValue("mil");
   expect(onPick).not.toHaveBeenCalled();
   expect(onCreate).not.toHaveBeenCalled();
+});
+
+test("the_suggestions_float_until_a_tap_outside_closes_them", async () => {
+  const user = userEvent.setup();
+  const { input } = renderTypeAhead();
+  expect(input).toHaveAttribute("aria-expanded", "false");
+
+  await user.type(input, "mil");
+  const listbox = screen.getByRole("listbox", { name: "Suggestions" });
+  expect(input).toHaveAttribute("aria-expanded", "true");
+  expect(input).toHaveAttribute("aria-controls", listbox.id);
+
+  await user.click(document.body);
+  expect(screen.queryByRole("listbox")).toBeNull();
+  expect(input).toHaveAttribute("aria-expanded", "false");
+  expect(input).toHaveValue("mil");
+
+  await user.click(input);
+  expect(screen.getByRole("listbox")).toBeInTheDocument();
 });
 
 test("tapping_a_match_picks_it", async () => {

@@ -35,7 +35,7 @@ test("a renamed item shows its new name on a meal, a day and the wanted list", a
   const mealUrl = page.url();
   const day = await placeOnFirstEmptyDay(page, meal);
   await planView(page, "Items");
-  const addWanted = page.getByRole("textbox", { name: "Add an item" });
+  const addWanted = page.getByRole("combobox", { name: "Add an item" });
   await addWanted.fill(item);
   await addWanted.press("Enter");
   await expect(line(page, item)).toBeVisible();
@@ -77,7 +77,7 @@ test("merging an item moves its lines onto the other and combines counts", async
   const mealUrl = page.url();
 
   await openItem(page, source);
-  await page.getByRole("textbox", { name: "Merge into" }).fill(target);
+  await page.getByRole("combobox", { name: "Merge into" }).fill(target);
   await page.getByRole("option", { name: target, exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Merge" }).click();
   await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue(target);
@@ -148,7 +148,7 @@ test("a close match is offered for a mistyped name", async ({ page }) => {
   await planView(page, "Items");
   await addLine(page, "Add an item", target);
 
-  const addItem = page.getByRole("textbox", { name: "Add an item" });
+  const addItem = page.getByRole("combobox", { name: "Add an item" });
   await addItem.fill(typo);
   await expect(
     page.getByRole("option", { name: `${target} close match`, exact: true }),

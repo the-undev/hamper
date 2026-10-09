@@ -85,7 +85,7 @@ export async function addLine(
   typeAheadLabel: string,
   itemName: string,
 ): Promise<void> {
-  await page.getByRole("textbox", { name: typeAheadLabel }).fill(itemName);
+  await page.getByRole("combobox", { name: typeAheadLabel }).fill(itemName);
   await page.getByRole("option", { name: `Add “${itemName}”` }).click();
   await expect(line(page, itemName)).toBeVisible();
 }
@@ -113,9 +113,9 @@ export async function placeOnFirstEmptyDay(
   const pickLabel = await pick.getAttribute("aria-label");
   const dayLabel = pickLabel?.replace("Pick a meal for ", "") ?? "";
   await pick.click();
-  await page.getByRole("textbox", { name: "Meal" }).fill(mealName);
+  await page.getByRole("combobox", { name: "Meal" }).fill(mealName);
   await page
-    .getByRole("dialog")
+    .getByRole("listbox", { name: "Suggestions" })
     .getByRole("option", { name: mealName })
     .first()
     .click();

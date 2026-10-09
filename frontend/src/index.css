@@ -18,6 +18,7 @@
   --warn-soft: #fbeedd;
   --danger: #c4423a;
   --tick: #8d948a;
+  --shadow: 0 10px 30px rgba(30, 40, 30, 0.12);
   color-scheme: light;
 }
 
@@ -36,6 +37,7 @@
     --warn-soft: #3a2a18;
     --danger: #e0675e;
     --tick: #6d746b;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
 }

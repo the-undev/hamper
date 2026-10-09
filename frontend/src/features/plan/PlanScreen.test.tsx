@@ -126,7 +126,7 @@ test("the_inactive_view_is_inert", async () => {
   expect(pane("items")).toHaveAttribute("aria-hidden", "true");
   expect(pane("meals")).not.toHaveAttribute("inert");
   expect(
-    screen.queryByRole("textbox", { name: "Add an item" }),
+    screen.queryByRole("combobox", { name: "Add an item" }),
   ).not.toBeInTheDocument();
 
   await user.click(screen.getByRole("radio", { name: "Items" }));
@@ -134,7 +134,7 @@ test("the_inactive_view_is_inert", async () => {
   expect(pane("meals")).toHaveAttribute("inert");
   expect(pane("items")).not.toHaveAttribute("inert");
   expect(
-    screen.getByRole("textbox", { name: "Add an item" }),
+    screen.getByRole("combobox", { name: "Add an item" }),
   ).toBeInTheDocument();
 });
 

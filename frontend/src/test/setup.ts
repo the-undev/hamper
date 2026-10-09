@@ -46,6 +46,8 @@ Object.defineProperty(window, "isSecureContext", {
 
 // jsdom does not implement scrolling; the router scrolls to the top on every navigation.
 window.scrollTo = () => {};
+// The type-ahead scrolls its box and its highlighted row into view.
+Element.prototype.scrollIntoView = () => {};
 
 // jsdom has no ResizeObserver; tests report sizes through resizeTo.
 window.ResizeObserver = FakeResizeObserver;
