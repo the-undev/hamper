@@ -34,4 +34,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
 RUN mkdir -p /data
 VOLUME /data
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "Hamper.Api.dll"]
+# The entrypoint, executable in git, drops to PUID:PGID when both are set and then runs CMD.
+COPY docker/entrypoint.sh /usr/local/bin/hamper-entrypoint
+ENTRYPOINT ["/usr/local/bin/hamper-entrypoint"]
+CMD ["dotnet", "Hamper.Api.dll"]

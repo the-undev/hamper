@@ -55,6 +55,12 @@ jobs:
       - run: pnpm -C frontend test
       - run: pnpm -C frontend build
 
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make image-check
+
   e2e:
     runs-on: ubuntu-latest
     steps:
