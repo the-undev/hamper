@@ -10,7 +10,7 @@ PWA added.
 | API | C# / .NET 10, ASP.NET Core minimal APIs, vertical slices, problem+json errors |
 | Database | SQLite through EF Core (`Microsoft.EntityFrameworkCore.Sqlite`), migrations in the repo |
 | Frontend | React 19, TypeScript strict, Vite, Tailwind CSS v4, TanStack Router and Query, pnpm, Biome |
-| Components | shadcn's AlertDialog, Badge, Button, Checkbox, Command (cmdk), Dialog, Input, Label, Popover and Sheet, on Radix UI, with lucide-react icons |
+| Components | shadcn's AlertDialog, Badge, Button, Checkbox, Command (cmdk), Dialog, Input, Label, Popover, Sheet and Tabs, on Radix UI, with lucide-react icons |
 | Drag and drop | dnd-kit (`@dnd-kit/core`, `@dnd-kit/sortable`) |
 | On-device store | Dexie (IndexedDB), read through `dexie-react-hooks` live queries |
 | Real time | Server-sent events |

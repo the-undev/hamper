@@ -218,7 +218,10 @@ test("the views slide and the wanted list is edited on Items", async ({
     await planView(page, "Items");
   }
   await expect(track).toHaveAttribute("style", /translateX\(-50%\)/);
-  await expect(page.getByRole("radio", { name: "Items" })).toBeChecked();
+  await expect(page.getByRole("tab", { name: "Items" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
 
   await addLine(page, "Add an item", item);
   const row = line(page, item);

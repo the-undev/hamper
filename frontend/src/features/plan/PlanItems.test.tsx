@@ -24,7 +24,10 @@ afterEach(async () => {
 test("the_items_view_opens_when_it_was_the_last_one_used", async () => {
   renderApp("/plan", db, fakeLoop());
 
-  expect(await screen.findByRole("radio", { name: "Items" })).toBeChecked();
+  expect(await screen.findByRole("tab", { name: "Items" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   expect(
     await screen.findByText("Nothing wanted beyond the meals"),
   ).toBeInTheDocument();

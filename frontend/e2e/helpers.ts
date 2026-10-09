@@ -47,17 +47,16 @@ export async function tab(page: Page, name: string): Promise<void> {
     .click();
 }
 
-/** Picks a view of the Plan screen by its segmented control. */
+/** Picks a view of the Plan screen by its tabs. */
 export async function planView(
   page: Page,
   name: "Meals" | "Items",
 ): Promise<void> {
-  // The radio is visually hidden under its label, which takes the click.
-  await page
-    .getByRole("group", { name: "Plan view" })
-    .getByText(name, { exact: true })
-    .click();
-  await expect(page.getByRole("radio", { name })).toBeChecked();
+  const viewTab = page
+    .getByRole("tablist", { name: "Plan view" })
+    .getByRole("tab", { name });
+  await viewTab.click();
+  await expect(viewTab).toHaveAttribute("aria-selected", "true");
 }
 
 /** Adds a meal to the library with one line per item name, and leaves the page on the meal. */

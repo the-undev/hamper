@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { Segmented } from "@/components/Segmented";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePlan } from "@/hooks/data";
 import { readSetting, writeSetting } from "@/lib/settings";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,7 @@ function trackTransform(
   return view === "items" ? "translateX(-50%)" : undefined;
 }
 
-/** The plan, its days and its wanted items side by side on a track that slides between them by the segmented control or a swipe; the last view is remembered. */
+/** The plan, its days and its wanted items side by side on a track that slides between them by the tabs or a swipe; the last view is remembered. */
 export function PlanScreen() {
   const plan = usePlan();
   const [view, setView] = useState<PlanView>(rememberedView);
@@ -83,17 +83,22 @@ export function PlanScreen() {
   );
 
   return (
-    <div className="flex flex-1 flex-col gap-3.5">
+    <Tabs
+      value={view}
+      onValueChange={(value) => choose(value === "items" ? "items" : "meals")}
+      className="flex-1 gap-3.5"
+    >
       <ScreenHeader
         title="Plan"
         actions={plan ? <PlanRange plan={plan} /> : undefined}
       />
-      <Segmented
-        label="Plan view"
-        segments={views}
-        value={view}
-        onChange={choose}
-      />
+      <TabsList aria-label="Plan view">
+        {views.map((planView) => (
+          <TabsTrigger key={planView.value} value={planView.value}>
+            {planView.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
       <div
         className="-mx-4 flex flex-1 touch-pan-y touch-pinch-zoom flex-col"
         {...handlers}
@@ -121,11 +126,11 @@ export function PlanScreen() {
           </div>
         </div>
       </div>
-    </div>
+    </Tabs>
   );
 }
 
-/** One view on the track; the inactive one is inert and hidden from screen readers. */
+/** One view on the track, the tab's panel; both stay mounted for the slide, and the inactive one is inert and hidden from screen readers. */
 function ViewPane({
   ref,
   name,
@@ -138,14 +143,16 @@ function ViewPane({
   children: ReactNode;
 }) {
   return (
-    <div
+    <TabsContent
       ref={ref}
+      value={name}
+      forceMount
       data-plan-view={name}
       inert={!active}
       aria-hidden={active ? undefined : true}
       className="flex w-1/2 min-w-0 flex-none flex-col gap-3.5 px-4"
     >
       {children}
-    </div>
+    </TabsContent>
   );
 }
