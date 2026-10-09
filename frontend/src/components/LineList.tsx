@@ -18,13 +18,13 @@ export interface LineView {
 export function LineList<L extends LineView>({
   lines,
   empty,
-  onCount,
+  onAdjust,
   onRemove,
   extra,
 }: {
   lines: readonly L[];
   empty: string;
-  onCount: (line: L, count: number) => void;
+  onAdjust: (line: L, step: 1 | -1) => void;
   onRemove: (line: L) => void;
   /** Anything a list shows between the name and the count, such as Once / Weekly. */
   extra?: (line: L) => ReactNode;
@@ -67,7 +67,7 @@ export function LineList<L extends LineView>({
                 <Counter
                   count={line.count}
                   subject={line.name}
-                  onChange={(count) => onCount(line, count)}
+                  onAdjust={(step) => onAdjust(line, step)}
                 />
               </div>
             </SwipeRow>

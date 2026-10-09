@@ -2,7 +2,8 @@ import { ItemTypeAhead } from "@/components/ItemTypeAhead";
 import { LineList, lineViews } from "@/components/LineList";
 import { Badge } from "@/components/ui/badge";
 import { addToWanted } from "@/domain/adds";
-import { removeWanted, setWantedCount, setWantedWeekly } from "@/domain/wanted";
+import { adjustLineCount } from "@/domain/counts";
+import { removeWanted, setWantedWeekly } from "@/domain/wanted";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import { liveRows, useLive } from "@/store/live";
@@ -34,8 +35,8 @@ export function WantedLines({
         <LineList
           lines={lineViews(wantedLines, itemsById)}
           empty="Nothing wanted beyond the meals"
-          onCount={(line, count) =>
-            void write((w) => setWantedCount(w, line.id, count))
+          onAdjust={(line, step) =>
+            void write((w) => adjustLineCount(w, "wantedLines", line.id, step))
           }
           onRemove={(line) =>
             void write((w) => removeWanted(w, line.id, nowIso()))

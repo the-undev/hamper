@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/sheet";
 import { dayDate } from "@/domain/display";
 import {
+  adjustPlanLength,
   maxLengthDays,
   minLengthDays,
-  setPlanLength,
   setPlanStart,
   startNewPlan,
 } from "@/domain/plan";
@@ -161,9 +161,7 @@ export function PlanRange({ plan }: { plan: Plan }) {
         min={minLengthDays}
         max={maxLengthDays}
         format={(count) => `${count} days`}
-        onChange={(lengthDays) =>
-          void write((w) => setPlanLength(w, lengthDays))
-        }
+        onAdjust={(step) => void write((w) => adjustPlanLength(w, step))}
       />
     </>
   );

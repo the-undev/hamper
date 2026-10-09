@@ -1,12 +1,8 @@
 import { Counter } from "@/components/Counter";
 import { SwipeRow } from "@/components/SwipeRow";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  editShopLine,
-  lineToWanted,
-  removeShopLine,
-  tickShopLine,
-} from "@/domain/shops";
+import { adjustLineCount } from "@/domain/counts";
+import { lineToWanted, removeShopLine, tickShopLine } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -68,14 +64,8 @@ export function ShopLineRow({
         <Counter
           count={line.count}
           subject={name}
-          onChange={(count) =>
-            void write((w) =>
-              editShopLine(w, line.id, {
-                nameOverride: line.nameOverride,
-                sizeOverride: line.sizeOverride,
-                count,
-              }),
-            )
+          onAdjust={(step) =>
+            void write((w) => adjustLineCount(w, "shopLines", line.id, step))
           }
         />
       </div>

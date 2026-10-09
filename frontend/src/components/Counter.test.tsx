@@ -3,21 +3,21 @@ import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { Counter } from "./Counter";
 
-test("plus_and_minus_report_the_next_count", async () => {
+test("plus_and_minus_report_one_step", async () => {
   const user = userEvent.setup();
-  const onChange = vi.fn();
-  render(<Counter count={3} subject="Milk" onChange={onChange} />);
+  const onAdjust = vi.fn();
+  render(<Counter count={3} subject="Milk" onAdjust={onAdjust} />);
 
   await user.click(screen.getByRole("button", { name: "One more Milk" }));
   await user.click(screen.getByRole("button", { name: "One fewer Milk" }));
 
-  expect(onChange.mock.calls).toEqual([[4], [2]]);
+  expect(onAdjust.mock.calls).toEqual([[1], [-1]]);
   expect(screen.getByText("3")).toBeInTheDocument();
 });
 
 test("the_buttons_stop_at_the_minimum_and_the_maximum", () => {
   const { rerender } = render(
-    <Counter count={1} subject="Milk" onChange={vi.fn()} />,
+    <Counter count={1} subject="Milk" onAdjust={vi.fn()} />,
   );
   expect(screen.getByRole("button", { name: "One fewer Milk" })).toBeDisabled();
 
@@ -27,7 +27,7 @@ test("the_buttons_stop_at_the_minimum_and_the_maximum", () => {
       subject="day"
       max={31}
       format={(count) => `${count} days`}
-      onChange={vi.fn()}
+      onAdjust={vi.fn()}
     />,
   );
   expect(screen.getByRole("button", { name: "One more day" })).toBeDisabled();

@@ -3,12 +3,7 @@ import type { HamperDb } from "@/store/db";
 import { write } from "@/store/write";
 import { freshDb } from "@/test/db";
 import { anItem, aWantedLine, live, now, seed } from "@/test/rows";
-import {
-  addWanted,
-  removeWanted,
-  setWantedCount,
-  setWantedWeekly,
-} from "./wanted";
+import { addWanted, removeWanted, setWantedWeekly } from "./wanted";
 
 let db: HamperDb;
 
@@ -54,16 +49,10 @@ test("each_wanted_line_is_marked_once_or_weekly", async () => {
   expect((await db.wantedLines.get(line.id))?.weekly).toBe(false);
 });
 
-test("a_wanted_lines_count_is_set_and_the_line_removed", async () => {
+test("a_wanted_line_is_removed", async () => {
   const milk = anItem("Milk");
   const line = aWantedLine(milk, 1);
   await seed(db, { items: [milk], wantedLines: [line] });
-
-  await write(db, (w) => setWantedCount(w, line.id, 4));
-  expect((await db.wantedLines.get(line.id))?.count).toBe(4);
-  await expect(
-    write(db, (w) => setWantedCount(w, line.id, 0)),
-  ).rejects.toThrow();
 
   await write(db, (w) => removeWanted(w, line.id, now));
   expect(await live(db, "wantedLines")).toEqual([]);

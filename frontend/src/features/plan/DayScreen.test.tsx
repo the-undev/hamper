@@ -3,7 +3,6 @@ import { afterEach, beforeEach, expect, test } from "vitest";
 import type { HamperDb } from "@/store/db";
 import { dayIdFor } from "@/store/ids";
 import { renderApp } from "@/test/app";
-import { waitForCount } from "@/test/counter";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import {
@@ -131,7 +130,6 @@ test("the_days_lines_are_added_counted_and_removed_for_that_day_only", async () 
   const typeAhead = await screen.findByLabelText("Add an item for this day");
   await user.type(typeAhead, "Bread{Enter}");
   await user.type(typeAhead, "rice{Enter}");
-  await waitForCount("Rice", "2");
   await user.click(screen.getByRole("button", { name: "One more Rice" }));
   await user.click(screen.getByRole("button", { name: "Remove Naan" }));
 
