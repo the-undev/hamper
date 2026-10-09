@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { secondaryButton } from "@/components/styles";
+import { Button } from "@/components/ui/button";
 import { startEmptyShop } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, localIsoDate, nowIso } from "@/lib/dates";
@@ -10,19 +10,23 @@ export function ShopStarters({ onStarted }: { onStarted: () => void }) {
   const navigate = useNavigate();
   return (
     <div className="flex gap-2">
-      <button
+      <Button
         type="button"
-        className={secondaryButton}
+        variant="outline"
+        size="lg"
+        className="flex-1"
         onClick={() => {
           onStarted();
           void navigate({ to: "/shop/breakdown" });
         }}
       >
         Make from plan
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className={secondaryButton}
+        variant="outline"
+        size="lg"
+        className="flex-1"
         onClick={async () => {
           const name = `Quick shop ${formatDay(localIsoDate(new Date()))}`;
           const shop = await write((w) => startEmptyShop(w, name, nowIso()));
@@ -34,7 +38,7 @@ export function ShopStarters({ onStarted }: { onStarted: () => void }) {
         }}
       >
         Start empty
-      </button>
+      </Button>
     </div>
   );
 }

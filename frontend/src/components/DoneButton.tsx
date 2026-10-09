@@ -1,6 +1,6 @@
 import { useCanGoBack, useNavigate, useRouter } from "@tanstack/react-router";
 import type { PlainPath } from "./ScreenHeader";
-import { primaryButton } from "./styles";
+import { Button } from "./ui/button";
 
 /** Returns the function that leaves an editing screen: back to where the user came from, else to the parent. */
 export function useLeave(parent: PlainPath): () => void {
@@ -20,8 +20,8 @@ export function useLeave(parent: PlainPath): () => void {
 export function DoneButton({ parent }: { parent: PlainPath }) {
   const leave = useLeave(parent);
   return (
-    <button type="button" className={primaryButton} onClick={leave}>
+    <Button type="button" size="lg" className="w-full" onClick={leave}>
       Done
-    </button>
+    </Button>
   );
 }

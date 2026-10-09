@@ -8,6 +8,7 @@ import { SavedField } from "./SavedField";
 import { textInput } from "./styles";
 import { ToastProvider } from "./Toast";
 import { TypeAhead } from "./TypeAhead";
+import { buttonVariants } from "./ui/button";
 
 let db: HamperDb | null = null;
 
@@ -16,6 +17,10 @@ afterEach(async () => {
 });
 
 const placeholderClass = "placeholder:text-placeholder";
+
+test("a_large_button_is_a_44px_target", () => {
+  expect(buttonVariants({ size: "lg" })).toContain("min-h-11");
+});
 
 test("text_input_uses_the_placeholder_colour", () => {
   expect(textInput).toContain(placeholderClass);

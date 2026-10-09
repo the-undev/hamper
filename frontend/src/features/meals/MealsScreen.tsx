@@ -3,7 +3,8 @@ import { useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { Picture } from "@/components/Picture";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { secondaryButton, textInput } from "@/components/styles";
+import { textInput } from "@/components/styles";
+import { Button } from "@/components/ui/button";
 import { createMeal } from "@/domain/meals";
 import { useLiveMeals, useMealLinesByMeal } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
@@ -60,13 +61,15 @@ export function MealsScreen() {
         className={textInput}
       />
       {typedName !== "" && !exactMeal && (
-        <button
+        <Button
           type="button"
-          className={secondaryButton}
+          variant="outline"
+          size="lg"
+          className="flex-1"
           onClick={() => void addMeal()}
         >
           Add “{typedName}” as a new meal
-        </button>
+        </Button>
       )}
       {meals.length === 0 && (
         <EmptyState>No meals yet. Type a name above to add one.</EmptyState>

@@ -1,4 +1,4 @@
-import { primaryButton } from "@/components/styles";
+import { Button } from "@/components/ui/button";
 import { dayDate } from "@/domain/display";
 import { placeMeal } from "@/domain/plan";
 import { usePlan, usePlannedDays } from "@/hooks/data";
@@ -12,9 +12,9 @@ export function MealPlacement({ mealId }: { mealId: string }) {
   const write = useWrite();
   if (plan === null) {
     return (
-      <button type="button" className={primaryButton} disabled>
+      <Button type="button" size="lg" className="w-full" disabled>
         Waiting for the server
-      </button>
+      </Button>
     );
   }
   if (!plan || !days) {
@@ -26,28 +26,29 @@ export function MealPlacement({ mealId }: { mealId: string }) {
   );
   if (onPlan) {
     return (
-      <button type="button" className={primaryButton} disabled>
+      <Button type="button" size="lg" className="w-full" disabled>
         On the plan
-      </button>
+      </Button>
     );
   }
   const emptyPosition = positions.find((position) => !days.has(position));
   if (emptyPosition === undefined) {
     return (
-      <button type="button" className={primaryButton} disabled>
+      <Button type="button" size="lg" className="w-full" disabled>
         No empty day on the plan
-      </button>
+      </Button>
     );
   }
   return (
-    <button
+    <Button
       type="button"
-      className={primaryButton}
+      size="lg"
+      className="w-full"
       onClick={() =>
         void write((w) => placeMeal(w, emptyPosition, mealId, nowIso()))
       }
     >
       Add to {formatDay(dayDate(plan, emptyPosition))}
-    </button>
+    </Button>
   );
 }

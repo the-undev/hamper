@@ -12,8 +12,9 @@ import {
   RestError,
   uploadImage,
 } from "@/api/rest";
-import { hint, secondaryButton } from "@/components/styles";
+import { hint } from "@/components/styles";
 import { useToast } from "@/components/Toast";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -147,23 +148,27 @@ export function CropUpload({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex gap-2">
-        <button
+        <Button
           type="button"
-          className={secondaryButton}
+          variant="outline"
+          size="lg"
+          className="flex-1"
           disabled={!online || busy}
           onClick={() => fileInput.current?.click()}
         >
           Change photo
-        </button>
+        </Button>
         {hasImage && (
-          <button
+          <Button
             type="button"
-            className={secondaryButton}
+            variant="outline"
+            size="lg"
+            className="flex-1"
             disabled={!online || busy}
             onClick={() => remove.mutate()}
           >
             Remove photo
-          </button>
+          </Button>
         )}
       </div>
       {!online && (

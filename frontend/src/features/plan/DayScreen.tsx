@@ -4,13 +4,13 @@ import { EmptyState, WaitingForServer } from "@/components/EmptyState";
 import { SavedField } from "@/components/SavedField";
 import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { hint, secondaryButton, sectionLabel } from "@/components/styles";
+import { hint, sectionLabel } from "@/components/styles";
+import { Button } from "@/components/ui/button";
 import { dayDate } from "@/domain/display";
 import { clearDay, renameDay, resetDay, saveDayAsMeal } from "@/domain/plan";
 import { useItemsById, usePlan } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
-import { cn } from "@/lib/utils";
 import { dayIdFor } from "@/store/ids";
 import { liveRow, liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
@@ -117,23 +117,27 @@ export function DayScreen({ position }: { position: number }) {
       />
       <p className={hint}>{originText(day.mealId, linkedMeal, changed)}</p>
       {linkedMeal && (
-        <button
+        <Button
           type="button"
-          className={cn(secondaryButton, "flex-none")}
+          variant="outline"
+          size="lg"
+          className="flex-none"
           disabled={!changed}
           onClick={() => void write((w) => resetDay(w, position, nowIso()))}
         >
           Reset to the meal
-        </button>
+        </Button>
       )}
       {!day.mealId && (
-        <button
+        <Button
           type="button"
-          className={cn(secondaryButton, "flex-none")}
+          variant="outline"
+          size="lg"
+          className="flex-none"
           onClick={() => void write((w) => saveDayAsMeal(w, position))}
         >
           Save as a meal
-        </button>
+        </Button>
       )}
       <h3 className={sectionLabel}>
         Items{" "}
@@ -148,16 +152,18 @@ export function DayScreen({ position }: { position: number }) {
         typeAheadLabel="Add an item for this day"
       />
       <ScreenFooter>
-        <button
+        <Button
           type="button"
-          className={`${secondaryButton} text-danger`}
+          variant="outline"
+          size="lg"
+          className="flex-1 text-danger"
           onClick={async () => {
             await write((w) => clearDay(w, position, nowIso()));
             await navigate({ to: "/plan" });
           }}
         >
           Clear day
-        </button>
+        </Button>
         <DoneButton parent="/plan" />
       </ScreenFooter>
     </>

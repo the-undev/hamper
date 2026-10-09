@@ -39,8 +39,8 @@ names (`--color-primary`, `--color-border` and the rest) map onto ours.
 
 | Piece | What it is | shadcn | Decision |
 | --- | --- | --- | --- |
-| `primaryButton` | A full-width call to action in the accent colour | Button, default variant | shadcn |
-| `secondaryButton` | An outlined button beside or under a list, red for a delete | Button, outline variant | shadcn |
+| `primaryButton` | A full-width call to action in the accent colour | Button, default variant | done |
+| `secondaryButton` | An outlined button beside or under a list, red for a delete | Button, outline variant | done |
 | `textInput` | A text box that fills its row | Input | shadcn |
 | `sectionLabel` | The small uppercase heading over a list | none | keep |
 | `hint` | Small muted text under a control | none | keep |

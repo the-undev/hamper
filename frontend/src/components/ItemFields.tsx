@@ -6,8 +6,9 @@ import { nowIso } from "@/lib/dates";
 import type { Item } from "@/store/types";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { SavedField } from "./SavedField";
-import { hint, primaryButton, secondaryButton, sectionLabel } from "./styles";
+import { hint, sectionLabel } from "./styles";
 import { TypeAhead, type TypeAheadOption } from "./TypeAhead";
+import { Button } from "./ui/button";
 
 /** A count and a noun, with an s when the count is not one. */
 function counted(count: number, noun: string): string {
@@ -97,26 +98,29 @@ export function ItemFields({
         options={itemOptions(otherItems)}
         onPick={setMergeTarget}
       />
-      <button
+      <Button
         type="button"
-        className={`${secondaryButton} flex-none text-danger`}
+        variant="outline"
+        size="lg"
+        className="flex-none text-danger"
         onClick={() => setConfirmingDelete(true)}
       >
         Delete item
-      </button>
+      </Button>
       {footer(
         sameNamedItem ? (
-          <button
+          <Button
             type="button"
-            className={primaryButton}
+            size="lg"
+            className="w-full"
             onClick={() => void merge(sameNamedItem.id)}
           >
             Merge into {sameNamedItem.name}
-          </button>
+          </Button>
         ) : (
-          <button type="button" className={primaryButton} onClick={onDone}>
+          <Button type="button" size="lg" className="w-full" onClick={onDone}>
             Done
-          </button>
+          </Button>
         ),
       )}
       <ConfirmDialog

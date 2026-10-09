@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { secondaryButton } from "@/components/styles";
+import { Button } from "@/components/ui/button";
 import { copyMealsFromArchived } from "@/domain/plan";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
@@ -23,14 +23,16 @@ export function CopyMealsButton({
   }
   return (
     <>
-      <button
+      <Button
         type="button"
         aria-label={`Copy the meals of ${shopName} to the plan`}
-        className={secondaryButton}
+        variant="outline"
+        size="lg"
+        className="flex-1"
         onClick={() => setConfirming(true)}
       >
         Copy these meals to the plan
-      </button>
+      </Button>
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}

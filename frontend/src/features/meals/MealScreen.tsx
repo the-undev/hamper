@@ -9,7 +9,8 @@ import { Picture } from "@/components/Picture";
 import { SavedField } from "@/components/SavedField";
 import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { hint, secondaryButton, sectionLabel } from "@/components/styles";
+import { hint, sectionLabel } from "@/components/styles";
+import { Button } from "@/components/ui/button";
 import { addToMeal } from "@/domain/adds";
 import {
   deleteMeal,
@@ -108,9 +109,11 @@ export function MealScreen({ mealId }: { mealId: string }) {
         }
       />
       <div className="flex gap-2">
-        <button
+        <Button
           type="button"
-          className={secondaryButton}
+          variant="outline"
+          size="lg"
+          className="flex-1"
           onClick={async () => {
             const copiedMeal = await write((w) => duplicateMeal(w, mealId));
             if (copiedMeal) {
@@ -122,14 +125,16 @@ export function MealScreen({ mealId }: { mealId: string }) {
           }}
         >
           Duplicate
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={`${secondaryButton} text-danger`}
+          variant="outline"
+          size="lg"
+          className="flex-1 text-danger"
           onClick={() => setConfirmingDelete(true)}
         >
           Delete
-        </button>
+        </Button>
       </div>
       <ScreenFooter>
         <DoneButton parent="/meals" />

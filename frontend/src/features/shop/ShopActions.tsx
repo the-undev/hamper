@@ -3,8 +3,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { archiveShop, historyKey, RestError } from "@/api/rest";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { secondaryButton } from "@/components/styles";
 import { useToast } from "@/components/Toast";
+import { Button } from "@/components/ui/button";
 import { deleteShop, restToWanted, shopText } from "@/domain/shops";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
@@ -75,46 +75,56 @@ export function ShopActions({
     <>
       <div className="flex gap-2">
         {secure && (
-          <button
+          <Button
             type="button"
-            className={secondaryButton}
+            variant="outline"
+            size="lg"
+            className="flex-1"
             onClick={() => void share()}
           >
             Share
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="button"
-          className={secondaryButton}
+          variant="outline"
+          size="lg"
+          className="flex-1"
           onClick={() => downloadText(shop.name, text)}
         >
           Download
-        </button>
+        </Button>
       </div>
       <div className="flex gap-2">
-        <button
+        <Button
           type="button"
-          className={secondaryButton}
+          variant="outline"
+          size="lg"
+          className="flex-1"
           disabled={!anyUnticked}
           onClick={() => void write((w) => restToWanted(w, shop.id, nowIso()))}
         >
           Rest to wanted
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={secondaryButton}
+          variant="outline"
+          size="lg"
+          className="flex-1"
           disabled={!online}
           onClick={() => setConfirming("archive")}
         >
           Archive
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={`${secondaryButton} text-danger`}
+          variant="outline"
+          size="lg"
+          className="flex-1 text-danger"
           onClick={() => setConfirming("delete")}
         >
           Delete
-        </button>
+        </Button>
       </div>
       {!online && (
         <p className="m-0 text-xs text-muted">

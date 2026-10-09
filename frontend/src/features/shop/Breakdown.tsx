@@ -2,7 +2,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useId } from "react";
 import { WaitingForServer } from "@/components/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { hint, primaryButton, sectionLabel } from "@/components/styles";
+import { hint, sectionLabel } from "@/components/styles";
+import { Button } from "@/components/ui/button";
 import { dayDate } from "@/domain/display";
 import { generateShop } from "@/domain/shops";
 import { DayLines } from "@/features/plan/DayLines";
@@ -78,13 +79,14 @@ export function Breakdown() {
         </h2>
         <WantedLines itemsById={itemsById} typeAheadLabel="Add a wanted item" />
       </section>
-      <button
+      <Button
         type="button"
-        className={primaryButton}
+        size="lg"
+        className="w-full"
         onClick={() => void generate()}
       >
         Generate the list
-      </button>
+      </Button>
     </>
   );
 }
