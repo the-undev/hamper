@@ -56,6 +56,24 @@ Once it is up, `GET /health` on the mapped port answers `{"status":"ok"}`, or a
 503 problem when the database cannot be reached. The first start creates
 `hamper.db` in `<dir>`.
 
+## Unraid
+
+`unraid/` holds two Docker templates. `hamper.xml` runs `:latest` and is for
+the household's data. `hamper-edge.xml` runs `:edge`, follows the newest `main`
+and is for trying changes. Each maps a port to `8080` and a directory to
+`/data`.
+
+To load them, add `https://github.com/the-undev/hamper` under Template
+repositories on the Docker tab, or copy a file to
+`/boot/config/plugins/dockerMan/templates-user/` on the flash drive.
+
+The package must be public, or Unraid cannot pull it without a login. Change
+that in the package's settings on GitHub.
+
+The ports in the templates, `8780` and `8781`, are defaults the operator
+changes to suit the host. To update `hamper-edge`, use Docker, then Check for
+Updates, then apply the update. A restart alone does not pull the new image.
+
 ## What the host provides
 
 - A directory mounted at `/data`. Everything mutable is in it: the database

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>hamper-edge</Name>
+  <Repository>ghcr.io/the-undev/hamper:edge</Repository>
+  <Registry>https://ghcr.io/the-undev/hamper</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/the-undev/hamper</Support>
+  <Project>https://github.com/the-undev/hamper</Project>
+  <Overview>What the household eats this week, and what to buy for it. A plan of meals against days, plus the other things wanted, becomes a shopping list that is edited against what is already in the kitchen and ticked off in the shop, on a phone, with or without signal. This template follows the newest main and is for trying changes, not the family's data.</Overview>
+  <Category>Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/the-undev/hamper/main/unraid/hamper-edge.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/the-undev/hamper/main/frontend/public/icon-192.png</Icon>
+  <ExtraParams></ExtraParams>
+  <Config Name="Port" Target="8080" Default="8781" Mode="tcp" Description="The host port the app answers on." Type="Port" Display="always" Required="true" Mask="false">8781</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/hamper-edge" Mode="rw" Description="The database and images live here. Backing it up rebuilds the instance." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/hamper-edge</Config>
+</Container>

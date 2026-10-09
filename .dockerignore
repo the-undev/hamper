@@ -20,6 +20,7 @@ frontend/dist/
 .vscode/
 .idea/
 docs/
+unraid/
 *.md
 LICENSE
 Makefile
