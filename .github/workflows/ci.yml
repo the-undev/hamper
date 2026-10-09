@@ -1,9 +1,10 @@
 # Mirrors `make check`; the Makefile is the source of truth for the gates.
+# The gates run on every branch push and pull request, and on main and tags through the publish and release workflows.
 name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches-ignore: ["main"]
     tags-ignore: ["v*"]
   pull_request:
   workflow_dispatch:
