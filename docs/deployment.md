@@ -9,13 +9,27 @@ belong in the operator's own notes, never here.
 `Dockerfile` builds the frontend with Node and pnpm, publishes the API with the
 .NET SDK, and assembles both into an `aspnet` runtime image with the frontend
 in `wwwroot`. The image listens on `8080`, declares `/data` as its volume and
-takes nothing else.
+takes two optional variables, `PUID` and `PGID`.
 
 | Setting | Value in the image |
 | --- | --- |
 | `ASPNETCORE_URLS` | `http://+:8080` |
 | `ConnectionStrings__Hamper` | `Data Source=/data/hamper.db` |
 | `Storage__DataDir` | `/data` |
+| `PUID` | Unset. The uid the process runs as, set together with `PGID`. |
+| `PGID` | Unset. The gid the process runs as, set together with `PUID`. |
+
+The entrypoint, `docker/entrypoint.sh`, starts the command in `CMD`. With
+`PUID` and `PGID` unset it runs it as the user that started the container.
+With both set it gives `/data` and everything in it to that uid and gid,
+exports `HOME=/data`, and runs the command as them through `setpriv`. Setting
+one without the other stops the container with an error.
+
+`make image-check` builds the image and runs it twice on `127.0.0.1:18090`,
+each time with a fresh data directory: once with `PUID=99` and `PGID=100`, once
+with neither. It checks that `/health` answers ok, that the process runs as the
+expected uid, and who owns `hamper.db`. The CI workflow runs it as the `image`
+job.
 
 The build takes two arguments, `VERSION` and `INFORMATIONAL_VERSION`, which
 stamp the API assembly's version and informational version. Both default to
@@ -72,8 +86,10 @@ To create `hamper-edge`:
    `8080`, TCP.
 5. Add a Path mapping from `/mnt/user/appdata/hamper-edge` to `/data`, read
    and write.
-6. Choose Apply.
-7. Open `/health` on the host port. It answers ok.
+6. Add a Variable with Key `PUID` and Value `99`, Unraid's `nobody`.
+7. Add a Variable with Key `PGID` and Value `100`, Unraid's `users`.
+8. Choose Apply.
+9. Open `/health` on the host port. It answers ok.
 
 The stable container is the same with `:latest`, its own appdata folder and
 its own host port (`8780` by default).
@@ -94,9 +110,10 @@ the update. A restart alone does not pull the new image.
   and the images. Back that directory up and the instance can be rebuilt.
 - A port mapped to `8080`.
 - A network that reaches nothing else. hamper calls no other service.
-- The image sets no user, so the process runs as root unless the host
-  passes one with `--user`. Files under `/data` are owned by the user it runs
-  as.
+- The process runs as root unless `PUID` and `PGID` are set. With both set,
+  the entrypoint, which starts as root, gives `/data` to that uid and gid and
+  runs the process as them, so files under `/data` are owned by the host's
+  user. That suits hosts whose integrations need a root entrypoint.
 
 ## HTTPS
 
@@ -114,6 +131,9 @@ and hides what is absent.
 ## Monitoring
 
 A keyword monitor watches `/health` for `ok`. It needs no login.
+
+The production log carries only warnings and errors from EF Core's SQL
+commands. Development logs every command.
 
 ## Development
 

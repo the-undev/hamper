@@ -2,7 +2,7 @@ BACKEND := backend
 FRONTEND := frontend
 SLN := $(BACKEND)/Hamper.slnx
 
-.PHONY: setup dev live-test check e2e e2e-ui image \
+.PHONY: setup dev live-test check e2e e2e-ui image image-check \
 	backend-build backend-format backend-test \
 	frontend-lint frontend-typecheck frontend-test frontend-build
 
@@ -39,6 +39,10 @@ image:
 		--build-arg VERSION=$(BUILD_VERSION) \
 		--build-arg INFORMATIONAL_VERSION=$(BUILD_INFORMATIONAL_VERSION) \
 		-t $(IMAGE):$(BUILD_VERSION) .
+
+# The built image run as uid 99 and as root on 127.0.0.1:18090, each with a throwaway data directory.
+image-check: image
+	scripts/image-check.sh $(IMAGE):$(BUILD_VERSION)
 
 # The browser suite against the API on 8778 with its own temp database, serving a fresh build.
 e2e:

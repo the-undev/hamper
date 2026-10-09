@@ -31,6 +31,7 @@ to phones. The code follows the docs, never the other way round.
 | Run the API and Vite | `make dev` |
 | Isolated API for live checks (own database and data dir) | `make live-test` |
 | Build the production image | `make image` (optional `VERSION=x.y.z`) |
+| Run the image as uid 99 and as root and check it; CI runs it too | `make image-check` |
 | Publish an edge image | Push to main, or run the Publish edge workflow on a branch |
 | Cut a release | Push a `v*` tag; the Release workflow runs the gates and publishes the image |
 | Backend build and test | `cd backend && dotnet build && dotnet test` |
