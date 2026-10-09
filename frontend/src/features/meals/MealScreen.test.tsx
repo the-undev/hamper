@@ -76,17 +76,18 @@ test("the_meals_lines_are_added_counted_and_removed", async () => {
   await user.click(screen.getByRole("button", { name: "One fewer Naan" }));
   await user.click(screen.getByRole("button", { name: "Remove Rice" }));
 
-  const peppers = (await live(db, "items")).find(
-    (item) => item.name === "Peppers",
-  );
-  await waitFor(async () =>
+  // The add writes after Enter returns, so Peppers is looked up inside the wait.
+  await waitFor(async () => {
+    const peppers = (await live(db, "items")).find(
+      (item) => item.name === "Peppers",
+    );
     expect(await countsOnMeal(curry.id)).toEqual(
       new Map([
         [naan.id, 1],
         [peppers?.id, 1],
       ]),
-    ),
-  );
+    );
+  });
 });
 
 test("the_name_is_edited_in_place", async () => {

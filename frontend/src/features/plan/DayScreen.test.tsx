@@ -133,15 +133,18 @@ test("the_days_lines_are_added_counted_and_removed_for_that_day_only", async () 
   await user.click(screen.getByRole("button", { name: "One more Rice" }));
   await user.click(screen.getByRole("button", { name: "Remove Naan" }));
 
-  const bread = (await live(db, "items")).find((item) => item.name === "Bread");
-  await waitFor(async () =>
+  // The add writes after Enter returns, so Bread is looked up inside the wait.
+  await waitFor(async () => {
+    const bread = (await live(db, "items")).find(
+      (item) => item.name === "Bread",
+    );
     expect(await countsOnDay(0)).toEqual(
       new Map([
         [rice.id, 3],
         [bread?.id, 1],
       ]),
-    ),
-  );
+    );
+  });
   expect(await live(db, "mealLines")).toHaveLength(2);
 });
 
