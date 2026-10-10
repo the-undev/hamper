@@ -18,9 +18,6 @@ import {
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay } from "@/lib/dates";
 
-/** The screen the picker was opened from, which it goes back to. */
-export type PickOpener = "plan" | "day";
-
 /** A library meal as the picker lists it: its name, its lines as text and its picture. */
 interface MealRow {
   id: string;
@@ -56,13 +53,7 @@ function MealRowButton({
 }
 
 /** Picking a meal for one day: the box at the top, the library under it, and a typed name for a day of its own. */
-export function PickMealScreen({
-  position,
-  opener,
-}: {
-  position: number;
-  opener: PickOpener;
-}) {
+export function PickMealScreen({ position }: { position: number }) {
   const plan = usePlan();
   const meals = useLiveMeals();
   const linesByMeal = useMealLinesByMeal();
@@ -96,7 +87,6 @@ export function PickMealScreen({
   const title = plan
     ? `Pick a meal for ${formatDay(dayDate(plan, position))}`
     : "Pick a meal";
-  const params = { position: String(position) };
   const typedName = query.trim();
   const rows: MealRow[] = (meals ?? []).map((meal) => ({
     id: meal.id,
@@ -112,16 +102,12 @@ export function PickMealScreen({
   );
   const offerOwnDay = typedName !== "" && !exactRow;
 
-  const backToOpener = (): void => {
+  const backToPlan = (): void => {
     if (canGoBack) {
       router.history.back();
       return;
     }
-    void navigate(
-      opener === "day"
-        ? { to: "/plan/day/$position", params }
-        : { to: "/plan" },
-    );
+    void navigate({ to: "/plan" });
   };
 
   const pickMeal = async (row: MealRow): Promise<void> => {
@@ -130,24 +116,21 @@ export function PickMealScreen({
       return true;
     });
     if (placed) {
-      backToOpener();
+      backToPlan();
     }
   };
 
   const placeAsItIs = async (name: string): Promise<void> => {
-    const placed = await write(async (w) => {
-      await placeAdHoc(w, position, name);
-      return true;
-    });
+    const placed = await write((w) => placeAdHoc(w, position, name));
     if (!placed) {
       return;
     }
-    if (opener === "day") {
-      backToOpener();
-      return;
-    }
-    // A day of its own has no lines yet, so it opens in place of the picker.
-    void navigate({ to: "/plan/day/$position", params, replace: true });
+    // A meal of its own has no lines yet, so it opens in place of the picker.
+    void navigate({
+      to: "/plan/meal/$plannedMealId",
+      params: { plannedMealId: placed.id },
+      replace: true,
+    });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {

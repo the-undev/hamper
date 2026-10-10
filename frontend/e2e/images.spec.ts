@@ -1,11 +1,11 @@
 import type { Locator, Page } from "@playwright/test";
 import {
   addMeal,
-  clearDay,
-  dayHandle,
+  dayCard,
   expect,
   openApp,
-  placeOnFirstEmptyDay,
+  placeOnDay,
+  removeFromDay,
   test,
   uniqueName,
 } from "./helpers.ts";
@@ -64,11 +64,11 @@ test("a meal's photo shows on its card and the plan, and Remove photo brings bac
   await page.goto("/meals");
   await expectLoaded(page.getByRole("link", { name: meal }).locator("img"));
 
-  const day = await placeOnFirstEmptyDay(page, meal);
-  const slot = page
+  const day = await placeOnDay(page, meal);
+  const row = dayCard(page, day)
     .getByRole("listitem")
-    .filter({ has: dayHandle(page, meal, day) });
-  await expectLoaded(slot.locator("img"));
+    .filter({ has: page.getByRole("link", { name: meal }) });
+  await expectLoaded(row.locator("img"));
 
   await page.goto(mealUrl);
   await page.getByRole("button", { name: "Remove photo" }).click();
@@ -78,5 +78,5 @@ test("a meal's photo shows on its card and the plan, and Remove photo brings bac
   await expect(page.getByRole("main").locator("img")).toHaveCount(0);
 
   await page.goto("/plan");
-  await clearDay(page, day);
+  await removeFromDay(page, meal, day);
 });

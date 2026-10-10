@@ -101,17 +101,18 @@ export function line(scope: Page | Locator, itemName: string): Locator {
   });
 }
 
-/** Places a library meal on the plan's first empty day through the picker screen and returns that day's label, as "Thu 8 Oct". */
-export async function placeOnFirstEmptyDay(
+/** Adds a library meal to a day through the picker screen, the first day unless another is named by its index, and returns that day's label, as "Thu 8 Oct". */
+export async function placeOnDay(
   page: Page,
   mealName: string,
+  dayIndex = 0,
 ): Promise<string> {
   await page.goto("/plan");
   await planView(page, "Meals");
-  const pick = page.getByRole("button", { name: /^Pick a meal for / }).first();
-  const pickLabel = await pick.getAttribute("aria-label");
-  const dayLabel = pickLabel?.replace("Pick a meal for ", "") ?? "";
-  await pick.click();
+  const add = page.getByRole("link", { name: /^Add a meal to / }).nth(dayIndex);
+  const addLabel = await add.getAttribute("aria-label");
+  const dayLabel = addLabel?.replace("Add a meal to ", "") ?? "";
+  await add.click();
   await page.getByRole("textbox", { name: "Meal" }).fill(mealName);
   await page
     .getByRole("list", { name: "Library" })
@@ -119,44 +120,55 @@ export async function placeOnFirstEmptyDay(
     .first()
     .click();
   await expect(page).toHaveURL(/\/plan$/);
-  await expect(dayHandle(page, mealName, dayLabel)).toBeVisible();
+  await expect(plannedMealRow(page, mealName, dayLabel)).toBeVisible();
   return dayLabel;
 }
 
-/** The drag handle of a filled day, which names the meal and the day. */
-export function dayHandle(
+/** A day's card on the Plan, by its date label. */
+export function dayCard(page: Page, dayLabel: string): Locator {
+  return page.getByRole("listitem", { name: dayLabel, exact: true });
+}
+
+/** A planned meal's link on the Plan, which shows its name and lines, within its day's card. */
+export function plannedMealRow(
   page: Page,
   mealName: string,
   dayLabel: string,
 ): Locator {
-  return page.getByRole("button", {
-    name: `Move ${mealName} from ${dayLabel}`,
-    exact: true,
-  });
+  return dayCard(page, dayLabel).getByRole("link", { name: mealName });
 }
 
-/** Clears a day through its Clear action: a swipe and a tap on a phone, keyboard focus and Enter on a desktop. */
-export async function clearDay(page: Page, dayLabel: string): Promise<void> {
+/** The names of a day's planned meals in their order on the Plan. */
+export async function mealNamesOn(
+  page: Page,
+  dayLabel: string,
+): Promise<string[]> {
+  return dayCard(page, dayLabel)
+    .getByRole("link")
+    .locator("b")
+    .allTextContents();
+}
+
+/** Removes a planned meal through its Remove action: a swipe and a tap on a phone, keyboard focus and Enter on a desktop. */
+export async function removeFromDay(
+  page: Page,
+  mealName: string,
+  dayLabel: string,
+): Promise<void> {
   await planView(page, "Meals");
-  const clear = page.getByRole("button", {
-    name: `Clear ${dayLabel}`,
+  const remove = page.getByRole("button", {
+    name: `Remove ${mealName} from ${dayLabel}`,
     exact: true,
   });
   if (test.info().project.use.hasTouch) {
-    const slot = page.getByRole("listitem").filter({ has: clear });
-    await swipeLeft(page, slot.getByRole("link"));
-    await clear.click();
+    await swipeLeft(page, plannedMealRow(page, mealName, dayLabel));
+    await remove.click();
   } else {
-    await clear.focus();
-    await expect(clear).toBeFocused();
+    await remove.focus();
+    await expect(remove).toBeFocused();
     await page.keyboard.press("Enter");
   }
-  await expect(
-    page.getByRole("button", {
-      name: `Pick a meal for ${dayLabel}`,
-      exact: true,
-    }),
-  ).toBeVisible();
+  await expect(plannedMealRow(page, mealName, dayLabel)).toHaveCount(0);
 }
 
 /** The name of the header's sync indicator: "Syncing", "N changes to send" or the offline sentence, or null once everything is sent. */

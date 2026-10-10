@@ -8,7 +8,7 @@ import { nowIso } from "@/lib/dates";
 import type { Item, PlannedMealLine } from "@/store/types";
 
 /** A planned meal's type-ahead and lines, each with + and − and a swipe to remove, edited for it only. */
-export function DayLines({
+export function PlannedMealLines({
   plannedMealId,
   lines,
   itemsById,
@@ -31,7 +31,7 @@ export function DayLines({
       />
       <LineList
         lines={lineViews(lines, itemsById)}
-        empty="Nothing to buy for this day"
+        empty="Nothing to buy for this meal"
         onAdjust={(line, step) =>
           void write((w) =>
             adjustLineCount(w, "plannedMealLines", line.id, step),

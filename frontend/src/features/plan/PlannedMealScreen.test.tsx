@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test } from "vitest";
+import { formatDay } from "@/lib/dates";
 import type { HamperDb } from "@/store/db";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
@@ -10,9 +11,9 @@ import {
   anItem,
   aPlannedMeal,
   aPlannedMealLine,
-  linesOnDay,
   live,
   now,
+  plannedMealsAt,
   seed,
   thePlan,
 } from "@/test/rows";
@@ -22,7 +23,7 @@ let db: HamperDb;
 const rice = anItem("Rice", "1kg bag");
 const naan = anItem("Naan");
 const curry = aMeal("Curry");
-const curryDay = aPlannedMeal(0, "Curry", curry);
+const curryDinner = aPlannedMeal(0, "Curry", curry);
 
 beforeEach(async () => {
   db = freshDb();
@@ -38,18 +39,35 @@ afterEach(async () => {
   await db.delete();
 });
 
-async function countsOnDay(position: number): Promise<Map<string, number>> {
+function openPlannedMeal(plannedMealId: string) {
+  return renderApp(`/plan/meal/${plannedMealId}`, db, fakeLoop());
+}
+
+async function countsOn(plannedMealId: string): Promise<Map<string, number>> {
   return new Map(
-    (await linesOnDay(db, position)).map((line) => [line.itemId, line.count]),
+    (await live(db, "plannedMealLines"))
+      .filter((line) => line.plannedMealId === plannedMealId)
+      .map((line) => [line.itemId, line.count]),
   );
 }
 
-test("reset_restores_the_meals_lines_on_a_changed_day", async () => {
+test("the_header_shows_the_day_the_planned_meal_is_on", async () => {
+  const lunch = aPlannedMeal(2, "Soup", null, 1);
+  await seed(db, { plannedMeals: [lunch] });
+  openPlannedMeal(lunch.id);
+
+  expect(
+    await screen.findByRole("heading", { name: formatDay("2026-06-03") }),
+  ).toBeInTheDocument();
+  expect(await screen.findByLabelText("Name")).toHaveValue("Soup");
+});
+
+test("reset_restores_the_meals_lines_on_a_changed_planned_meal", async () => {
   await seed(db, {
-    plannedMeals: [curryDay],
-    plannedMealLines: [aPlannedMealLine(curryDay, rice, 3)],
+    plannedMeals: [curryDinner],
+    plannedMealLines: [aPlannedMealLine(curryDinner, rice, 3)],
   });
-  const { user } = renderApp("/plan/day/0", db, fakeLoop());
+  const { user } = openPlannedMeal(curryDinner.id);
 
   expect(
     await screen.findByText("From the meal Curry, changed for this day"),
@@ -60,7 +78,7 @@ test("reset_restores_the_meals_lines_on_a_changed_day", async () => {
   expect(
     screen.getByRole("button", { name: "Reset to the meal" }),
   ).toBeDisabled();
-  expect(await countsOnDay(0)).toEqual(
+  expect(await countsOn(curryDinner.id)).toEqual(
     new Map([
       [rice.id, 1],
       [naan.id, 2],
@@ -68,16 +86,16 @@ test("reset_restores_the_meals_lines_on_a_changed_day", async () => {
   );
 });
 
-test("the_days_name_is_edited_for_that_day_only", async () => {
-  await seed(db, { plannedMeals: [curryDay] });
-  const { user } = renderApp("/plan/day/0", db, fakeLoop());
+test("the_name_is_edited_for_that_planned_meal_only", async () => {
+  await seed(db, { plannedMeals: [curryDinner] });
+  const { user } = openPlannedMeal(curryDinner.id);
 
   const nameBox = await screen.findByLabelText("Name");
   await user.clear(nameBox);
   await user.type(nameBox, "Curry and rice{Enter}");
 
   await waitFor(async () =>
-    expect((await db.plannedMeals.get(curryDay.id))?.name).toBe(
+    expect((await db.plannedMeals.get(curryDinner.id))?.name).toBe(
       "Curry and rice",
     ),
   );
@@ -85,13 +103,13 @@ test("the_days_name_is_edited_for_that_day_only", async () => {
   expect(screen.getByText(/^From the meal Curry/)).toBeInTheDocument();
 });
 
-test("save_as_a_meal_puts_an_ad_hoc_day_in_the_library_and_links_it", async () => {
+test("save_as_a_meal_puts_an_ad_hoc_planned_meal_in_the_library_and_links_it", async () => {
   const leftovers = aPlannedMeal(1, "Leftovers");
   await seed(db, {
     plannedMeals: [leftovers],
     plannedMealLines: [aPlannedMealLine(leftovers, naan, 1)],
   });
-  const { user } = renderApp("/plan/day/1", db, fakeLoop());
+  const { user } = openPlannedMeal(leftovers.id);
 
   expect(
     await screen.findByText("Not a meal in the library"),
@@ -112,29 +130,36 @@ test("save_as_a_meal_puts_an_ad_hoc_day_in_the_library_and_links_it", async () =
   ).toMatchObject([{ itemId: naan.id, count: 1 }]);
 });
 
-test("clear_day_empties_the_day_and_goes_back_to_the_plan", async () => {
+test("remove_from_day_removes_only_this_meal_and_goes_back_to_the_plan", async () => {
+  const pudding = aPlannedMeal(0, "Rice pudding", null, 1);
   await seed(db, {
-    plannedMeals: [curryDay],
-    plannedMealLines: [aPlannedMealLine(curryDay, rice, 1)],
+    plannedMeals: [curryDinner, pudding],
+    plannedMealLines: [aPlannedMealLine(curryDinner, rice, 1)],
   });
-  const { user, router } = renderApp("/plan/day/0", db, fakeLoop());
+  const { user, router } = openPlannedMeal(curryDinner.id);
 
-  await user.click(await screen.findByRole("button", { name: "Clear day" }));
+  await user.click(
+    await screen.findByRole("button", { name: "Remove from day" }),
+  );
 
   await waitFor(() => expect(router.state.location.pathname).toBe("/plan"));
-  expect(await live(db, "plannedMeals")).toEqual([]);
-  expect(await countsOnDay(0)).toEqual(new Map());
+  expect(await plannedMealsAt(db, 0)).toMatchObject([
+    { id: pudding.id, rank: 0 },
+  ]);
+  expect(await countsOn(curryDinner.id)).toEqual(new Map());
 });
 
-test("the_days_lines_are_added_counted_and_removed_for_that_day_only", async () => {
+test("the_lines_are_added_counted_and_removed_for_that_planned_meal_only", async () => {
+  const pudding = aPlannedMeal(0, "Rice pudding", null, 1);
   await seed(db, {
-    plannedMeals: [curryDay],
+    plannedMeals: [curryDinner, pudding],
     plannedMealLines: [
-      aPlannedMealLine(curryDay, rice, 1),
-      aPlannedMealLine(curryDay, naan, 2),
+      aPlannedMealLine(curryDinner, rice, 1),
+      aPlannedMealLine(curryDinner, naan, 2),
+      aPlannedMealLine(pudding, rice, 1),
     ],
   });
-  const { user } = renderApp("/plan/day/0", db, fakeLoop());
+  const { user } = openPlannedMeal(curryDinner.id);
 
   const typeAhead = await screen.findByLabelText("Add an item for this day");
   await user.type(typeAhead, "Bread{Enter}");
@@ -147,22 +172,23 @@ test("the_days_lines_are_added_counted_and_removed_for_that_day_only", async () 
     const bread = (await live(db, "items")).find(
       (item) => item.name === "Bread",
     );
-    expect(await countsOnDay(0)).toEqual(
+    expect(await countsOn(curryDinner.id)).toEqual(
       new Map([
         [rice.id, 3],
         [bread?.id, 1],
       ]),
     );
   });
+  expect(await countsOn(pudding.id)).toEqual(new Map([[rice.id, 1]]));
   expect(await live(db, "mealLines")).toHaveLength(2);
 });
 
-test("a_day_whose_meal_was_deleted_says_so_and_offers_no_reset", async () => {
+test("a_planned_meal_whose_meal_was_deleted_says_so_and_offers_no_reset", async () => {
   await seed(db, {
     meals: [{ ...curry, deletedAt: now }],
-    plannedMeals: [curryDay],
+    plannedMeals: [curryDinner],
   });
-  renderApp("/plan/day/0", db, fakeLoop());
+  openPlannedMeal(curryDinner.id);
 
   expect(
     await screen.findByText("The meal it came from has been deleted"),
@@ -175,26 +201,18 @@ test("a_day_whose_meal_was_deleted_says_so_and_offers_no_reset", async () => {
   ).not.toBeInTheDocument();
 });
 
-test("an_empty_day_opens_the_picker_which_comes_back_to_the_day", async () => {
-  const { user, router } = renderApp("/plan/day/3", db, fakeLoop());
+test("a_planned_meal_no_longer_on_the_plan_says_so", async () => {
+  await seed(db, { plannedMeals: [{ ...curryDinner, deletedAt: now }] });
+  openPlannedMeal(curryDinner.id);
 
-  await user.click(await screen.findByRole("link", { name: "Pick a meal" }));
-  expect(router.state.location.pathname).toBe("/plan/pick/3");
-  await user.click(await screen.findByRole("button", { name: /^Curry/ }));
-
-  expect(await screen.findByText("From the meal Curry")).toBeInTheDocument();
-  expect(router.state.location.pathname).toBe("/plan/day/3");
-  expect(await countsOnDay(3)).toEqual(
-    new Map([
-      [rice.id, 1],
-      [naan.id, 2],
-    ]),
-  );
+  expect(
+    await screen.findByText("This meal is no longer on the plan."),
+  ).toBeInTheDocument();
 });
 
-test("the_footer_holds_clear_day_then_done", async () => {
-  await seed(db, { plannedMeals: [curryDay] });
-  renderApp("/plan/day/0", db, fakeLoop());
+test("the_footer_holds_remove_from_day_then_done", async () => {
+  await seed(db, { plannedMeals: [curryDinner] });
+  openPlannedMeal(curryDinner.id);
   // The footer above the tab bar is a fieldset, so a group named Screen actions rather than a contentinfo landmark.
   const footer = await screen.findByRole("group", { name: "Screen actions" });
 
@@ -202,15 +220,15 @@ test("the_footer_holds_clear_day_then_done", async () => {
     within(footer)
       .getAllByRole("button")
       .map((button) => button.textContent),
-  ).toEqual(["Clear day", "Done"]);
+  ).toEqual(["Remove from day", "Done"]);
 });
 
-test("done_goes_back_to_the_screen_the_day_was_opened_from", async () => {
-  await seed(db, { plannedMeals: [curryDay] });
+test("done_goes_back_to_the_screen_the_planned_meal_was_opened_from", async () => {
+  await seed(db, { plannedMeals: [curryDinner] });
   const { user, router } = renderApp("/meals", db, fakeLoop());
   await router.navigate({
-    to: "/plan/day/$position",
-    params: { position: "0" },
+    to: "/plan/meal/$plannedMealId",
+    params: { plannedMealId: curryDinner.id },
   });
 
   await user.click(await screen.findByRole("button", { name: "Done" }));

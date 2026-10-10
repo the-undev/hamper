@@ -2,13 +2,13 @@ import type { Page } from "@playwright/test";
 import {
   addLine,
   addMeal,
-  clearDay,
   expect,
   expectCount,
   line,
   openApp,
-  placeOnFirstEmptyDay,
+  placeOnDay,
   planView,
+  removeFromDay,
   swipeLeft,
   test,
   uniqueName,
@@ -33,7 +33,7 @@ test("a renamed item shows its new name on a meal, a day and the extras list", a
   await openApp(page, "/meals");
   await addMeal(page, meal, [item]);
   const mealUrl = page.url();
-  const day = await placeOnFirstEmptyDay(page, meal);
+  const day = await placeOnDay(page, meal);
   await planView(page, "Extras");
   const addExtra = page.getByRole("combobox", { name: "Add to extras" });
   await addExtra.fill(item);
@@ -63,7 +63,7 @@ test("a renamed item shows its new name on a meal, a day and the extras list", a
   );
   await page.getByRole("button", { name: `Remove ${renamed}` }).click();
   await expect(line(page, renamed)).toHaveCount(0);
-  await clearDay(page, day);
+  await removeFromDay(page, meal, day);
 });
 
 test("merging an item moves its lines onto the other and combines counts", async ({

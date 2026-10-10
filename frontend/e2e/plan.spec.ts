@@ -2,21 +2,34 @@ import {
   addLine,
   addMeal,
   centre,
-  clearDay,
-  dayHandle,
+  dayCard,
   drag,
   expect,
   expectCount,
   line,
+  mealNamesOn,
   openApp,
-  placeOnFirstEmptyDay,
+  placeOnDay,
+  plannedMealRow,
   planView,
+  removeFromDay,
   swipeLeft,
   test,
   uniqueName,
 } from "./helpers.ts";
 
-test("a meal placed on a day can be renamed, reset and cleared there", async ({
+/** The given meals' names in the order a day shows them, leaving out any other meal on it. */
+async function orderOf(
+  page: Parameters<typeof mealNamesOn>[0],
+  dayLabel: string,
+  mealNames: readonly string[],
+): Promise<string[]> {
+  return (await mealNamesOn(page, dayLabel)).filter((name) =>
+    mealNames.includes(name),
+  );
+}
+
+test("a meal placed on a day can be renamed, reset and removed there", async ({
   page,
 }) => {
   const meal = uniqueName("Chilli");
@@ -24,12 +37,13 @@ test("a meal placed on a day can be renamed, reset and cleared there", async ({
   const rice = uniqueName("Rice");
   await openApp(page, "/meals");
   await addMeal(page, meal, [beans, rice]);
-  const day = await placeOnFirstEmptyDay(page, meal);
+  const day = await placeOnDay(page, meal);
 
-  const slotLink = page.getByRole("link", { name: meal });
-  await expect(slotLink).toContainText(`${beans}, ${rice}`);
-  await slotLink.click();
+  const row = plannedMealRow(page, meal, day);
+  await expect(row).toContainText(`${beans}, ${rice}`);
+  await row.click();
 
+  await expect(page.getByRole("heading", { name: day })).toBeVisible();
   await expect(page.getByText(`From the meal ${meal}`)).toBeVisible();
   await line(page, beans)
     .getByRole("button", { name: `One more ${beans}` })
@@ -51,12 +65,11 @@ test("a meal placed on a day can be renamed, reset and cleared there", async ({
   await expect(name).toHaveValue(renamed);
 
   await page.getByRole("button", { name: "Done" }).click();
-  await expect(dayHandle(page, renamed, day)).toBeVisible();
-  await page.getByRole("link", { name: renamed }).click();
-  await page.getByRole("button", { name: "Clear day" }).click();
-  await expect(
-    page.getByRole("button", { name: `Pick a meal for ${day}`, exact: true }),
-  ).toBeVisible();
+  await expect(plannedMealRow(page, renamed, day)).toBeVisible();
+  await plannedMealRow(page, renamed, day).click();
+  await page.getByRole("button", { name: "Remove from day" }).click();
+  await expect(page).toHaveURL(/\/plan$/);
+  await expect(plannedMealRow(page, renamed, day)).toHaveCount(0);
 });
 
 test("picking a meal is a screen with the box at the top", async ({ page }) => {
@@ -67,13 +80,13 @@ test("picking a meal is a screen with the box at the top", async ({ page }) => {
   await addMeal(page, meal, [lentils]);
   await page.goto("/plan");
   await planView(page, "Meals");
-  const pick = page.getByRole("button", { name: /^Pick a meal for / }).first();
-  const day = (await pick.getAttribute("aria-label"))?.replace(
-    "Pick a meal for ",
+  const add = page.getByRole("link", { name: /^Add a meal to / }).first();
+  const day = (await add.getAttribute("aria-label"))?.replace(
+    "Add a meal to ",
     "",
   );
 
-  await pick.click();
+  await add.click();
 
   await expect(page).toHaveURL(/\/plan\/pick\/\d+$/);
   await expect(
@@ -100,13 +113,13 @@ test("picking a meal is a screen with the box at the top", async ({ page }) => {
   ).toBeVisible();
   await box.press("Enter");
 
-  await expect(page).toHaveURL(/\/plan\/day\/\d+$/);
+  await expect(page).toHaveURL(/\/plan\/meal\/[^/]+$/);
   await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue(adHoc);
-  await page.getByRole("button", { name: "Clear day" }).click();
+  await page.getByRole("button", { name: "Remove from day" }).click();
   await expect(page).toHaveURL(/\/plan$/);
 
-  await placeOnFirstEmptyDay(page, meal);
-  await clearDay(page, day ?? "");
+  const placedDay = await placeOnDay(page, meal);
+  await removeFromDay(page, meal, placedDay);
 });
 
 test("Done stays above the tabs on a long day and goes back", async ({
@@ -116,8 +129,8 @@ test("Done stays above the tabs on a long day and goes back", async ({
   const meal = uniqueName("Feast");
   await openApp(page, "/meals");
   await addMeal(page, meal, []);
-  const day = await placeOnFirstEmptyDay(page, meal);
-  await page.getByRole("link", { name: meal }).click();
+  const day = await placeOnDay(page, meal);
+  await plannedMealRow(page, meal, day).click();
   for (let count = 0; count < 12; count += 1) {
     await addLine(page, "Add an item for this day", uniqueName("Spice"));
   }
@@ -141,37 +154,45 @@ test("Done stays above the tabs on a long day and goes back", async ({
   );
 
   await done.tap();
-  await expect(dayHandle(page, meal, day)).toBeVisible();
-  await clearDay(page, day);
+  await expect(plannedMealRow(page, meal, day)).toBeVisible();
+  await removeFromDay(page, meal, day);
 });
 
-test("a day drags onto another to swap", async ({ page }) => {
+test("a hold anywhere on a meal lifts it onto another day on a phone", async ({
+  page,
+}) => {
+  test.skip(!test.info().project.use.hasTouch, "a hold needs a finger");
   const first = uniqueName("Soup");
   const second = uniqueName("Stew");
   await openApp(page, "/meals");
   await addMeal(page, first, []);
   await addMeal(page, second, []);
-  const firstDay = await placeOnFirstEmptyDay(page, first);
-  const secondDay = await placeOnFirstEmptyDay(page, second);
+  const firstDay = await placeOnDay(page, first, 0);
+  const secondDay = await placeOnDay(page, second, 1);
 
-  // A phone lifts the day after a 250 ms hold on the handle; a mouse after 8px.
-  const holdMs = test.info().project.use.hasTouch ? 300 : 0;
+  // A finger lifts the meal after a 250 ms hold; "Add a meal" takes a drop at the end of its day.
   await drag(
     page,
-    await centre(dayHandle(page, first, firstDay)),
-    await centre(dayHandle(page, second, secondDay)),
-    holdMs,
+    await centre(plannedMealRow(page, first, firstDay)),
+    await centre(
+      dayCard(page, secondDay).getByRole("link", { name: /^Add a meal to / }),
+    ),
+    300,
   );
 
-  await expect(dayHandle(page, first, secondDay)).toBeVisible();
-  await expect(dayHandle(page, second, firstDay)).toBeVisible();
+  await expect(plannedMealRow(page, first, secondDay)).toBeVisible();
+  await expect(plannedMealRow(page, first, firstDay)).toHaveCount(0);
+  expect(await orderOf(page, secondDay, [first, second])).toEqual([
+    second,
+    first,
+  ]);
   // dnd-kit swallows every click for 50 ms after a drop, which no hand is quick enough to meet.
   await page.waitForTimeout(100);
-  await clearDay(page, firstDay);
-  await clearDay(page, secondDay);
+  await removeFromDay(page, first, secondDay);
+  await removeFromDay(page, second, secondDay);
 });
 
-test("a dragged day shows the swap and the page keeps its height", async ({
+test("a mouse drag reorders a day, showing where it lands without moving the page", async ({
   page,
 }) => {
   test.skip(!!test.info().project.use.hasTouch, "a mouse drag is a desktop's");
@@ -180,20 +201,13 @@ test("a dragged day shows the swap and the page keeps its height", async ({
   await openApp(page, "/meals");
   await addMeal(page, first, []);
   await addMeal(page, second, []);
-  const firstDay = await placeOnFirstEmptyDay(page, first);
-  const secondDay = await placeOnFirstEmptyDay(page, second);
-  const from = await centre(dayHandle(page, first, firstDay));
-  const to = await centre(dayHandle(page, second, secondDay));
-  // The target's handle gives way to "Swap" mid-drag, so the slots are found by position.
-  const slotOf = async (mealName: string, dayLabel: string) => {
-    const position = await page
-      .locator("li[data-position]")
-      .filter({ has: dayHandle(page, mealName, dayLabel) })
-      .getAttribute("data-position");
-    return page.locator(`li[data-position="${position}"]`);
-  };
-  const origin = await slotOf(first, firstDay);
-  const target = await slotOf(second, secondDay);
+  const day = await placeOnDay(page, first);
+  await placeOnDay(page, second);
+  expect(await orderOf(page, day, [first, second])).toEqual([first, second]);
+  const from = await centre(plannedMealRow(page, first, day));
+  const secondCentre = await centre(plannedMealRow(page, second, day));
+  // The lower half of a row drops after it.
+  const to = { x: secondCentre.x, y: secondCentre.y + 15 };
   const scrollHeight = () =>
     page.evaluate(() => document.documentElement.scrollHeight);
   const before = await scrollHeight();
@@ -208,50 +222,59 @@ test("a dragged day shows the swap and the page keeps its height", async ({
     );
     heights.push(await scrollHeight());
   }
-  await expect(target).toContainText("Swap");
-  await expect(origin.getByRole("link")).toContainText(second);
+  await expect(dayCard(page, day).locator("[data-drop-line]")).toHaveCount(1);
   await page.mouse.up();
-  await expect(dayHandle(page, first, secondDay)).toBeVisible();
+  await expect
+    .poll(() => orderOf(page, day, [first, second]))
+    .toEqual([second, first]);
   heights.push(await scrollHeight());
 
   expect(heights).toEqual(heights.map(() => before));
   await page.waitForTimeout(100);
-  await clearDay(page, firstDay);
-  await clearDay(page, secondDay);
+  await removeFromDay(page, first, day);
+  await removeFromDay(page, second, day);
 });
 
-test("a swipe clears a day on a phone", async ({ page }) => {
+test("a swipe removes one meal from a day on a phone", async ({ page }) => {
   test.skip(!test.info().project.use.hasTouch, "a swipe needs a finger");
   const meal = uniqueName("Curry");
+  const other = uniqueName("Rice pudding");
   await openApp(page, "/meals");
   await addMeal(page, meal, []);
-  const day = await placeOnFirstEmptyDay(page, meal);
+  await addMeal(page, other, []);
+  const day = await placeOnDay(page, meal);
+  await placeOnDay(page, other);
 
-  const clear = page.getByRole("button", { name: `Clear ${day}`, exact: true });
-  await swipeLeft(page, page.getByRole("link", { name: meal }));
-  await clear.click();
-  await expect(
-    page.getByRole("button", { name: `Pick a meal for ${day}`, exact: true }),
-  ).toBeVisible();
+  await swipeLeft(page, plannedMealRow(page, meal, day));
+  await page
+    .getByRole("button", { name: `Remove ${meal} from ${day}`, exact: true })
+    .click();
+
+  await expect(plannedMealRow(page, meal, day)).toHaveCount(0);
+  await expect(plannedMealRow(page, other, day)).toBeVisible();
+  await removeFromDay(page, other, day);
 });
 
-test("the Clear action opens by keyboard focus on a desktop", async ({
+test("the Remove action opens by keyboard focus on a desktop", async ({
   page,
 }) => {
   test.skip(!!test.info().project.use.hasTouch, "a keyboard is a desktop's");
   const meal = uniqueName("Pie");
   await openApp(page, "/meals");
   await addMeal(page, meal, []);
-  const day = await placeOnFirstEmptyDay(page, meal);
+  const day = await placeOnDay(page, meal);
 
-  await dayHandle(page, meal, day).focus();
+  await page
+    .getByRole("button", { name: `Move ${meal} from ${day}`, exact: true })
+    .focus();
   await page.keyboard.press("Tab");
-  const clear = page.getByRole("button", { name: `Clear ${day}`, exact: true });
-  await expect(clear).toBeFocused();
+  const remove = page.getByRole("button", {
+    name: `Remove ${meal} from ${day}`,
+    exact: true,
+  });
+  await expect(remove).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(
-    page.getByRole("button", { name: `Pick a meal for ${day}`, exact: true }),
-  ).toBeVisible();
+  await expect(plannedMealRow(page, meal, day)).toHaveCount(0);
 });
 
 test("the views slide and the extras list is edited on Extras", async ({

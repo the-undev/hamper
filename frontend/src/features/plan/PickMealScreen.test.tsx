@@ -37,11 +37,11 @@ afterEach(async () => {
   await db.delete();
 });
 
-/** Opens the picker for Tuesday from the Plan, as a tap on its empty slot does. */
+/** Opens the picker for Tuesday from the Plan, as a tap on its "Add a meal" row does. */
 async function openFromPlan() {
   const app = renderApp("/plan", db, fakeLoop());
   await app.user.click(
-    await screen.findByRole("button", { name: `Pick a meal for ${tuesday}` }),
+    await screen.findByRole("link", { name: `Add a meal to ${tuesday}` }),
   );
   await screen.findByRole("heading", { name: `Pick a meal for ${tuesday}` });
   return app;
@@ -137,7 +137,8 @@ test("enter_on_any_other_name_makes_a_day_of_its_own_and_opens_it", async () => 
   await user.type(screen.getByLabelText("Meal"), "Chil{Enter}");
 
   expect(await screen.findByLabelText("Name")).toHaveValue("Chil");
-  expect(router.state.location.pathname).toBe("/plan/day/1");
+  const [adHoc] = await plannedMealsAt(db, 1);
+  expect(router.state.location.pathname).toBe(`/plan/meal/${adHoc?.id}`);
   expect(screen.getByText("Not a meal in the library")).toBeInTheDocument();
   expect((await plannedMealsAt(db, 1))[0]).toMatchObject({
     name: "Chil",
@@ -157,15 +158,4 @@ test("opened_with_no_history_picking_goes_to_the_plan", async () => {
 
   await waitFor(() => expect(router.state.location.pathname).toBe("/plan"));
   expect((await plannedMealsAt(db, 1))[0]).toMatchObject({ mealId: curry.id });
-});
-
-test("opened_from_the_day_with_no_history_picking_goes_to_the_day", async () => {
-  const { user, router } = renderApp("/plan/pick/1?from=day", db, fakeLoop());
-
-  await user.type(await screen.findByLabelText("Meal"), "Takeaway{Enter}");
-
-  await waitFor(() =>
-    expect(router.state.location.pathname).toBe("/plan/day/1"),
-  );
-  expect(await screen.findByLabelText("Name")).toHaveValue("Takeaway");
 });

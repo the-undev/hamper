@@ -3,13 +3,13 @@ import type { Locator, Page } from "@playwright/test";
 import {
   addLine,
   addMeal,
-  clearDay,
   expect,
   expectCount,
   line,
   openApp,
-  placeOnFirstEmptyDay,
+  placeOnDay,
   planView,
+  removeFromDay,
   swipeLeft,
   tab,
   test,
@@ -69,7 +69,7 @@ test("Make from plan edits the plan and generates a list with summed counts", as
   const extra = uniqueName("Limes");
   await openApp(page, "/meals");
   await addMeal(page, meal, [shared]);
-  const day = await placeOnFirstEmptyDay(page, meal);
+  const day = await placeOnDay(page, meal);
   await planView(page, "Extras");
   const addExtra = page.getByRole("combobox", { name: "Add to extras" });
   await addExtra.fill(shared);
@@ -101,7 +101,7 @@ test("Make from plan edits the plan and generates a list with summed counts", as
   await page.getByRole("link", { name: meal }).click();
   await expectCount(line(page, shared), 2);
   await page.getByRole("button", { name: "Done" }).click();
-  await clearDay(page, day);
+  await removeFromDay(page, meal, day);
   await removeExtra(page, shared);
   await removeExtra(page, extra);
 });
@@ -199,7 +199,7 @@ test("an archived list goes to History, which can copy its meals back", async ({
   const item = uniqueName("Arborio");
   await openApp(page, "/meals");
   await addMeal(page, meal, [item]);
-  const day = await placeOnFirstEmptyDay(page, meal);
+  const day = await placeOnDay(page, meal);
 
   await tab(page, "Shop");
   await page.getByRole("button", { name: "Make from plan" }).click();
@@ -215,7 +215,7 @@ test("an archived list goes to History, which can copy its meals back", async ({
   ).toBeVisible();
 
   await page.goto("/plan");
-  await clearDay(page, day);
+  await removeFromDay(page, meal, day);
 
   await page.goto("/more/history");
   const entry = page.getByRole("listitem").filter({ hasText: meal });
@@ -232,7 +232,7 @@ test("an archived list goes to History, which can copy its meals back", async ({
     .click();
 
   await expect(page.getByRole("link", { name: meal })).toBeVisible();
-  await clearDay(page, day);
+  await removeFromDay(page, meal, day);
 });
 
 test("a deleted list is gone", async ({ page }) => {

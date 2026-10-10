@@ -6,7 +6,7 @@ import { hint, sectionLabel } from "@/components/styles";
 import { Button } from "@/components/ui/button";
 import { byPlanOrder, dayDate } from "@/domain/display";
 import { generateShop } from "@/domain/shops";
-import { DayLines } from "@/features/plan/DayLines";
+import { PlannedMealLines } from "@/features/plan/PlannedMealLines";
 import { WantedLines } from "@/features/plan/WantedLines";
 import {
   useItemsById,
@@ -114,7 +114,7 @@ function BreakdownDay({
           {day.name}
         </span>
       </h2>
-      <DayLines
+      <PlannedMealLines
         plannedMealId={day.id}
         lines={lines}
         itemsById={itemsById}

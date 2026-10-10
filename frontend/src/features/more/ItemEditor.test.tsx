@@ -89,8 +89,8 @@ test("a_rename_shows_everywhere_the_item_is_used", async () => {
   );
 
   await router.navigate({
-    to: "/plan/day/$position",
-    params: { position: "0" },
+    to: "/plan/meal/$plannedMealId",
+    params: { plannedMealId: roastDay.id },
   });
 
   expect(await screen.findByText("Maris Pipers")).toBeInTheDocument();

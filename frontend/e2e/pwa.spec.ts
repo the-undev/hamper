@@ -25,9 +25,10 @@ test("the worker installs, the manifest names the app, and the Plan opens offlin
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByText(/^Starts /)).toBeVisible();
-  await expect(
-    page.getByRole("main").getByRole("list").first().getByRole("listitem"),
-  ).toHaveCount(7);
+  // Every day's card ends with its own "Add a meal".
+  await expect(page.getByRole("link", { name: /^Add a meal to / })).toHaveCount(
+    7,
+  );
   await expect
     .poll(() => syncState(page))
     .toBe("Offline. Changes are kept on this phone.");
