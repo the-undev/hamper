@@ -20,11 +20,11 @@ one.
   underneath. Tapping a row opens the planned meal. A hold anywhere on a row
   lifts it, and it drags within its day or to another day; see Everywhere.
   Swiping left reveals Remove, which takes that meal off the day.
-- "Add a meal" ends every card, and is all an empty day shows. It opens Pick
-  a meal, a screen titled with the day's date. The box sits at the top,
-  focused, and under it the library as a list: each meal with its picture,
-  its name and its lines. Typing filters the library and adds a row under
-  "Or a day of its own", "Use “Takeaway” as it is", for an ad-hoc meal; a
+- "Add a meal" ends every card, and is all an empty day shows. It opens a
+  screen titled "Add a meal to <date>". The box sits at the top, focused,
+  and under it the library as a list: each meal with its picture, its name
+  and its lines. Typing filters the library and adds a row under "Or a meal
+  of its own", "Use “Takeaway” as it is", for an ad-hoc meal; a
   name that is a meal's, ignoring case and spaces at the ends, has no such
   row. Enter picks the meal of exactly that name, and otherwise uses the name
   as it is. The meal goes at the end of the day. Picking a library meal goes
@@ -85,9 +85,11 @@ name matching nothing offers "Add as a new meal".
 
 **Meal.** The picture, Change photo (take or choose, crop square, upload) and,
 when there is a picture, Remove photo; both are disabled while offline. Then
-the name, when it was last shopped for, "Add to <next empty day>" or
-"On the plan", then the type-ahead and the meal's lines with + and − and
-swipe to remove. Duplicate and Delete. When it was last shopped for comes
+the name, when it was last shopped for, and "Add to a day", which opens a
+sheet listing the plan's days, each with how many meals it holds, and adds
+the meal at the end of the day tapped. Beside it, "On 2 days" once days of
+the plan hold the meal. Then the type-ahead and the meal's lines with + and −
+and swipe to remove. Duplicate and Delete. When it was last shopped for comes
 from history, so it is left out while offline.
 
 ## More

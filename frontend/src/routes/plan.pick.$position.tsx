@@ -14,7 +14,7 @@ function PickRoute() {
     return (
       <>
         <ScreenHeader
-          title="Pick a meal"
+          title="Add a meal"
           back={{ to: "/plan", label: "Plan" }}
         />
         <EmptyState>There is no such day on the plan.</EmptyState>

@@ -52,7 +52,7 @@ function MealRowButton({
   );
 }
 
-/** Picking a meal for one day: the box at the top, the library under it, and a typed name for a day of its own. */
+/** Adding a meal to one day: the box at the top, the library under it, and a typed name for a meal of its own; either goes at the end of the day. */
 export function PickMealScreen({ position }: { position: number }) {
   const plan = usePlan();
   const meals = useLiveMeals();
@@ -78,15 +78,15 @@ export function PickMealScreen({ position }: { position: number }) {
   if (waiting) {
     return (
       <>
-        <ScreenHeader title="Pick a meal" back={back} />
+        <ScreenHeader title="Add a meal" back={back} />
         <WaitingForServer />
       </>
     );
   }
 
   const title = plan
-    ? `Pick a meal for ${formatDay(dayDate(plan, position))}`
-    : "Pick a meal";
+    ? `Add a meal to ${formatDay(dayDate(plan, position))}`
+    : "Add a meal";
   const typedName = query.trim();
   const rows: MealRow[] = (meals ?? []).map((meal) => ({
     id: meal.id,
@@ -100,7 +100,7 @@ export function PickMealScreen({ position }: { position: number }) {
   const exactRow = rows.find(
     (row) => row.name.trim().toLowerCase() === typedName.toLowerCase(),
   );
-  const offerOwnDay = typedName !== "" && !exactRow;
+  const offerOwnMeal = typedName !== "" && !exactRow;
 
   const backToPlan = (): void => {
     if (canGoBack) {
@@ -182,10 +182,10 @@ export function PickMealScreen({ position }: { position: number }) {
           )}
         </section>
       )}
-      {offerOwnDay && (
+      {offerOwnMeal && (
         <section className="flex flex-col gap-2">
           <h2 id={ownHeadingId} className={sectionLabel}>
-            Or a day of its own
+            Or a meal of its own
           </h2>
           <ul aria-labelledby={ownHeadingId} className={listBox}>
             <li>

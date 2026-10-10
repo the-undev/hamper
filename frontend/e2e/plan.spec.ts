@@ -72,7 +72,7 @@ test("a meal placed on a day can be renamed, reset and removed there", async ({
   await expect(plannedMealRow(page, renamed, day)).toHaveCount(0);
 });
 
-test("picking a meal is a screen with the box at the top", async ({ page }) => {
+test("adding a meal is a screen with the box at the top", async ({ page }) => {
   const meal = uniqueName("Dhal");
   const lentils = uniqueName("Lentils");
   const adHoc = uniqueName("Takeaway");
@@ -90,7 +90,7 @@ test("picking a meal is a screen with the box at the top", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/plan\/pick\/\d+$/);
   await expect(
-    page.getByRole("heading", { name: `Pick a meal for ${day}` }),
+    page.getByRole("heading", { name: `Add a meal to ${day}` }),
   ).toBeVisible();
   const box = page.getByRole("textbox", { name: "Meal" });
   await expect(box).toBeFocused();
@@ -108,7 +108,7 @@ test("picking a meal is a screen with the box at the top", async ({ page }) => {
   await expect(library.getByRole("button", { name: meal })).toHaveCount(0);
   await expect(
     page
-      .getByRole("list", { name: "Or a day of its own" })
+      .getByRole("list", { name: "Or a meal of its own" })
       .getByRole("button", { name: `Use “${adHoc}” as it is` }),
   ).toBeVisible();
   await box.press("Enter");
@@ -120,6 +120,26 @@ test("picking a meal is a screen with the box at the top", async ({ page }) => {
 
   const placedDay = await placeOnDay(page, meal);
   await removeFromDay(page, meal, placedDay);
+});
+
+test("the Meal screen adds its meal to a day chosen from a sheet", async ({
+  page,
+}) => {
+  const meal = uniqueName("Paella");
+  await openApp(page, "/meals");
+  await addMeal(page, meal, []);
+
+  await page.getByRole("button", { name: "Add to a day" }).click();
+  const sheet = page.getByRole("dialog", { name: "Add to a day" });
+  const secondDay = sheet.getByRole("button").nth(1);
+  const day = (await secondDay.locator("b").textContent()) ?? "";
+  await secondDay.click();
+
+  await expect(sheet).toHaveCount(0);
+  await expect(page.getByText("On 1 day", { exact: true })).toBeVisible();
+  await page.goto("/plan");
+  await expect(plannedMealRow(page, meal, day)).toBeVisible();
+  await removeFromDay(page, meal, day);
 });
 
 test("Done stays above the tabs on a long day and goes back", async ({

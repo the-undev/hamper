@@ -3,17 +3,13 @@ import { deleteItem, mergeItem, renameItem, setItemSize } from "@/domain/items";
 import { type ItemUsage, itemOptions, useItemUsage } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
+import { counted } from "@/lib/utils";
 import type { Item } from "@/store/types";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { SavedField } from "./SavedField";
 import { hint, sectionLabel } from "./styles";
 import { TypeAhead, type TypeAheadOption } from "./TypeAhead";
 import { Button } from "./ui/button";
-
-/** A count and a noun, with an s when the count is not one. */
-function counted(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
 
 /** Says where an item is used, as "Used on 2 meals, 1 day, 1 list." */
 export function usageText(usage: ItemUsage): string {
