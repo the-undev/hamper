@@ -13,32 +13,34 @@ during a swipe they follow the finger. The view last used is remembered.
 
 **Meals.** A read-only line says when the plan starts and ends: "Starts Mon
 1 Jun, ends Sun 7 Jun", with dates in the browser's locale. Below it, one
-slot per day:
+card per day. Its header is the date, with "2 meals" when it holds more than
+one.
 
-- An empty day shows "Pick a meal". Tapping it opens Pick a meal, a screen
-  titled with the day's date. The box sits at the top, focused, and under it
-  the library as a list: each meal with its picture, its name and its lines.
-  Typing filters the library and adds a row under "Or a day of its own",
-  "Use “Takeaway” as it is", for an ad-hoc day; a name that is a meal's,
-  ignoring case and spaces at the ends, has no such row. Enter picks the meal
-  of exactly that name, and otherwise uses the name as it is. Picking a meal
-  goes back to the Plan; an ad-hoc day opens in its place.
-- A filled day shows the meal's picture, its name and its lines in one line
-  underneath. Tapping the name opens the day. A ≡ handle on the right drags
-  the meal onto another day to swap. Swiping left reveals Clear.
+- Each planned meal is a row: its picture, its name and its lines in one line
+  underneath. Tapping a row opens the planned meal. A hold anywhere on a row
+  lifts it, and it drags within its day or to another day; see Everywhere.
+  Swiping left reveals Remove, which takes that meal off the day.
+- "Add a meal" ends every card, and is all an empty day shows. It opens a
+  screen titled "Add a meal to <date>". The box sits at the top, focused,
+  and under it the library as a list: each meal with its picture, its name
+  and its lines. Typing filters the library and adds a row under "Or a meal
+  of its own", "Use “Takeaway” as it is", for an ad-hoc meal; a
+  name that is a meal's, ignoring case and spaces at the ends, has no such
+  row. Enter picks the meal of exactly that name, and otherwise uses the name
+  as it is. The meal goes at the end of the day. Picking a library meal goes
+  back to the Plan; an ad-hoc meal opens in its place.
 - "Start new plan from <date>", a row under the last day, which asks for a
   confirm.
 
 Until the first sync brings the plan, the plan's screens say they are waiting
 for the server.
 
-**Day.** An empty day says so and offers Pick a meal, which opens the same
-screen and comes back to the day. A filled day: the date, the planned meal's
-name, editable for this day, and a line saying which library meal it came
-from and whether it has been changed for this day, or that it is not a
-library meal. Reset to the meal, or Save as
-a meal for an ad-hoc day. Then the type-ahead and the day's lines, each with +
-and − and a swipe to remove.
+**Planned meal.** Headed with the day's date. The planned meal's name,
+editable for this day, and a line saying which library meal it came from and
+whether it has been changed for this day, or that it is not a library meal.
+Reset to the meal, or Save as a meal for an ad-hoc one. Then the type-ahead
+and the planned meal's lines, each with + and − and a swipe to remove. The
+footer holds Remove from day and Done.
 
 **Extras.** Headed "Extras, beyond what the meals need". The type-ahead at
 the top, then the extras list: each line with its usual size under the name, a
@@ -52,9 +54,11 @@ showing the same progress. Tapping a card opens the list. Under the cards,
 "Make from plan" and "Start empty". With no list open, a note says so above
 the two.
 
-**Breakdown.** Reached by "Make from plan". Every day with its lines, then the
-extras list, all editable with the same controls as the Day screen and the
-Extras view, and every edit saved to the plan. "Generate the list" at the
+**Breakdown.** Reached by "Make from plan". Every day of the plan under its
+date, with "this day's meal only" beside it: each of its planned meals by name
+with its lines, or "nothing planned". Then the extras list. All of it is
+editable with the same controls as the Planned meal screen and the Extras
+view, and every edit is saved to the plan. "Generate the list" at the
 bottom, Cancel at the top. The list is named after the plan's start date, "Shop Mon 1 Jun"; an
 empty one is "Quick shop" and today's date.
 
@@ -83,9 +87,11 @@ name matching nothing offers "Add as a new meal".
 
 **Meal.** The picture, Change photo (take or choose, crop square, upload) and,
 when there is a picture, Remove photo; both are disabled while offline. Then
-the name, when it was last shopped for, "Add to <next empty day>" or
-"On the plan", then the type-ahead and the meal's lines with + and − and
-swipe to remove. Duplicate and Delete. When it was last shopped for comes
+the name, when it was last shopped for, and "Add to a day", which opens a
+sheet listing the plan's days, each with how many meals it holds, and adds
+the meal at the end of the day tapped. Beside it, "On 2 days" once days of
+the plan hold the meal. Then the type-ahead and the meal's lines with + and −
+and swipe to remove. Duplicate and Delete. When it was last shopped for comes
 from history, so it is left out while offline.
 
 ## More
@@ -100,7 +106,9 @@ screen, then the same fields as the item sheet (see Everywhere), which save as
 they are edited, with Done or the merge offer in the footer.
 
 **History.** Archived shops by date, each with its meals and a count of lines.
-Tapping one opens it read only. "Copy these meals to the plan" on each.
+Tapping one opens it read only, with each day's meals in order. "Copy these
+meals to the plan" on each, after a confirm, fills each day with that shop's
+meals for it in order and clears the days it does not mention.
 History needs the server, and says so while offline.
 
 ## Everywhere
@@ -115,10 +123,10 @@ History needs the server, and says so while offline.
 - When a new version is ready, a toast says "Update ready" with Reload, once
   per update.
 - Every edit is saved as it is made, except in the line editor, which saves
-  on Done. Day, Meal and the item
+  on Done. Planned meal, Meal and the item
   editor have a footer that stays above the tabs, holding Done, which goes
-  back, and on a Day, Clear day.
-- Tapping a line's name on a meal, a day or the extras list opens its item in
+  back, and on a Planned meal, Remove from day.
+- Tapping a line's name on a meal, a planned meal or the extras list opens its item in
   a sheet: the name and usual size, each saved as it is edited; where it is used, "Used on
   2 meals, 1 day, 1 list", with the extras list counted as a list; Merge into
   another item (a type-ahead over the rest); and Delete item, which asks
@@ -129,11 +137,15 @@ History needs the server, and says so while offline.
 - A sheet stays above the phone's keyboard and is never taller than the part
   of the screen left visible; when the keyboard comes up, the sheet scrolls
   within itself to bring the focused field to its top.
-- Targets are at least 44px. Lines swipe left to reveal actions. Drag is a
-  press and hold on the handle on a phone, a plain drag with a mouse. The day
-  under the finger is highlighted and says Swap, or Move here when it is
-  empty, and the dragged day's slot shows the name it would take. After the
-  drop both days fade in.
+- Targets are at least 44px. Lines swipe left to reveal actions; on a
+  desktop, keyboard focus reaches them too. A planned meal drags after a
+  250ms hold anywhere on its row on a phone, and a finger that moves sideways
+  first swipes instead; a mouse drags it after 8px. The rows stay put, the
+  dragged meal follows the pointer, the day it would land on is outlined and
+  a line shows where: between two meals, by which half of a row the pointer
+  is over, or at the end of a day over its "Add a meal" row or empty space.
+  With the keyboard, a row's Move button lifts it, the arrow keys move it
+  through the days and Space drops it.
 - The type-ahead is the same control wherever a line is added: type, then
   pick an existing item or take the row that creates one. The suggestions
   float over the content under the box, about five rows high, and scroll; a

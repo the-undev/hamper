@@ -16,15 +16,15 @@ public sealed record TransferDocument(
     IReadOnlyList<TransferItem> Items,
     IReadOnlyList<TransferMeal> Meals,
     IReadOnlyList<TransferMealLine> MealLines,
-    IReadOnlyList<TransferDay> Days,
-    IReadOnlyList<TransferDayLine> DayLines,
+    IReadOnlyList<TransferPlannedMeal> PlannedMeals,
+    IReadOnlyList<TransferPlannedMealLine> PlannedMealLines,
     IReadOnlyList<TransferWantedLine> WantedLines,
     IReadOnlyList<TransferShop> Shops,
     IReadOnlyList<TransferShopLine> ShopLines,
     IReadOnlyList<TransferArchivedShop> ArchivedShops)
 {
     /// <summary>The format this build writes and the only one it imports.</summary>
-    public const int CurrentFormat = 1;
+    public const int CurrentFormat = 2;
 
     /// <summary>The name of the JSON entry in the zip.</summary>
     public const string EntryName = "data.json";
@@ -65,18 +65,22 @@ public sealed record TransferMealLine(Guid Id, Guid MealId, Guid ItemId, int Cou
     public MealLine ToEntity() => new() { Id = Id, MealId = MealId, ItemId = ItemId, Count = Count, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferDay(Guid Id, int Position, string Name, Guid? MealId, DateTimeOffset? DeletedAt)
+public sealed record TransferPlannedMeal(Guid Id, int Position, int Rank, string Name, Guid? MealId, DateTimeOffset? DeletedAt)
 {
-    public static TransferDay From(Day day) => new(day.Id, day.Position, day.Name, day.MealId, day.DeletedAt);
+    public static TransferPlannedMeal From(PlannedMeal plannedMeal) =>
+        new(plannedMeal.Id, plannedMeal.Position, plannedMeal.Rank, plannedMeal.Name, plannedMeal.MealId, plannedMeal.DeletedAt);
 
-    public Day ToEntity() => new() { Id = Id, Position = Position, Name = Name, MealId = MealId, DeletedAt = DeletedAt };
+    public PlannedMeal ToEntity() =>
+        new() { Id = Id, Position = Position, Rank = Rank, Name = Name, MealId = MealId, DeletedAt = DeletedAt };
 }
 
-public sealed record TransferDayLine(Guid Id, Guid DayId, Guid ItemId, int Count, DateTimeOffset? DeletedAt)
+public sealed record TransferPlannedMealLine(Guid Id, Guid PlannedMealId, Guid ItemId, int Count, DateTimeOffset? DeletedAt)
 {
-    public static TransferDayLine From(DayLine line) => new(line.Id, line.DayId, line.ItemId, line.Count, line.DeletedAt);
+    public static TransferPlannedMealLine From(PlannedMealLine line) =>
+        new(line.Id, line.PlannedMealId, line.ItemId, line.Count, line.DeletedAt);
 
-    public DayLine ToEntity() => new() { Id = Id, DayId = DayId, ItemId = ItemId, Count = Count, DeletedAt = DeletedAt };
+    public PlannedMealLine ToEntity() =>
+        new() { Id = Id, PlannedMealId = PlannedMealId, ItemId = ItemId, Count = Count, DeletedAt = DeletedAt };
 }
 
 public sealed record TransferWantedLine(Guid Id, Guid ItemId, int Count, bool Weekly, DateTimeOffset? DeletedAt)

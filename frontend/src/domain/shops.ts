@@ -9,29 +9,29 @@ import {
   requireLive,
   requireName,
 } from "./checks";
-import { lineName, lineSize } from "./display";
+import { byPlanOrder, lineName, lineSize } from "./display";
 import { requirePlan } from "./plan";
 import { addWanted } from "./wanted";
 
 /** The source a shop line names for counts that came from the extras list. */
 export const extrasSource = "extras";
 
-/** A summed count for one item and the names of the days and list it came from. */
+/** A summed count for one item and the names of the planned meals and list it came from. */
 interface ItemTotal {
   count: number;
   sources: string[];
 }
 
-/** Makes a shop from the plan: one line per item with the count summed across the days within the length and the extras list. */
+/** Makes a shop from the plan: one line per item with the count summed across every planned meal on the days within the length, in plan order, and the extras list. */
 export async function generateShop(
   w: Writer,
   name: string,
   now: string,
 ): Promise<Shop> {
   const plan = await requirePlan(w);
-  const plannedDays = liveRows(await w.all("days"))
-    .filter((day) => day.position < plan.lengthDays)
-    .sort((first, second) => first.position - second.position);
+  const plannedMeals = liveRows(await w.all("plannedMeals"))
+    .filter((plannedMeal) => plannedMeal.position < plan.lengthDays)
+    .sort(byPlanOrder);
 
   const totals = new Map<string, ItemTotal>();
   const addToTotal = (itemId: string, count: number, source: string): void => {
@@ -40,19 +40,25 @@ export async function generateShop(
     total.sources.push(source);
     totals.set(itemId, total);
   };
-  for (const day of plannedDays) {
-    for (const line of await liveWhere(w, "dayLines", "dayId", day.id)) {
-      addToTotal(line.itemId, line.count, day.name);
+  for (const plannedMeal of plannedMeals) {
+    for (const line of await liveWhere(
+      w,
+      "plannedMealLines",
+      "plannedMealId",
+      plannedMeal.id,
+    )) {
+      addToTotal(line.itemId, line.count, plannedMeal.name);
     }
   }
   for (const line of liveRows(await w.all("wantedLines"))) {
     addToTotal(line.itemId, line.count, extrasSource);
   }
 
-  const plannedMeals: ShopMeal[] = plannedDays.map((day) => ({
-    position: day.position,
-    name: day.name,
-    mealId: day.mealId,
+  const shopMeals: ShopMeal[] = plannedMeals.map((plannedMeal) => ({
+    position: plannedMeal.position,
+    rank: plannedMeal.rank,
+    name: plannedMeal.name,
+    mealId: plannedMeal.mealId,
   }));
   const shop: Shop = {
     id: newId(),
@@ -63,7 +69,7 @@ export async function generateShop(
     fromPlan: true,
     planStartDate: plan.startDate,
     planLengthDays: plan.lengthDays,
-    meals: plannedMeals,
+    meals: shopMeals,
   };
   await w.put("shops", shop);
   for (const [itemId, total] of totals) {

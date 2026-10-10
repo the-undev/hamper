@@ -1,13 +1,13 @@
 import {
   type Announcements,
-  closestCenter,
   DndContext,
   type DragEndEvent,
+  type DragMoveEvent,
   DragOverlay,
+  type DragStartEvent,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  type UniqueIdentifier,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -17,141 +17,199 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { useState } from "react";
+import { Picture } from "@/components/Picture";
 import { dayDate } from "@/domain/display";
-import { clearDay, swapDays } from "@/domain/plan";
+import { movePlannedMeal, removePlannedMeal } from "@/domain/plan";
 import { lineNames } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
-import type { Day, DayLine, Item, Meal, Plan } from "@/store/types";
-import { DaySlot, slotId } from "./DaySlot";
+import type {
+  Item,
+  Meal,
+  Plan,
+  PlannedMeal,
+  PlannedMealLine,
+} from "@/store/types";
+import { DaySlot, type PlannedMealView } from "./DaySlot";
+import {
+  type DropData,
+  type DropPlace,
+  dropCollisions,
+  dropPlace,
+  pointerStartY,
+} from "./drop";
 
-/** A mouse lifts a day once it moves 8px; a finger lifts it after a 250ms hold, so a scroll that starts on the handle still scrolls. */
-export const daySwapSensorOptions = {
+/** A mouse lifts a planned meal once it moves 8px; a finger lifts it after a 250ms hold, so a swipe or a scroll that starts on a row still swipes or scrolls. */
+export const plannedMealDragSensorOptions = {
   mouse: { activationConstraint: { distance: 8 } },
   touch: { activationConstraint: { delay: 250, tolerance: 8 } },
 } as const;
 
-/** Days swap rather than reorder, so no slot moves while one is dragged. */
+/** The rows stay where they are during a drag; a line shows where the drop lands. */
 const holdStill: SortingStrategy = () => null;
 
-function positionOf(id: UniqueIdentifier): number {
-  return Number(String(id).replace("slot-", ""));
+/** Where a drag over a droppable would put the dragged planned meal, with a pointer's height deciding before or after the row under it. */
+function placeOf(
+  event: DragMoveEvent,
+  mealsByPosition: ReadonlyMap<number, readonly PlannedMeal[]>,
+): DropPlace | null {
+  const { active, over, delta, activatorEvent } = event;
+  const dragged = (active.data.current as DropData | undefined) ?? undefined;
+  if (!over || dragged?.kind !== "meal") {
+    return null;
+  }
+  const startY = pointerStartY(activatorEvent);
+  const below =
+    startY === null
+      ? null
+      : startY + delta.y > over.rect.top + over.rect.height / 2;
+  return dropPlace(
+    dragged.plannedMeal,
+    over.data.current as DropData | undefined,
+    below,
+    mealsByPosition,
+  );
 }
 
-/** The plan's days in order; a filled day drags by its handle onto another to swap, showing the swap before the drop and fading both days in after it. */
+function samePlace(first: DropPlace | null, second: DropPlace | null): boolean {
+  return first?.position === second?.position && first?.rank === second?.rank;
+}
+
+/** The plan's days in order, each a card of its planned meals; a meal drags within its day or to another, between the meals there, and swipes left to remove. */
 export function DayList({
   plan,
-  days,
-  linesByDay,
+  mealsByPosition,
+  linesByPlannedMeal,
   itemsById,
   mealsById,
-  onPick,
 }: {
   plan: Plan;
-  days: ReadonlyMap<number, Day>;
-  linesByDay: ReadonlyMap<string, DayLine[]>;
+  mealsByPosition: ReadonlyMap<number, readonly PlannedMeal[]>;
+  linesByPlannedMeal: ReadonlyMap<string, PlannedMealLine[]>;
   itemsById: ReadonlyMap<string, Item>;
   mealsById: ReadonlyMap<string, Meal>;
-  onPick: (position: number) => void;
 }) {
   const write = useWrite();
-  const [draggedPosition, setDraggedPosition] = useState<number | null>(null);
-  const [overPosition, setOverPosition] = useState<number | null>(null);
-  const [swappedPositions, setSwappedPositions] = useState<readonly number[]>(
-    [],
-  );
+  const [dragged, setDragged] = useState<PlannedMeal | null>(null);
+  const [place, setPlace] = useState<DropPlace | null>(null);
   const sensors = useSensors(
-    useSensor(MouseSensor, daySwapSensorOptions.mouse),
-    useSensor(TouchSensor, daySwapSensorOptions.touch),
+    useSensor(MouseSensor, plannedMealDragSensorOptions.mouse),
+    useSensor(TouchSensor, plannedMealDragSensorOptions.touch),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
   const positions = Array.from({ length: plan.lengthDays }, (_, at) => at);
-  const labelOf = (id: UniqueIdentifier): string =>
-    formatDay(dayDate(plan, positionOf(id)));
+  const dayLabel = (position: number): string =>
+    formatDay(dayDate(plan, position));
+  const droppableLabel = (data: DropData | undefined): string => {
+    if (data?.kind === "meal") {
+      return `${data.plannedMeal.name} on ${dayLabel(data.plannedMeal.position)}`;
+    }
+    return data ? dayLabel(data.position) : "nothing";
+  };
   const announcements: Announcements = {
-    onDragStart: ({ active }) => `Picked up ${labelOf(active.id)}.`,
-    onDragOver: ({ over }) => (over ? `Over ${labelOf(over.id)}.` : undefined),
-    onDragEnd: ({ active, over }) =>
-      over && over.id !== active.id
-        ? `Swapped ${labelOf(active.id)} with ${labelOf(over.id)}.`
+    onDragStart: ({ active }) =>
+      `Picked up ${droppableLabel(active.data.current as DropData | undefined)}.`,
+    onDragOver: ({ over }) =>
+      over
+        ? `Over ${droppableLabel(over.data.current as DropData | undefined)}.`
+        : undefined,
+    onDragEnd: ({ over }) =>
+      over
+        ? `Dropped on ${droppableLabel(over.data.current as DropData | undefined)}.`
         : "Put back.",
     onDragCancel: () => "Put back.",
   };
 
   const putDown = (): void => {
-    setDraggedPosition(null);
-    setOverPosition(null);
+    setDragged(null);
+    setPlace(null);
   };
-  const onDragEnd = ({ active, over }: DragEndEvent): void => {
+  const onDragStart = ({ active }: DragStartEvent): void => {
+    const data = active.data.current as DropData | undefined;
+    setDragged(data?.kind === "meal" ? data.plannedMeal : null);
+  };
+  const onDragMove = (event: DragMoveEvent): void => {
+    const nextPlace = placeOf(event, mealsByPosition);
+    if (!samePlace(nextPlace, place)) {
+      setPlace(nextPlace);
+    }
+  };
+  const onDragEnd = (event: DragEndEvent): void => {
+    const target = placeOf(event, mealsByPosition);
     putDown();
-    if (!over || over.id === active.id) {
+    if (!target) {
       return;
     }
-    const from = positionOf(active.id);
-    const to = positionOf(over.id);
-    setSwappedPositions([from, to]);
-    void write((w) => swapDays(w, from, to, nowIso()));
+    void write((w) =>
+      movePlannedMeal(w, String(event.active.id), target.position, target.rank),
+    );
   };
 
-  const draggedDay =
-    draggedPosition === null ? undefined : days.get(draggedPosition);
-  const targetPosition =
-    draggedPosition === null || overPosition === draggedPosition
-      ? null
-      : overPosition;
-  const targetName =
-    targetPosition === null ? null : (days.get(targetPosition)?.name ?? null);
+  const viewOf = (plannedMeal: PlannedMeal): PlannedMealView => ({
+    plannedMeal,
+    imageId:
+      (plannedMeal.mealId && mealsById.get(plannedMeal.mealId)?.imageId) ||
+      null,
+    summary: lineNames(linesByPlannedMeal.get(plannedMeal.id) ?? [], itemsById),
+  });
+  const dropLineAt = (position: number): number | null => {
+    if (!dragged || place?.position !== position) {
+      return null;
+    }
+    const dayMeals = mealsByPosition.get(position) ?? [];
+    const others = dayMeals.filter((dayMeal) => dayMeal.id !== dragged.id);
+    const before = others[place.rank];
+    return before ? dayMeals.indexOf(before) : dayMeals.length;
+  };
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={dropCollisions}
       accessibility={{ announcements }}
-      onDragStart={({ active }) => {
-        setDraggedPosition(positionOf(active.id));
-        setSwappedPositions([]);
-      }}
-      onDragOver={({ over }) =>
-        setOverPosition(over ? positionOf(over.id) : null)
-      }
+      onDragStart={onDragStart}
+      onDragMove={onDragMove}
+      onDragOver={onDragMove}
       onDragEnd={onDragEnd}
       onDragCancel={putDown}
     >
-      <SortableContext items={positions.map(slotId)} strategy={holdStill}>
-        <ol className="m-0 flex list-none flex-col gap-2 p-0">
-          {positions.map((position) => {
-            const day = days.get(position);
-            return (
+      <ol className="m-0 flex list-none flex-col gap-2 p-0">
+        {positions.map((position) => {
+          const dayMeals = mealsByPosition.get(position) ?? [];
+          return (
+            <SortableContext
+              key={position}
+              id={`day-meals-${position}`}
+              items={dayMeals.map((dayMeal) => dayMeal.id)}
+              strategy={holdStill}
+            >
               <DaySlot
-                key={position}
                 position={position}
                 date={dayDate(plan, position)}
-                day={day}
-                imageId={
-                  (day?.mealId && mealsById.get(day.mealId)?.imageId) || null
-                }
-                summary={lineNames(
-                  day ? (linesByDay.get(day.id) ?? []) : [],
-                  itemsById,
-                )}
-                targeted={position === targetPosition}
-                incomingName={position === draggedPosition ? targetName : null}
-                arriving={swappedPositions.includes(position)}
-                onPick={() => onPick(position)}
-                onClear={() =>
-                  void write((w) => clearDay(w, position, nowIso()))
+                meals={dayMeals.map(viewOf)}
+                dropLineAt={dropLineAt(position)}
+                targeted={place?.position === position}
+                onRemove={(plannedMeal) =>
+                  void write((w) =>
+                    removePlannedMeal(w, plannedMeal.id, nowIso()),
+                  )
                 }
               />
-            );
-          })}
-        </ol>
-      </SortableContext>
+            </SortableContext>
+          );
+        })}
+      </ol>
       <DragOverlay>
-        {draggedDay && (
-          <div className="rounded-[14px] border border-accent bg-surface px-3 py-2 text-[15px] font-semibold shadow-lg">
-            {draggedDay.name}
+        {dragged && (
+          <div className="flex min-h-[62px] items-center gap-2.5 rounded-[14px] border border-accent bg-surface px-2.5 py-2 shadow-lg">
+            <Picture
+              name={dragged.name}
+              imageId={viewOf(dragged).imageId}
+              size="row"
+            />
+            <b className="truncate text-[15px] font-semibold">{dragged.name}</b>
           </div>
         )}
       </DragOverlay>

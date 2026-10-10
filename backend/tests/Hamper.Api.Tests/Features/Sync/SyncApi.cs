@@ -9,7 +9,7 @@ internal static class SyncApi
 {
     /// <summary>The wire names of the synced tables, in response order.</summary>
     public static readonly string[] TableNames =
-        ["items", "meals", "mealLines", "plan", "days", "dayLines", "wantedLines", "shops", "shopLines"];
+        ["items", "meals", "mealLines", "plan", "plannedMeals", "plannedMealLines", "wantedLines", "shops", "shopLines"];
 
     public static async Task<JsonObject> PullAsync(HttpClient client, long since, CancellationToken ct)
     {

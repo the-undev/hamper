@@ -28,22 +28,22 @@ public sealed class ExportData : IEndpoint
     {
         var plan = await db.Plans.AsNoTracking().SingleAsync(row => row.Id == Plan.SingletonId, ct);
         var mealLines = await db.MealLines.AsNoTracking().Live().ToListAsync(ct);
-        var dayLines = await db.DayLines.AsNoTracking().Live().ToListAsync(ct);
+        var plannedMealLines = await db.PlannedMealLines.AsNoTracking().Live().ToListAsync(ct);
         var wantedLines = await db.WantedLines.AsNoTracking().Live().ToListAsync(ct);
         var shopLines = await db.ShopLines.AsNoTracking().Live().ToListAsync(ct);
 
-        var days = await db.Days.AsNoTracking().Live().ToListAsync(ct);
+        var plannedMeals = await db.PlannedMeals.AsNoTracking().Live().ToListAsync(ct);
 
         // A live row may point at a deleted item or meal, so those are exported as tombstones and every reference resolves on import.
         var referencedItemIds = mealLines.Select(line => line.ItemId)
-            .Concat(dayLines.Select(line => line.ItemId))
+            .Concat(plannedMealLines.Select(line => line.ItemId))
             .Concat(wantedLines.Select(line => line.ItemId))
             .Concat(shopLines.Select(line => line.ItemId))
             .ToHashSet();
         var items = await db.Items.AsNoTracking()
             .Where(item => item.DeletedAt == null || referencedItemIds.Contains(item.Id))
             .ToListAsync(ct);
-        var referencedMealIds = days.Where(day => day.MealId != null).Select(day => day.MealId!.Value).ToHashSet();
+        var referencedMealIds = plannedMeals.Where(plannedMeal => plannedMeal.MealId != null).Select(plannedMeal => plannedMeal.MealId!.Value).ToHashSet();
         var meals = await db.Meals.AsNoTracking()
             .Where(meal => meal.DeletedAt == null || referencedMealIds.Contains(meal.Id))
             .ToListAsync(ct);
@@ -55,8 +55,8 @@ public sealed class ExportData : IEndpoint
             items.Select(TransferItem.From).OrderBy(row => row.Id).ToList(),
             meals.Select(TransferMeal.From).OrderBy(row => row.Id).ToList(),
             mealLines.Select(TransferMealLine.From).OrderBy(row => row.Id).ToList(),
-            days.Select(TransferDay.From).OrderBy(row => row.Id).ToList(),
-            dayLines.Select(TransferDayLine.From).OrderBy(row => row.Id).ToList(),
+            plannedMeals.Select(TransferPlannedMeal.From).OrderBy(row => row.Id).ToList(),
+            plannedMealLines.Select(TransferPlannedMealLine.From).OrderBy(row => row.Id).ToList(),
             wantedLines.Select(TransferWantedLine.From).OrderBy(row => row.Id).ToList(),
             (await db.Shops.AsNoTracking().Live().ToListAsync(ct)).Select(TransferShop.From).OrderBy(row => row.Id).ToList(),
             shopLines.Select(TransferShopLine.From).OrderBy(row => row.Id).ToList(),

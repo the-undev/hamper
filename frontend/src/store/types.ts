@@ -34,16 +34,17 @@ export interface Plan extends SyncedRow {
   lengthDays: number;
 }
 
-/** A day of the plan by position, holding a planned meal's name and an optional link to a library meal. */
-export interface Day extends SyncedRow {
+/** A meal on a day of the plan: the day's position, its place in that day's order from 0, a name and an optional link to a library meal. */
+export interface PlannedMeal extends SyncedRow {
   position: number;
+  rank: number;
   name: string;
   mealId: string | null;
 }
 
-/** An item and a count on a day of the plan. */
-export interface DayLine extends SyncedRow {
-  dayId: string;
+/** An item and a count on a planned meal. */
+export interface PlannedMealLine extends SyncedRow {
+  plannedMealId: string;
   itemId: string;
   count: number;
 }
@@ -58,6 +59,7 @@ export interface WantedLine extends SyncedRow {
 /** A planned meal as it stood when a shop was made from the plan. */
 export interface ShopMeal {
   position: number;
+  rank: number;
   name: string;
   mealId: string | null;
 }
@@ -90,8 +92,8 @@ export interface TableRows {
   meals: Meal;
   mealLines: MealLine;
   plan: Plan;
-  days: Day;
-  dayLines: DayLine;
+  plannedMeals: PlannedMeal;
+  plannedMealLines: PlannedMealLine;
   wantedLines: WantedLine;
   shops: Shop;
   shopLines: ShopLine;
@@ -106,8 +108,8 @@ export const syncTables: readonly SyncTable[] = [
   "meals",
   "mealLines",
   "plan",
-  "days",
-  "dayLines",
+  "plannedMeals",
+  "plannedMealLines",
   "wantedLines",
   "shops",
   "shopLines",

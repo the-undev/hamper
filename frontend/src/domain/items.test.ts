@@ -3,11 +3,11 @@ import type { HamperDb } from "@/store/db";
 import { write } from "@/store/write";
 import { freshDb } from "@/test/db";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aShop,
   aShopLine,
   aWantedLine,
@@ -106,14 +106,14 @@ test("merging_repoints_every_reference_at_the_target_and_removes_the_source", as
   const milk = anItem("Milk");
   const semiSkimmed = anItem("Semi-skimmed");
   const curry = aMeal("Curry");
-  const monday = aDay(0, "Curry", curry);
+  const monday = aPlannedMeal(0, "Curry", curry);
   const shop = aShop("Big shop");
   await seed(db, {
     items: [milk, semiSkimmed],
     meals: [curry],
     mealLines: [aMealLine(curry, milk, 1)],
-    days: [monday],
-    dayLines: [aDayLine(monday, milk, 2)],
+    plannedMeals: [monday],
+    plannedMealLines: [aPlannedMealLine(monday, milk, 2)],
     wantedLines: [aWantedLine(milk, 3)],
     shops: [shop],
     shopLines: [aShopLine(shop, milk, 4)],
@@ -124,7 +124,7 @@ test("merging_repoints_every_reference_at_the_target_and_removes_the_source", as
   expect((await db.items.get(milk.id))?.deletedAt).toBe(now);
   for (const table of [
     "mealLines",
-    "dayLines",
+    "plannedMealLines",
     "wantedLines",
     "shopLines",
   ] as const) {
@@ -139,13 +139,16 @@ test("merging_combines_lines_that_become_duplicates_on_one_meal_or_day_by_adding
   const milk = anItem("Milk");
   const semiSkimmed = anItem("Semi-skimmed");
   const curry = aMeal("Curry");
-  const monday = aDay(0, "Curry", curry);
+  const monday = aPlannedMeal(0, "Curry", curry);
   await seed(db, {
     items: [milk, semiSkimmed],
     meals: [curry],
     mealLines: [aMealLine(curry, milk, 2), aMealLine(curry, semiSkimmed, 1)],
-    days: [monday],
-    dayLines: [aDayLine(monday, milk, 1), aDayLine(monday, semiSkimmed, 4)],
+    plannedMeals: [monday],
+    plannedMealLines: [
+      aPlannedMealLine(monday, milk, 1),
+      aPlannedMealLine(monday, semiSkimmed, 4),
+    ],
   });
 
   await write(db, (w) => mergeItem(w, milk.id, semiSkimmed.id, now));
@@ -154,7 +157,10 @@ test("merging_combines_lines_that_become_duplicates_on_one_meal_or_day_by_adding
     (await live(db, "mealLines")).map((line) => [line.itemId, line.count]),
   ).toEqual([[semiSkimmed.id, 3]]);
   expect(
-    (await live(db, "dayLines")).map((line) => [line.itemId, line.count]),
+    (await live(db, "plannedMealLines")).map((line) => [
+      line.itemId,
+      line.count,
+    ]),
   ).toEqual([[semiSkimmed.id, 5]]);
 });
 
@@ -196,13 +202,13 @@ test("deleting_an_item_removes_its_lines_from_meals_and_the_plan", async () => {
   const milk = anItem("Milk");
   const rice = anItem("Rice");
   const curry = aMeal("Curry");
-  const monday = aDay(0, "Curry", curry);
+  const monday = aPlannedMeal(0, "Curry", curry);
   await seed(db, {
     items: [milk, rice],
     meals: [curry],
     mealLines: [aMealLine(curry, milk, 1), aMealLine(curry, rice, 1)],
-    days: [monday],
-    dayLines: [aDayLine(monday, milk, 1)],
+    plannedMeals: [monday],
+    plannedMealLines: [aPlannedMealLine(monday, milk, 1)],
     wantedLines: [aWantedLine(milk, 1)],
   });
 
@@ -212,7 +218,7 @@ test("deleting_an_item_removes_its_lines_from_meals_and_the_plan", async () => {
   expect((await live(db, "mealLines")).map((line) => line.itemId)).toEqual([
     rice.id,
   ]);
-  expect(await live(db, "dayLines")).toEqual([]);
+  expect(await live(db, "plannedMealLines")).toEqual([]);
   expect(await live(db, "wantedLines")).toEqual([]);
 });
 

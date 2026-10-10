@@ -5,14 +5,16 @@ What hamper has to do, by flow. Each flow names the screens in
 
 ## Plan a week
 
-- See the days from the start date with a meal, or nothing, on each.
+- See the days from the start date, each with its meals in order, or nothing.
 - Put a meal on a day by picking from the library with a type-ahead, or type
-  any name for a day that is not a library meal.
-- Move meals between days by dragging. Clear a day by swiping.
+  any name for a meal that is not a library meal. A day holds any number of
+  meals.
+- Drag a meal to reorder it within its day or to move it to another day.
+  Remove a meal from a day by swiping.
 - Change the start date with a date picker and the length with + and −,
   without disturbing the meals.
-- Open a day and change its items for that day only. Reset it to the library
-  meal. Save an ad-hoc day as a meal.
+- Open a planned meal and change its items for that day only. Reset it to the
+  library meal. Save an ad-hoc one as a meal.
 - Fill the days from a past week in history.
 - Start a new plan: the date moves on, Once items clear, everything else stays.
 
@@ -25,9 +27,9 @@ What hamper has to do, by flow. Each flow names the screens in
 
 ## Make the list
 
-- Open the breakdown: every day's items and the extras list, editable, saved
-  to the plan as edited.
-- Generate: one line per item, counts summed, each line saying which days and
+- Open the breakdown: every day's meals with their items, and the extras list,
+  editable, saved to the plan as edited.
+- Generate: one line per item, counts summed, each line saying which meals and
   whether the extras list brought it in. "Potatoes ×3, 1kg bag, Roast,
   Shepherd's pie, Fish and chips" is how two meals needing potatoes shows.
 - Edit the list against the kitchen: change a line's count, size or name,

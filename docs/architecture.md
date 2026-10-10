@@ -11,7 +11,7 @@ PWA added.
 | Database | SQLite through EF Core (`Microsoft.EntityFrameworkCore.Sqlite`), migrations in the repo |
 | Frontend | React 19, TypeScript strict, Vite, Tailwind CSS v4, TanStack Router and Query, pnpm, Biome |
 | Components | shadcn's AlertDialog, Badge, Button, Checkbox, Command (cmdk), Dialog, Input, Label, Popover, Sheet, Sonner and Tabs, on Radix UI, with lucide-react icons |
-| Drag and drop | dnd-kit (`@dnd-kit/core`, `@dnd-kit/sortable`) |
+| Drag and drop | dnd-kit (`@dnd-kit/core`, `@dnd-kit/sortable`), sortable across containers: one per day of the plan |
 | On-device store | Dexie (IndexedDB), read through `dexie-react-hooks` live queries |
 | Real time | Server-sent events |
 | PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode, and `workbox-window` under its register module: the web app manifest, and a service worker for the app shell and viewed images |
@@ -95,8 +95,8 @@ and images.
 
 ### What is synced
 
-Items, meals and their lines, the plan with its days, planned meals and
-extras lines, and open shops with their lines. History and images are not.
+Items, meals and their lines, the plan with its planned meals, their lines
+and the extras lines, and open shops with their lines. History and images are not.
 
 ### Revisions and tombstones
 
@@ -113,16 +113,18 @@ assigned.
 
 ### On the wire
 
-The tables are `items`, `meals`, `mealLines`, `plan`, `days`, `dayLines`,
-`wantedLines`, `shops` and `shopLines`, the database tables in camelCase. A
-row is a JSON object holding every column in camelCase, `revision` and
-`deletedAt` included; `deletedAt` is null on a live row. Dates are
-`yyyy-MM-dd` and timestamps ISO 8601 with an offset. A shop's `meals` and a
-shop line's `sources` are JSON arrays.
+The tables are `items`, `meals`, `mealLines`, `plan`, `plannedMeals`,
+`plannedMealLines`, `wantedLines`, `shops` and `shopLines`, the database
+tables in camelCase. A row is a JSON object holding every column in camelCase,
+`revision` and `deletedAt` included; `deletedAt` is null on a live row. Dates
+are `yyyy-MM-dd` and timestamps ISO 8601 with an offset. A shop's `meals` and
+a shop line's `sources` are JSON arrays. Each entry of `meals` is
+`{ "position", "rank", "name", "mealId" }`.
 
-The plan row's id is fixed at `5e1f0a3c-9b2d-4c47-8a61-2f3d4b5c6a70`. A
-day's id is `da7e0000-0000-4000-8000-` followed by its position as twelve
-hex digits, so every device names the same day the same way.
+A planned meal row carries the day's `position` and its `rank`, its place in
+that day's order from 0.
+
+The plan row's id is fixed at `5e1f0a3c-9b2d-4c47-8a61-2f3d4b5c6a70`.
 
 ### Pull
 
@@ -132,7 +134,8 @@ included. `since` defaults to 0, and a negative one is a 400 problem.
 
 ```json
 { "revision": 42, "items": [], "meals": [], "mealLines": [], "plan": [],
-  "days": [], "dayLines": [], "wantedLines": [], "shops": [], "shopLines": [] }
+  "plannedMeals": [], "plannedMealLines": [], "wantedLines": [], "shops": [],
+  "shopLines": [] }
 ```
 
 Every table key is present, empty or not, and `plan` holds zero or one row.
@@ -167,11 +170,11 @@ the reason:
 - a missing or malformed row id;
 - a row that does not fit its table: a column missing or of the wrong type,
   or a property the table does not have;
-- a name empty after trimming, or longer than its maximum (items and meals
-  200, an item's size 100);
+- a name empty after trimming, or longer than its maximum (items, meals and
+  planned meals 200, an item's size 100);
 - a count below 1;
 - a plan `lengthDays` outside 1 to 31, or a plan row with another id;
-- a day whose id does not match its position, or a negative position;
+- a planned meal with a negative position or rank;
 - a foreign key that points at no row once the batch is applied.
 
 The response holds the current revision after the batch, the applied change
@@ -221,8 +224,9 @@ browser's; on reconnect the client pulls once, which covers anything missed.
 ### On the device
 
 Dexie holds a database named `hamper` with one table per synced table, keyed
-on `id` and indexed on the foreign keys `mealId`, `dayId`, `shopId` and
-`itemId`, plus `outbox` and `meta`. A row the server has not yet seen has
+on `id` and indexed on the foreign keys `mealId`, `plannedMealId`, `shopId`
+and `itemId`, with planned meals also indexed on `position`, plus `outbox` and
+`meta`. A row the server has not yet seen has
 revision 0.
 
 The outbox holds one entry per changed row: `seq` (its place in the queue),
@@ -316,16 +320,17 @@ delete and patches in a null `imageId` the same way. Both need the server and ar
 disabled while offline.
 
 A picture shows the `thumb` in lists, on meal cards and on the plan, and the
-`large` on the meal screen. A day shows the picture of the library meal it
-came from. With no image, or when the request fails, offline with nothing
+`large` on the meal screen. A planned meal shows the picture of the library
+meal it came from. With no image, or when the request fails, offline with nothing
 cached for example, the placeholder shows instead: a coloured block with the
 name's first letter.
 
 ## Export and import
 
 `GET /api/export` returns a zip named `hamper-<yyyyMMdd-HHmmss>.zip` holding
-`data.json`: format 1, the plan's start date and length, every live row of
-the synced tables without revisions, and all of history. Each row carries
+`data.json`: format 2, the plan's start date and length, every live row of
+the synced tables without revisions under the wire names (`plannedMeals` and
+`plannedMealLines` among them), and all of history. Each row carries
 `deletedAt`, null for a live row. A deleted item or meal that an exported row
 still points at is exported as a tombstone, so every reference resolves on
 import, where it stays deleted. Beside `data.json`, the zip holds
@@ -335,10 +340,10 @@ exported item and meal with an image whose files exist.
 `POST /api/import` takes the same zip as the raw request body
 (`application/zip`) and writes it in one transaction: every row as it comes,
 `deletedAt` included, with new revisions, and the plan's start date and
-length. It refuses with 409 when any item, meal, day, extras line, shop or
-archived shop exists, deleted ones included, and with 400 when the body is not
-a zip, the zip has no `data.json`, the format is not 1, or the JSON does not
-fit the schema. Import writes each image's two files from the zip into the
+length. It refuses with 409 when any item, meal, planned meal, extras line,
+shop or archived shop exists, deleted ones included, and with 400 when the
+body is not a zip, the zip has no `data.json`, the format is not 2, or the
+JSON does not fit the schema. Import writes each image's two files from the zip into the
 data directory. A row whose `imageId` lacks either file in the zip is imported
 with `imageId` cleared.
 

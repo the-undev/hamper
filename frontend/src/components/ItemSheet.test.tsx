@@ -5,11 +5,11 @@ import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aShop,
   aShopLine,
   aWantedLine,
@@ -25,7 +25,7 @@ const banana = anItem("Banana", "bunch");
 const rice = anItem("Rice");
 const curry = aMeal("Curry");
 const smoothie = aMeal("Smoothie");
-const curryDay = aDay(0, "Curry", curry);
+const curryDay = aPlannedMeal(0, "Curry", curry);
 const shop = aShop("Corner shop");
 
 beforeEach(async () => {
@@ -39,8 +39,8 @@ beforeEach(async () => {
       aMealLine(smoothie, banana, 2),
     ],
     plan: [thePlan()],
-    days: [curryDay],
-    dayLines: [aDayLine(curryDay, banan, 1)],
+    plannedMeals: [curryDay],
+    plannedMealLines: [aPlannedMealLine(curryDay, banan, 1)],
     wantedLines: [aWantedLine(banana, 1)],
     shops: [shop],
     shopLines: [aShopLine(shop, banan, 1)],
@@ -60,6 +60,20 @@ async function openSheet(itemName: string) {
 }
 
 test("the_sheet_says_where_the_item_is_used", async () => {
+  const { sheet } = await openSheet("banan");
+
+  expect(
+    await within(sheet).findByText("Used on 1 meal, 1 day, 1 list."),
+  ).toBeInTheDocument();
+});
+
+test("two_planned_meals_of_one_day_count_as_one_day", async () => {
+  const bananaBread = aPlannedMeal(0, "Banana bread", null, 1);
+  await seed(db, {
+    plannedMeals: [bananaBread],
+    plannedMealLines: [aPlannedMealLine(bananaBread, banan, 1)],
+  });
+
   const { sheet } = await openSheet("banan");
 
   expect(
@@ -108,9 +122,9 @@ test("a_name_another_item_has_offers_a_merge_into_it", async () => {
       .map((line) => line.itemId)
       .sort(),
   ).toEqual([banana.id, rice.id].sort());
-  expect((await live(db, "dayLines")).map((line) => line.itemId)).toEqual([
-    banana.id,
-  ]);
+  expect(
+    (await live(db, "plannedMealLines")).map((line) => line.itemId),
+  ).toEqual([banana.id]);
 });
 
 test("a_blur_saves_the_usual_size", async () => {
@@ -140,7 +154,7 @@ test("delete_after_a_confirm_removes_the_item_and_its_lines", async () => {
   expect(
     (await live(db, "mealLines")).map((line) => line.itemId),
   ).not.toContain(banan.id);
-  expect(await live(db, "dayLines")).toEqual([]);
+  expect(await live(db, "plannedMealLines")).toEqual([]);
   expect((await live(db, "shopLines")).map((line) => line.itemId)).toEqual([
     banan.id,
   ]);

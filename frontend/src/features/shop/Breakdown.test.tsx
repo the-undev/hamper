@@ -6,10 +6,10 @@ import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aWantedLine,
   live,
   seed,
@@ -22,9 +22,9 @@ const rice = anItem("Rice", "1kg bag");
 const naan = anItem("Naan");
 const milk = anItem("Milk", "4 pints");
 const curry = aMeal("Curry");
-const curryDay = aDay(0, "Curry", curry);
-const fajitasDay = aDay(2, "Fajitas");
-const curryRice = aDayLine(curryDay, rice, 1);
+const curryDay = aPlannedMeal(0, "Curry", curry);
+const fajitasDay = aPlannedMeal(2, "Fajitas");
+const curryRice = aPlannedMealLine(curryDay, rice, 1);
 
 beforeEach(async () => {
   db = freshDb();
@@ -32,11 +32,11 @@ beforeEach(async () => {
     items: [rice, naan, milk],
     meals: [curry],
     plan: [thePlan("2026-06-01", 7)],
-    days: [curryDay, fajitasDay, aDay(9, "Beyond the plan")],
-    dayLines: [
+    plannedMeals: [curryDay, fajitasDay, aPlannedMeal(9, "Beyond the plan")],
+    plannedMealLines: [
       curryRice,
-      aDayLine(curryDay, naan, 2),
-      aDayLine(fajitasDay, rice, 1),
+      aPlannedMealLine(curryDay, naan, 2),
+      aPlannedMealLine(fajitasDay, rice, 1),
     ],
     wantedLines: [aWantedLine(rice, 1), aWantedLine(milk, 2, true)],
   });
@@ -86,17 +86,17 @@ test("make_from_plan_goes_through_the_breakdown_and_generate_sums_the_lines", as
 
 test("an_edit_in_the_breakdown_is_saved_to_the_plan", async () => {
   const { user } = renderApp("/shop/breakdown", db, fakeLoop());
-  const currySection = await screen.findByRole("region", {
-    name: `${formatDay("2026-06-01")} Curry`,
+  const monday = formatDay("2026-06-01");
+  const mondaySection = await screen.findByRole("region", { name: monday });
+  const currySection = within(mondaySection).getByRole("region", {
+    name: "Curry",
   });
 
   await user.click(
     within(currySection).getByRole("button", { name: "One more Rice" }),
   );
   await user.type(
-    within(currySection).getByLabelText(
-      `Add an item for ${formatDay("2026-06-01")}`,
-    ),
+    within(currySection).getByLabelText(`Add an item for Curry on ${monday}`),
     "milk{Enter}",
   );
   const extrasSection = screen.getByRole("region", { name: "Extras" });
@@ -105,15 +105,51 @@ test("an_edit_in_the_breakdown_is_saved_to_the_plan", async () => {
   );
 
   await waitFor(async () =>
-    expect((await db.dayLines.get(curryRice.id))?.count).toBe(2),
+    expect((await db.plannedMealLines.get(curryRice.id))?.count).toBe(2),
   );
   expect(
-    (await live(db, "dayLines")).filter(
-      (line) => line.dayId === curryDay.id && line.itemId === milk.id,
+    (await live(db, "plannedMealLines")).filter(
+      (line) => line.plannedMealId === curryDay.id && line.itemId === milk.id,
     ),
   ).toHaveLength(1);
   expect((await live(db, "wantedLines")).map((line) => line.itemId)).toEqual([
     rice.id,
+  ]);
+});
+
+test("the_breakdown_lists_every_day_with_its_meals_in_order_and_says_when_nothing_is_planned", async () => {
+  await seed(db, {
+    plannedMeals: [aPlannedMeal(0, "Rice pudding", null, 1)],
+  });
+  renderApp("/shop/breakdown", db, fakeLoop());
+
+  const monday = await screen.findByRole("region", {
+    name: formatDay("2026-06-01"),
+  });
+  await waitFor(() =>
+    expect(
+      within(monday)
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent),
+    ).toEqual(["Curry", "Rice pudding"]),
+  );
+  expect(within(monday).getAllByText("this day's meal only")).toHaveLength(1);
+  const tuesday = screen.getByRole("region", { name: formatDay("2026-06-02") });
+  expect(within(tuesday).getByText("nothing planned")).toBeInTheDocument();
+  expect(within(tuesday).queryByText("this day's meal only")).toBeNull();
+  expect(
+    screen
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent),
+  ).toEqual([
+    `${formatDay("2026-06-01")}this day's meal only`,
+    formatDay("2026-06-02"),
+    `${formatDay("2026-06-03")}this day's meal only`,
+    formatDay("2026-06-04"),
+    formatDay("2026-06-05"),
+    formatDay("2026-06-06"),
+    formatDay("2026-06-07"),
+    "Extras",
   ]);
 });
 

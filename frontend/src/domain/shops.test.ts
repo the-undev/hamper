@@ -4,10 +4,10 @@ import { planId } from "@/store/ids";
 import { write } from "@/store/write";
 import { freshDb } from "@/test/db";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aShop,
   aShopLine,
   aWantedLine,
@@ -35,10 +35,10 @@ const rice = anItem("Rice", "1kg bag");
 const naan = anItem("Naan");
 const milk = anItem("Milk", "4 pints");
 const curry = aMeal("Curry");
-const monday = aDay(0, "Curry", curry);
-const tuesday = aDay(1, "Fajitas");
-const sunday = aDay(6, "Roast");
-const nextMonday = aDay(7, "Beyond the plan");
+const monday = aPlannedMeal(0, "Curry", curry);
+const tuesday = aPlannedMeal(1, "Fajitas");
+const sunday = aPlannedMeal(6, "Roast");
+const nextMonday = aPlannedMeal(7, "Beyond the plan");
 
 beforeEach(() => {
   db = freshDb();
@@ -48,20 +48,20 @@ afterEach(async () => {
   await db.delete();
 });
 
-/** Seeds the plan with days at 0, 1, 6 and 7, of which 7 is beyond the length. */
+/** Seeds the plan with planned meals on days 0, 1, 6 and 7, of which 7 is beyond the length. */
 async function seedPlan(): Promise<void> {
   await seed(db, {
     items: [rice, naan, milk],
     meals: [curry],
     plan: [thePlan("2026-06-01", 7)],
-    days: [monday, tuesday, sunday, nextMonday],
-    dayLines: [
-      aDayLine(monday, rice, 1),
-      aDayLine(monday, naan, 2),
-      aDayLine(tuesday, rice, 2),
-      aDayLine(sunday, rice, 1),
-      aDayLine(nextMonday, rice, 9),
-      { ...aDayLine(tuesday, naan, 5), deletedAt: now },
+    plannedMeals: [monday, tuesday, sunday, nextMonday],
+    plannedMealLines: [
+      aPlannedMealLine(monday, rice, 1),
+      aPlannedMealLine(monday, naan, 2),
+      aPlannedMealLine(tuesday, rice, 2),
+      aPlannedMealLine(sunday, rice, 1),
+      aPlannedMealLine(nextMonday, rice, 9),
+      { ...aPlannedMealLine(tuesday, naan, 5), deletedAt: now },
     ],
     wantedLines: [aWantedLine(rice, 1), aWantedLine(milk, 2, true)],
   });
@@ -74,7 +74,7 @@ async function shopLinesByItem(shopId: string) {
   return new Map(shopLines.map((line) => [line.itemId, line]));
 }
 
-test("generating_sums_counts_per_item_across_the_days_and_the_extras_list", async () => {
+test("generating_sums_counts_per_item_across_the_planned_meals_and_the_extras_list", async () => {
   await seedPlan();
 
   const shop = await write(db, (w) => generateShop(w, "Big shop", now));
@@ -125,7 +125,7 @@ test("generating_ignores_tombstoned_lines", async () => {
 
 test("generating_copies_the_plan_fields_and_the_meals_and_changes_nothing_on_the_plan", async () => {
   await seedPlan();
-  const daysBefore = await live(db, "days");
+  const plannedMealsBefore = await live(db, "plannedMeals");
   const wantedBefore = await live(db, "wantedLines");
 
   const shop = await write(db, (w) => generateShop(w, "Big shop", now));
@@ -137,25 +137,28 @@ test("generating_copies_the_plan_fields_and_the_meals_and_changes_nothing_on_the
     planStartDate: "2026-06-01",
     planLengthDays: 7,
     meals: [
-      { position: 0, name: "Curry", mealId: curry.id },
-      { position: 1, name: "Fajitas", mealId: null },
-      { position: 6, name: "Roast", mealId: null },
+      { position: 0, rank: 0, name: "Curry", mealId: curry.id },
+      { position: 1, rank: 0, name: "Fajitas", mealId: null },
+      { position: 6, rank: 0, name: "Roast", mealId: null },
     ],
   });
   expect(await db.shops.get(shop.id)).toEqual(shop);
-  expect(await live(db, "days")).toEqual(daysBefore);
+  expect(await live(db, "plannedMeals")).toEqual(plannedMealsBefore);
   expect(await live(db, "wantedLines")).toEqual(wantedBefore);
   expect((await db.plan.get(planId))?.startDate).toBe("2026-06-01");
 });
 
 test("one_meal_placed_on_two_days_is_counted_twice", async () => {
-  const wednesday = aDay(2, "Curry", curry);
+  const wednesday = aPlannedMeal(2, "Curry", curry);
   await seed(db, {
     items: [rice],
     meals: [curry],
     plan: [thePlan()],
-    days: [monday, wednesday],
-    dayLines: [aDayLine(monday, rice, 1), aDayLine(wednesday, rice, 1)],
+    plannedMeals: [monday, wednesday],
+    plannedMealLines: [
+      aPlannedMealLine(monday, rice, 1),
+      aPlannedMealLine(wednesday, rice, 1),
+    ],
   });
 
   const shop = await write(db, (w) => generateShop(w, "Big shop", now));
@@ -164,6 +167,38 @@ test("one_meal_placed_on_two_days_is_counted_twice", async () => {
     count: 2,
     sources: ["Curry", "Curry"],
   });
+});
+
+test("two_meals_on_one_day_both_count_in_the_shop", async () => {
+  const lunch = aPlannedMeal(0, "Soup", null, 1);
+  const supper = aPlannedMeal(0, "Rice pudding", null, 2);
+  const tuesdayLunch = aPlannedMeal(1, "Risotto");
+  await seed(db, {
+    items: [rice],
+    meals: [curry],
+    plan: [thePlan()],
+    // Seeded out of order, so the shop has to put them in plan order.
+    plannedMeals: [tuesdayLunch, supper, monday, lunch],
+    plannedMealLines: [
+      aPlannedMealLine(supper, rice, 3),
+      aPlannedMealLine(tuesdayLunch, rice, 4),
+      aPlannedMealLine(monday, rice, 1),
+      aPlannedMealLine(lunch, rice, 2),
+    ],
+  });
+
+  const shop = await write(db, (w) => generateShop(w, "Big shop", now));
+
+  expect((await shopLinesByItem(shop.id)).get(rice.id)).toMatchObject({
+    count: 10,
+    sources: ["Curry", "Soup", "Rice pudding", "Risotto"],
+  });
+  expect(shop.meals).toEqual([
+    { position: 0, rank: 0, name: "Curry", mealId: curry.id },
+    { position: 0, rank: 1, name: "Soup", mealId: null },
+    { position: 0, rank: 2, name: "Rice pudding", mealId: null },
+    { position: 1, rank: 0, name: "Risotto", mealId: null },
+  ]);
 });
 
 test("a_shop_can_be_started_empty_for_a_quick_trip", async () => {
@@ -335,13 +370,13 @@ test("rest_to_extras_moves_every_unticked_line", async () => {
 test("delete_discards_the_shop_and_leaves_the_plan", async () => {
   await seedPlan();
   const shop = await write(db, (w) => generateShop(w, "Big shop", now));
-  const daysBefore = await live(db, "days");
+  const plannedMealsBefore = await live(db, "plannedMeals");
 
   await write(db, (w) => deleteShop(w, shop.id, now));
 
   expect(await live(db, "shops")).toEqual([]);
   expect(await live(db, "shopLines")).toEqual([]);
-  expect(await live(db, "days")).toEqual(daysBefore);
+  expect(await live(db, "plannedMeals")).toEqual(plannedMealsBefore);
 });
 
 test("share_produces_the_unticked_lines_as_text", () => {

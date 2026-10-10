@@ -39,7 +39,7 @@ public sealed class ArchiveShop : IEndpoint
             ArchivedAt = now,
             PlanStartDate = shop.PlanStartDate,
             PlanLengthDays = shop.PlanLengthDays,
-            Meals = shop.Meals,
+            Meals = ShopMeal.InPlanOrder(shop.Meals),
             Lines = linesWithItems
                 .Select(pair => new ArchivedShopLine(
                     pair.Line.NameOverride ?? pair.Item.Name,

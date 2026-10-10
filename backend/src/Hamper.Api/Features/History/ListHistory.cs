@@ -31,7 +31,7 @@ public sealed class ListHistory : IEndpoint
                 shop.ArchivedAt,
                 shop.PlanStartDate,
                 shop.PlanLengthDays,
-                shop.Meals,
+                ShopMeal.InPlanOrder(shop.Meals),
                 shop.Lines.Count)));
         });
 }

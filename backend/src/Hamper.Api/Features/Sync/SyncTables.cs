@@ -22,8 +22,8 @@ public static class SyncTables
         new SyncTable<Meal>("meals", db => db.Meals, meal => NameProblem(meal.Name, Meal.NameMaxLength)),
         new SyncTable<MealLine>("mealLines", db => db.MealLines, line => CountProblem(line.Count)),
         new SyncTable<Plan>("plan", db => db.Plans, PlanProblem),
-        new SyncTable<Day>("days", db => db.Days, DayProblem),
-        new SyncTable<DayLine>("dayLines", db => db.DayLines, line => CountProblem(line.Count)),
+        new SyncTable<PlannedMeal>("plannedMeals", db => db.PlannedMeals, PlannedMealProblem),
+        new SyncTable<PlannedMealLine>("plannedMealLines", db => db.PlannedMealLines, line => CountProblem(line.Count)),
         new SyncTable<WantedLine>("wantedLines", db => db.WantedLines, line => CountProblem(line.Count)),
         new SyncTable<Shop>("shops", db => db.Shops, shop => NameProblem(shop.Name, maxLength: null)),
         new SyncTable<ShopLine>("shopLines", db => db.ShopLines, line => CountProblem(line.Count)),
@@ -78,19 +78,19 @@ public static class SyncTables
             : null;
     }
 
-    private static string? DayProblem(Day day)
+    private static string? PlannedMealProblem(PlannedMeal plannedMeal)
     {
-        if (day.Position < 0)
+        if (plannedMeal.Position < 0)
         {
             return "position is below 0";
         }
 
-        if (day.Id != Day.IdFor(day.Position))
+        if (plannedMeal.Rank < 0)
         {
-            return string.Create(CultureInfo.InvariantCulture, $"a day at position {day.Position} has the id {Day.IdFor(day.Position)}");
+            return "rank is below 0";
         }
 
-        return NameProblem(day.Name, maxLength: null);
+        return NameProblem(plannedMeal.Name, PlannedMeal.NameMaxLength);
     }
 }
 

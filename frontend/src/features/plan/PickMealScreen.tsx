@@ -16,10 +16,7 @@ import {
   usePlan,
 } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
-import { formatDay, nowIso } from "@/lib/dates";
-
-/** The screen the picker was opened from, which it goes back to. */
-export type PickOpener = "plan" | "day";
+import { formatDay } from "@/lib/dates";
 
 /** A library meal as the picker lists it: its name, its lines as text and its picture. */
 interface MealRow {
@@ -55,14 +52,8 @@ function MealRowButton({
   );
 }
 
-/** Picking a meal for one day: the box at the top, the library under it, and a typed name for a day of its own. */
-export function PickMealScreen({
-  position,
-  opener,
-}: {
-  position: number;
-  opener: PickOpener;
-}) {
+/** Adding a meal to one day: the box at the top, the library under it, and a typed name for a meal of its own; either goes at the end of the day. */
+export function PickMealScreen({ position }: { position: number }) {
   const plan = usePlan();
   const meals = useLiveMeals();
   const linesByMeal = useMealLinesByMeal();
@@ -87,16 +78,15 @@ export function PickMealScreen({
   if (waiting) {
     return (
       <>
-        <ScreenHeader title="Pick a meal" back={back} />
+        <ScreenHeader title="Add a meal" back={back} />
         <WaitingForServer />
       </>
     );
   }
 
   const title = plan
-    ? `Pick a meal for ${formatDay(dayDate(plan, position))}`
-    : "Pick a meal";
-  const params = { position: String(position) };
+    ? `Add a meal to ${formatDay(dayDate(plan, position))}`
+    : "Add a meal";
   const typedName = query.trim();
   const rows: MealRow[] = (meals ?? []).map((meal) => ({
     id: meal.id,
@@ -110,44 +100,37 @@ export function PickMealScreen({
   const exactRow = rows.find(
     (row) => row.name.trim().toLowerCase() === typedName.toLowerCase(),
   );
-  const offerOwnDay = typedName !== "" && !exactRow;
+  const offerOwnMeal = typedName !== "" && !exactRow;
 
-  const backToOpener = (): void => {
+  const backToPlan = (): void => {
     if (canGoBack) {
       router.history.back();
       return;
     }
-    void navigate(
-      opener === "day"
-        ? { to: "/plan/day/$position", params }
-        : { to: "/plan" },
-    );
+    void navigate({ to: "/plan" });
   };
 
   const pickMeal = async (row: MealRow): Promise<void> => {
     const placed = await write(async (w) => {
-      await placeMeal(w, position, row.id, nowIso());
+      await placeMeal(w, position, row.id);
       return true;
     });
     if (placed) {
-      backToOpener();
+      backToPlan();
     }
   };
 
   const placeAsItIs = async (name: string): Promise<void> => {
-    const placed = await write(async (w) => {
-      await placeAdHoc(w, position, name, nowIso());
-      return true;
-    });
+    const placed = await write((w) => placeAdHoc(w, position, name));
     if (!placed) {
       return;
     }
-    if (opener === "day") {
-      backToOpener();
-      return;
-    }
-    // A day of its own has no lines yet, so it opens in place of the picker.
-    void navigate({ to: "/plan/day/$position", params, replace: true });
+    // A meal of its own has no lines yet, so it opens in place of the picker.
+    void navigate({
+      to: "/plan/meal/$plannedMealId",
+      params: { plannedMealId: placed.id },
+      replace: true,
+    });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
@@ -199,10 +182,10 @@ export function PickMealScreen({
           )}
         </section>
       )}
-      {offerOwnDay && (
+      {offerOwnMeal && (
         <section className="flex flex-col gap-2">
           <h2 id={ownHeadingId} className={sectionLabel}>
-            Or a day of its own
+            Or a meal of its own
           </h2>
           <ul aria-labelledby={ownHeadingId} className={listBox}>
             <li>

@@ -98,8 +98,8 @@ public sealed class ImportData : IEndpoint
         db.Items.AddRange(items);
         db.Meals.AddRange(meals);
         db.MealLines.AddRange(document.MealLines.Select(row => row.ToEntity()));
-        db.Days.AddRange(document.Days.Select(row => row.ToEntity()));
-        db.DayLines.AddRange(document.DayLines.Select(row => row.ToEntity()));
+        db.PlannedMeals.AddRange(document.PlannedMeals.Select(row => row.ToEntity()));
+        db.PlannedMealLines.AddRange(document.PlannedMealLines.Select(row => row.ToEntity()));
         db.WantedLines.AddRange(document.WantedLines.Select(row => row.ToEntity()));
         db.Shops.AddRange(document.Shops.Select(row => row.ToEntity()));
         db.ShopLines.AddRange(document.ShopLines.Select(row => row.ToEntity()));
@@ -161,7 +161,7 @@ public sealed class ImportData : IEndpoint
         await db.Items.AnyAsync(ct)
         || await db.Meals.AnyAsync(ct)
         || await db.Shops.AnyAsync(ct)
-        || await db.Days.AnyAsync(ct)
+        || await db.PlannedMeals.AnyAsync(ct)
         || await db.WantedLines.AnyAsync(ct)
         || await db.ArchivedShops.AnyAsync(ct);
 

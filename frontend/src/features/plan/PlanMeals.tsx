@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Counter } from "@/components/Counter";
@@ -12,32 +11,37 @@ import {
   startNewPlan,
 } from "@/domain/plan";
 import {
-  useDayLinesByDay,
   useItemsById,
   useMealsById,
   usePlan,
-  usePlannedDays,
+  usePlannedMealLinesByPlannedMeal,
+  usePlannedMealsByPosition,
 } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
 import type { Plan } from "@/store/types";
 import { DayList } from "./DayList";
 
-/** The plan's days: when they start and end, a slot per day, and Start new plan. */
+/** The plan's days: when they start and end, a card per day with its planned meals, and Start new plan. */
 export function PlanMeals() {
   const plan = usePlan();
-  const days = usePlannedDays();
-  const linesByDay = useDayLinesByDay();
+  const mealsByPosition = usePlannedMealsByPosition();
+  const linesByPlannedMeal = usePlannedMealLinesByPlannedMeal();
   const itemsById = useItemsById();
   const mealsById = useMealsById();
   const write = useWrite();
-  const navigate = useNavigate();
   const [confirmingNewPlan, setConfirmingNewPlan] = useState(false);
 
   if (plan === null) {
     return <WaitingForServer />;
   }
-  if (!plan || !days || !linesByDay || !itemsById || !mealsById) {
+  if (
+    !plan ||
+    !mealsByPosition ||
+    !linesByPlannedMeal ||
+    !itemsById ||
+    !mealsById
+  ) {
     return null;
   }
 
@@ -55,16 +59,10 @@ export function PlanMeals() {
       <div className="flex flex-col gap-2">
         <DayList
           plan={plan}
-          days={days}
-          linesByDay={linesByDay}
+          mealsByPosition={mealsByPosition}
+          linesByPlannedMeal={linesByPlannedMeal}
           itemsById={itemsById}
           mealsById={mealsById}
-          onPick={(position) =>
-            void navigate({
-              to: "/plan/pick/$position",
-              params: { position: String(position) },
-            })
-          }
         />
         <button
           type="button"

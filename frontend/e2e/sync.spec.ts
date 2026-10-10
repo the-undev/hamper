@@ -1,13 +1,13 @@
 import {
   addLine,
   addMeal,
-  clearDay,
-  dayHandle,
   expect,
   line,
   openApp,
-  placeOnFirstEmptyDay,
+  placeOnDay,
+  plannedMealRow,
   planView,
+  removeFromDay,
   secondDevice,
   swipeLeft,
   syncState,
@@ -26,11 +26,13 @@ test("a second device sees a placed meal without a reload", async ({
 
   await openApp(page, "/meals");
   await addMeal(page, meal, []);
-  const day = await placeOnFirstEmptyDay(page, meal);
+  const day = await placeOnDay(page, meal);
 
-  await expect(dayHandle(otherPage, meal, day)).toBeVisible({ timeout: 5000 });
+  await expect(plannedMealRow(otherPage, meal, day)).toBeVisible({
+    timeout: 5000,
+  });
   await other.close();
-  await clearDay(page, day);
+  await removeFromDay(page, meal, day);
 });
 
 test("the pending count shows after an edit and clears once sent", async ({

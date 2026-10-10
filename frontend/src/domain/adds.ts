@@ -1,23 +1,22 @@
-import { dayIdFor } from "@/store/ids";
 import { liveRow, liveRows } from "@/store/live";
 import type { Writer } from "@/store/write";
 import { liveWhere } from "./checks";
 import { ensureItem } from "./items";
 import { setMealLine } from "./meals";
-import { setDayLine } from "./plan";
+import { setPlannedMealLine } from "./plan";
 import { addShopLine } from "./shops";
 import { addWanted } from "./wanted";
 
 /** The line tables the type-ahead adds to. */
 export type AddedLineTable =
   | "mealLines"
-  | "dayLines"
+  | "plannedMealLines"
   | "wantedLines"
   | "shopLines";
 
 const addedLineTables: readonly AddedLineTable[] = [
   "mealLines",
-  "dayLines",
+  "plannedMealLines",
   "wantedLines",
   "shopLines",
 ];
@@ -69,20 +68,26 @@ export async function addToMeal(
   return lineAdd("mealLines", previousLine, await lineOfItem());
 }
 
-/** Adds one of an item to the day at a position, for that day only. */
-export async function addToDay(
+/** Adds one of an item to a planned meal, for it only. */
+export async function addToPlannedMeal(
   w: Writer,
-  position: number,
+  plannedMealId: string,
   itemId: string,
   now: string,
 ): Promise<LineAdd> {
   const lineOfItem = async () =>
-    (await liveWhere(w, "dayLines", "dayId", dayIdFor(position))).find(
-      (line) => line.itemId === itemId,
-    );
+    (
+      await liveWhere(w, "plannedMealLines", "plannedMealId", plannedMealId)
+    ).find((line) => line.itemId === itemId);
   const previousLine = await lineOfItem();
-  await setDayLine(w, position, itemId, (previousLine?.count ?? 0) + 1, now);
-  return lineAdd("dayLines", previousLine, await lineOfItem());
+  await setPlannedMealLine(
+    w,
+    plannedMealId,
+    itemId,
+    (previousLine?.count ?? 0) + 1,
+    now,
+  );
+  return lineAdd("plannedMealLines", previousLine, await lineOfItem());
 }
 
 /** Adds one of an item to the extras list. */
@@ -132,7 +137,7 @@ export async function addNamed(
   };
 }
 
-/** Whether any live meal, day, extras or shop line points at the item. */
+/** Whether any live meal, planned meal, extras or shop line points at the item. */
 async function itemInUse(w: Writer, itemId: string): Promise<boolean> {
   for (const table of addedLineTables) {
     if ((await liveWhere(w, table, "itemId", itemId)).length > 0) {

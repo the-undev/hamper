@@ -24,7 +24,7 @@ public sealed class Shop : ISynced
 
     public int? PlanLengthDays { get; set; }
 
-    /// <summary>The planned meals by day when it was made from the plan.</summary>
+    /// <summary>The planned meals by day and order when it was made from the plan.</summary>
     public IReadOnlyList<ShopMeal> Meals { get; set; } = [];
 }
 

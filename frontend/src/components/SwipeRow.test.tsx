@@ -62,6 +62,31 @@ test("a_swipe_left_opens_the_row_and_does_not_count_as_a_tap", () => {
   expect(onOpen).not.toHaveBeenCalled();
 });
 
+test("a_finger_swipes_a_draggable_row_and_a_mouse_leaves_it_to_the_drag", () => {
+  render(
+    <SwipeRow
+      subject="Curry"
+      actions={[{ label: "Remove", tone: "danger", onAction: vi.fn() }]}
+    >
+      <div data-drag-handle>Curry</div>
+    </SwipeRow>,
+  );
+  const handle = screen.getByText("Curry");
+  const front = handle.parentElement;
+  const swipe = (pointerType: string) => {
+    fireEvent.pointerDown(handle, { clientX: 200, clientY: 10, pointerType });
+    fireEvent.pointerMove(handle, { clientX: 150, clientY: 12, pointerType });
+    fireEvent.pointerMove(handle, { clientX: 60, clientY: 12, pointerType });
+    fireEvent.pointerUp(handle, { clientX: 60, clientY: 12, pointerType });
+  };
+
+  swipe("mouse");
+  expect(front?.style.transform).toBe("");
+
+  swipe("touch");
+  expect(front?.style.transform).toBe("translateX(-96px)");
+});
+
 test("the_sliding_element_does_not_select_text_under_a_mouse_swipe", () => {
   renderRow();
 

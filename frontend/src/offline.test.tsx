@@ -9,9 +9,9 @@ import { FakeEventSource } from "@/test/fake-event-source";
 import { fakeFetch } from "@/test/fake-fetch";
 import { noRows } from "@/test/fake-sync-api";
 import {
-  aDay,
   aMeal,
   anItem,
+  aPlannedMeal,
   aShop,
   aShopLine,
   now,
@@ -34,7 +34,7 @@ beforeEach(async () => {
     items: [milk],
     meals: [curry],
     plan: [thePlan("2026-06-01", 7)],
-    days: [aDay(0, "Curry", curry)],
+    plannedMeals: [aPlannedMeal(0, "Curry", curry)],
     shops: [shop],
     shopLines: [milkLine],
   });

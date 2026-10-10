@@ -19,11 +19,11 @@ public sealed class PullTests
         var ct = TestContext.Current.CancellationToken;
         var milk = await TestData.AddItemAsync(factory, "Milk", "4 pints", ct);
         var curry = await TestData.AddMealAsync(factory, "Curry", [(milk, 1)], ct);
-        await TestData.AddDayAsync(factory, 0, "Curry", curry.Meal.Id, [(milk, 2)], ct);
+        await TestData.AddPlannedMealAsync(factory, 0, 0, "Curry", curry.Meal.Id, [(milk, 2)], ct);
         await TestData.AddWantedLineAsync(factory, milk, 1, weekly: true, ct);
         await TestData.AddShopAsync(
             factory,
-            new ShopSeed("Big shop", Meals: [new ShopMeal(0, "Curry", curry.Meal.Id)]),
+            new ShopSeed("Big shop", Meals: [new ShopMeal(0, 0, "Curry", curry.Meal.Id)]),
             [new ShopLineSeed(milk, 3, Sources: ["Monday", "extras"])],
             ct);
 

@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Hamper.Api.Features.Plans;
 
 namespace Hamper.Api.Tests.Features.Sync;
 
@@ -20,18 +19,19 @@ internal static class WireRows
     public static JsonObject Plan(Guid id, int lengthDays) =>
         new() { ["id"] = id, ["deletedAt"] = null, ["startDate"] = "2026-06-01", ["lengthDays"] = lengthDays };
 
-    public static JsonObject Day(int position, string name, Guid? mealId = null, Guid? id = null) =>
+    public static JsonObject PlannedMeal(Guid id, int position, int rank, string name, Guid? mealId = null) =>
         new()
         {
-            ["id"] = id ?? Hamper.Api.Features.Plans.Day.IdFor(position),
+            ["id"] = id,
             ["deletedAt"] = null,
             ["position"] = position,
+            ["rank"] = rank,
             ["name"] = name,
             ["mealId"] = mealId,
         };
 
-    public static JsonObject DayLine(Guid id, Guid dayId, Guid itemId, int count) =>
-        new() { ["id"] = id, ["deletedAt"] = null, ["dayId"] = dayId, ["itemId"] = itemId, ["count"] = count };
+    public static JsonObject PlannedMealLine(Guid id, Guid plannedMealId, Guid itemId, int count) =>
+        new() { ["id"] = id, ["deletedAt"] = null, ["plannedMealId"] = plannedMealId, ["itemId"] = itemId, ["count"] = count };
 
     public static JsonObject WantedLine(Guid id, Guid itemId, int count, bool weekly = false) =>
         new() { ["id"] = id, ["deletedAt"] = null, ["itemId"] = itemId, ["count"] = count, ["weekly"] = weekly };
@@ -46,7 +46,9 @@ internal static class WireRows
             ["fromPlan"] = true,
             ["planStartDate"] = "2026-06-01",
             ["planLengthDays"] = 7,
-            ["meals"] = new JsonArray(new JsonObject { ["position"] = 0, ["name"] = "Curry", ["mealId"] = mealId }),
+            ["meals"] = new JsonArray(
+                new JsonObject { ["position"] = 0, ["rank"] = 0, ["name"] = "Curry", ["mealId"] = mealId },
+                new JsonObject { ["position"] = 0, ["rank"] = 1, ["name"] = "Porridge", ["mealId"] = null }),
         };
 
     public static JsonObject ShopLine(Guid id, Guid shopId, Guid itemId, int count) =>

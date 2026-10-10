@@ -3,17 +3,17 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { HistoryEntry } from "@/api/rest";
 import { formatDay, formatTimestampDay } from "@/lib/dates";
 import type { HamperDb } from "@/store/db";
-import { dayIdFor } from "@/store/ids";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeFetch } from "@/test/fake-fetch";
 import { fakeLoop, quietStatus } from "@/test/fake-loop";
 import {
-  aDay,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
   live,
+  plannedMealsAt,
   seed,
   thePlan,
 } from "@/test/rows";
@@ -36,6 +36,7 @@ function historyEntry(archivedAt: string, mealIds: string[]): HistoryEntry {
     planLengthDays: 7,
     meals: mealIds.map((mealId, position) => ({
       position,
+      rank: 0,
       name: "A meal",
       mealId,
     })),
@@ -135,23 +136,54 @@ test("delete_removes_the_meal_after_a_confirm", async () => {
   expect(await live(db, "mealLines")).toEqual([]);
 });
 
-test("add_to_the_next_empty_day_places_the_meal_and_then_says_it_is_on_the_plan", async () => {
-  await seed(db, { days: [aDay(0, "Fajitas")] });
+test("add_to_a_day_lists_the_days_with_their_meals_and_adds_at_the_end_of_the_one_tapped", async () => {
+  const fajitas = aPlannedMeal(0, "Fajitas");
+  await seed(db, { plannedMeals: [fajitas] });
   const { user } = renderApp(`/meals/${curry.id}`, db, fakeLoop());
 
+  await user.click(await screen.findByRole("button", { name: "Add to a day" }));
+
+  const sheet = await screen.findByRole("dialog", { name: "Add to a day" });
+  expect(
+    within(sheet)
+      .getAllByRole("button")
+      .map((day) => day.textContent),
+  ).toEqual([
+    `${formatDay("2026-06-01")}1 meal`,
+    `${formatDay("2026-06-02")}nothing planned`,
+    `${formatDay("2026-06-03")}nothing planned`,
+  ]);
+  expect(screen.queryByText(/^On \d+ day/)).not.toBeInTheDocument();
+
   await user.click(
-    await screen.findByRole("button", {
-      name: `Add to ${formatDay("2026-06-02")}`,
+    within(sheet).getByRole("button", {
+      name: new RegExp(formatDay("2026-06-01")),
     }),
   );
 
-  expect(
-    await screen.findByRole("button", { name: "On the plan" }),
-  ).toBeDisabled();
-  expect(await db.days.get(dayIdFor(1))).toMatchObject({
-    name: "Curry",
-    mealId: curry.id,
+  expect(await screen.findByText("On 1 day")).toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
+  expect(await plannedMealsAt(db, 0)).toMatchObject([
+    { id: fajitas.id, rank: 0 },
+    { name: "Curry", mealId: curry.id, rank: 1 },
+  ]);
+});
+
+test("on_n_days_counts_the_days_within_the_length_that_hold_the_meal", async () => {
+  await seed(db, {
+    plannedMeals: [
+      aPlannedMeal(0, "Curry", curry),
+      aPlannedMeal(0, "Curry again", curry, 1),
+      aPlannedMeal(2, "Curry", curry),
+      aPlannedMeal(5, "Curry", curry),
+    ],
   });
+  renderApp(`/meals/${curry.id}`, db, fakeLoop());
+
+  expect(await screen.findByText("On 2 days")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Add to a day" })).toBeEnabled();
 });
 
 test("last_shopped_comes_from_the_newest_archived_shop_holding_the_meal", async () => {

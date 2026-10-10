@@ -5,11 +5,11 @@ import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
 import {
-  aDay,
-  aDayLine,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
+  aPlannedMealLine,
   aShop,
   aShopLine,
   aWantedLine,
@@ -24,7 +24,7 @@ const potatoes = anItem("Potatoes", "1kg bag");
 const spuds = anItem("Spuds");
 const rice = anItem("Rice");
 const roast = aMeal("Roast");
-const roastDay = aDay(0, "Roast", roast);
+const roastDay = aPlannedMeal(0, "Roast", roast);
 const shop = aShop("Corner shop");
 
 beforeEach(async () => {
@@ -34,8 +34,11 @@ beforeEach(async () => {
     meals: [roast],
     mealLines: [aMealLine(roast, spuds, 1)],
     plan: [thePlan("2026-06-01", 7)],
-    days: [roastDay],
-    dayLines: [aDayLine(roastDay, potatoes, 2), aDayLine(roastDay, spuds, 1)],
+    plannedMeals: [roastDay],
+    plannedMealLines: [
+      aPlannedMealLine(roastDay, potatoes, 2),
+      aPlannedMealLine(roastDay, spuds, 1),
+    ],
     wantedLines: [aWantedLine(spuds, 1)],
     shops: [shop],
     shopLines: [aShopLine(shop, spuds, 4)],
@@ -86,8 +89,8 @@ test("a_rename_shows_everywhere_the_item_is_used", async () => {
   );
 
   await router.navigate({
-    to: "/plan/day/$position",
-    params: { position: "0" },
+    to: "/plan/meal/$plannedMealId",
+    params: { plannedMealId: roastDay.id },
   });
 
   expect(await screen.findByText("Maris Pipers")).toBeInTheDocument();
@@ -130,7 +133,10 @@ test("merge_repoints_and_combines_after_a_confirm", async () => {
   );
   expect((await db.items.get(spuds.id))?.deletedAt).not.toBeNull();
   expect(
-    (await live(db, "dayLines")).map((line) => [line.itemId, line.count]),
+    (await live(db, "plannedMealLines")).map((line) => [
+      line.itemId,
+      line.count,
+    ]),
   ).toEqual([[potatoes.id, 3]]);
   expect((await live(db, "mealLines")).map((line) => line.itemId)).toEqual([
     potatoes.id,
@@ -160,9 +166,9 @@ test("delete_removes_the_item_and_its_lines_after_a_confirm_and_open_lists_keep_
     "Potatoes",
     "Rice",
   ]);
-  expect((await live(db, "dayLines")).map((line) => line.itemId)).toEqual([
-    potatoes.id,
-  ]);
+  expect(
+    (await live(db, "plannedMealLines")).map((line) => line.itemId),
+  ).toEqual([potatoes.id]);
   expect(await live(db, "mealLines")).toEqual([]);
   expect(await live(db, "wantedLines")).toEqual([]);
   expect(await live(db, "shopLines")).toHaveLength(1);

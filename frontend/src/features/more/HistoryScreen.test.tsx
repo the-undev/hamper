@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { ArchivedShop, HistoryEntry } from "@/api/rest";
+import { byPlanOrder } from "@/domain/display";
 import { formatDay, formatTimestampDay } from "@/lib/dates";
 import type { HamperDb } from "@/store/db";
 import { renderApp } from "@/test/app";
@@ -8,10 +9,10 @@ import { freshDb } from "@/test/db";
 import { fakeFetch } from "@/test/fake-fetch";
 import { fakeLoop } from "@/test/fake-loop";
 import {
-  aDay,
   aMeal,
   aMealLine,
   anItem,
+  aPlannedMeal,
   live,
   seed,
   thePlan,
@@ -31,8 +32,9 @@ const archivedShop: ArchivedShop = {
   planStartDate: "2026-05-25",
   planLengthDays: 7,
   meals: [
-    { position: 0, name: "Curry", mealId: curry.id },
-    { position: 2, name: "Takeaway", mealId: null },
+    { position: 0, rank: 0, name: "Curry", mealId: curry.id },
+    { position: 0, rank: 1, name: "Rice pudding", mealId: null },
+    { position: 2, rank: 0, name: "Takeaway", mealId: null },
   ],
   lines: [
     {
@@ -56,7 +58,7 @@ beforeEach(async () => {
     meals: [curry],
     mealLines: [aMealLine(curry, rice, 1)],
     plan: [thePlan("2026-06-01", 7)],
-    days: [aDay(5, "Roast")],
+    plannedMeals: [aPlannedMeal(5, "Roast")],
   });
   fakeFetch({
     "GET /api/history": () => Response.json([historyEntry]),
@@ -74,7 +76,7 @@ test("history_lists_archived_shops_by_date_with_their_meals_and_line_count", asy
 
   expect(
     await screen.findByRole("link", {
-      name: `${formatTimestampDay(archivedAt)} Shop Mon 25 May · 2 lines · Curry, Takeaway`,
+      name: `${formatTimestampDay(archivedAt)} Shop Mon 25 May · 2 lines · Curry, Rice pudding, Takeaway`,
     }),
   ).toBeInTheDocument();
 });
@@ -92,7 +94,7 @@ test("history_says_it_needs_a_connection_when_it_cannot_be_read", async () => {
   ).toBeInTheDocument();
 });
 
-test("copy_these_meals_fills_the_plan_by_position_after_a_confirm", async () => {
+test("copy_these_meals_fills_each_day_with_its_meals_in_order_after_a_confirm", async () => {
   const { user, router } = renderApp("/more/history", db, fakeLoop());
 
   await user.click(
@@ -107,12 +109,18 @@ test("copy_these_meals_fills_the_plan_by_position_after_a_confirm", async () => 
   );
 
   await waitFor(() => expect(router.state.location.pathname).toBe("/plan"));
-  const days = (await live(db, "days")).sort(
-    (first, second) => first.position - second.position,
-  );
-  expect(days.map((day) => [day.position, day.name, day.mealId])).toEqual([
-    [0, "Curry", curry.id],
-    [2, "Takeaway", null],
+  const plannedMeals = (await live(db, "plannedMeals")).sort(byPlanOrder);
+  expect(
+    plannedMeals.map((plannedMeal) => [
+      plannedMeal.position,
+      plannedMeal.rank,
+      plannedMeal.name,
+      plannedMeal.mealId,
+    ]),
+  ).toEqual([
+    [0, 0, "Curry", curry.id],
+    [0, 1, "Rice pudding", null],
+    [2, 0, "Takeaway", null],
   ]);
 });
 
@@ -126,8 +134,12 @@ test("an_archived_shop_opens_read_only_with_its_meals_by_day_and_its_lines", asy
   expect(
     await screen.findByRole("heading", { name: "Shop Mon 25 May" }),
   ).toBeInTheDocument();
-  expect(screen.getByText(formatDay("2026-05-27"))).toBeInTheDocument();
-  expect(screen.getByText("Takeaway")).toBeInTheDocument();
+  expect(
+    screen.getByText(formatDay("2026-05-25")).closest("li"),
+  ).toHaveTextContent(`${formatDay("2026-05-25")}CurryRice pudding`);
+  expect(
+    screen.getByText(formatDay("2026-05-27")).closest("li"),
+  ).toHaveTextContent(`${formatDay("2026-05-27")}Takeaway`);
   expect(screen.getByText("1kg bag · Curry")).toBeInTheDocument();
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();

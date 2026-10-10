@@ -21,15 +21,15 @@ public sealed class ImportDataTests
     }
 
     [Fact]
-    public async Task Import_refuses_a_wrong_format()
+    public async Task Import_refuses_format_1()
     {
         using var factory = new HamperApiFactory();
         using var client = factory.CreateClient();
         var ct = TestContext.Current.CancellationToken;
 
-        var response = await TransferZip.ImportAsync(client, TransferZip.WithEntry("data.json", """{"format":2}"""), ct);
+        var response = await TransferZip.ImportAsync(client, TransferZip.WithEntry("data.json", """{"format":1}"""), ct);
 
-        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "data.json is not format 1", ct);
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "data.json is not format 2", ct);
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public sealed class ImportDataTests
         using var client = factory.CreateClient();
         var ct = TestContext.Current.CancellationToken;
 
-        var response = await TransferZip.ImportAsync(client, TransferZip.WithEntry("data.json", """{"format":1,"items":"""), ct);
+        var response = await TransferZip.ImportAsync(client, TransferZip.WithEntry("data.json", """{"format":2,"items":"""), ct);
 
         await AssertProblemAsync(response, HttpStatusCode.BadRequest, "data.json is not valid", ct);
     }

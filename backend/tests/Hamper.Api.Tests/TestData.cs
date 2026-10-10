@@ -11,8 +11,8 @@ namespace Hamper.Api.Tests;
 /// <summary>A meal and the lines inserted with it.</summary>
 internal sealed record MealWithLines(Meal Meal, IReadOnlyList<MealLine> Lines);
 
-/// <summary>A day and the lines inserted with it.</summary>
-internal sealed record DayWithLines(Day Day, IReadOnlyList<DayLine> Lines);
+/// <summary>A planned meal and the lines inserted with it.</summary>
+internal sealed record PlannedMealWithLines(PlannedMeal PlannedMeal, IReadOnlyList<PlannedMealLine> Lines);
 
 /// <summary>A shop and the lines inserted with it.</summary>
 internal sealed record ShopWithLines(Shop Shop, IReadOnlyList<ShopLine> Lines);
@@ -58,22 +58,29 @@ internal static class TestData
             return new MealWithLines(meal, mealLines);
         }, ct);
 
-    public static Task<DayWithLines> AddDayAsync(
+    public static Task<PlannedMealWithLines> AddPlannedMealAsync(
         HamperApiFactory factory,
         int position,
+        int rank,
         string name,
         Guid? mealId,
         IReadOnlyList<(Item Item, int Count)> lines,
         CancellationToken ct) =>
         WriteAsync(factory, (db, _) =>
         {
-            var day = new Day { Id = Day.IdFor(position), Position = position, Name = name, MealId = mealId };
-            var dayLines = lines
-                .Select(line => new DayLine { Id = Guid.NewGuid(), DayId = day.Id, ItemId = line.Item.Id, Count = line.Count })
+            var plannedMeal = new PlannedMeal { Id = Guid.NewGuid(), Position = position, Rank = rank, Name = name, MealId = mealId };
+            var plannedMealLines = lines
+                .Select(line => new PlannedMealLine
+                {
+                    Id = Guid.NewGuid(),
+                    PlannedMealId = plannedMeal.Id,
+                    ItemId = line.Item.Id,
+                    Count = line.Count,
+                })
                 .ToList();
-            db.Days.Add(day);
-            db.DayLines.AddRange(dayLines);
-            return new DayWithLines(day, dayLines);
+            db.PlannedMeals.Add(plannedMeal);
+            db.PlannedMealLines.AddRange(plannedMealLines);
+            return new PlannedMealWithLines(plannedMeal, plannedMealLines);
         }, ct);
 
     public static Task<WantedLine> AddWantedLineAsync(

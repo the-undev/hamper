@@ -21,7 +21,7 @@ import { Route as MoreHistoryIndexRouteImport } from './routes/more.history.inde
 import { Route as MoreHistoryArchivedIdRouteImport } from './routes/more.history.$archivedId'
 import { Route as MoreItemsIndexRouteImport } from './routes/more.items.index'
 import { Route as MoreItemsItemIdRouteImport } from './routes/more.items.$itemId'
-import { Route as PlanDayPositionRouteImport } from './routes/plan.day.$position'
+import { Route as PlanMealPlannedMealIdRouteImport } from './routes/plan.meal.$plannedMealId'
 import { Route as PlanPickPositionRouteImport } from './routes/plan.pick.$position'
 
 const IndexRoute = IndexRouteImport.update({
@@ -84,9 +84,9 @@ const MoreItemsItemIdRoute = MoreItemsItemIdRouteImport.update({
   path: '/more/items/$itemId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlanDayPositionRoute = PlanDayPositionRouteImport.update({
-  id: '/plan/day/$position',
-  path: '/plan/day/$position',
+const PlanMealPlannedMealIdRoute = PlanMealPlannedMealIdRouteImport.update({
+  id: '/plan/meal/$plannedMealId',
+  path: '/plan/meal/$plannedMealId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanPickPositionRoute = PlanPickPositionRouteImport.update({
@@ -106,7 +106,7 @@ export interface FileRoutesByFullPath {
   '/shop/': typeof ShopIndexRoute
   '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
   '/more/items/$itemId': typeof MoreItemsItemIdRoute
-  '/plan/day/$position': typeof PlanDayPositionRoute
+  '/plan/meal/$plannedMealId': typeof PlanMealPlannedMealIdRoute
   '/plan/pick/$position': typeof PlanPickPositionRoute
   '/more/history/': typeof MoreHistoryIndexRoute
   '/more/items/': typeof MoreItemsIndexRoute
@@ -122,7 +122,7 @@ export interface FileRoutesByTo {
   '/shop': typeof ShopIndexRoute
   '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
   '/more/items/$itemId': typeof MoreItemsItemIdRoute
-  '/plan/day/$position': typeof PlanDayPositionRoute
+  '/plan/meal/$plannedMealId': typeof PlanMealPlannedMealIdRoute
   '/plan/pick/$position': typeof PlanPickPositionRoute
   '/more/history': typeof MoreHistoryIndexRoute
   '/more/items': typeof MoreItemsIndexRoute
@@ -139,7 +139,7 @@ export interface FileRoutesById {
   '/shop/': typeof ShopIndexRoute
   '/more/history/$archivedId': typeof MoreHistoryArchivedIdRoute
   '/more/items/$itemId': typeof MoreItemsItemIdRoute
-  '/plan/day/$position': typeof PlanDayPositionRoute
+  '/plan/meal/$plannedMealId': typeof PlanMealPlannedMealIdRoute
   '/plan/pick/$position': typeof PlanPickPositionRoute
   '/more/history/': typeof MoreHistoryIndexRoute
   '/more/items/': typeof MoreItemsIndexRoute
@@ -157,7 +157,7 @@ export interface FileRouteTypes {
     | '/shop/'
     | '/more/history/$archivedId'
     | '/more/items/$itemId'
-    | '/plan/day/$position'
+    | '/plan/meal/$plannedMealId'
     | '/plan/pick/$position'
     | '/more/history/'
     | '/more/items/'
@@ -173,7 +173,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/more/history/$archivedId'
     | '/more/items/$itemId'
-    | '/plan/day/$position'
+    | '/plan/meal/$plannedMealId'
     | '/plan/pick/$position'
     | '/more/history'
     | '/more/items'
@@ -189,7 +189,7 @@ export interface FileRouteTypes {
     | '/shop/'
     | '/more/history/$archivedId'
     | '/more/items/$itemId'
-    | '/plan/day/$position'
+    | '/plan/meal/$plannedMealId'
     | '/plan/pick/$position'
     | '/more/history/'
     | '/more/items/'
@@ -206,7 +206,7 @@ export interface RootRouteChildren {
   ShopIndexRoute: typeof ShopIndexRoute
   MoreHistoryArchivedIdRoute: typeof MoreHistoryArchivedIdRoute
   MoreItemsItemIdRoute: typeof MoreItemsItemIdRoute
-  PlanDayPositionRoute: typeof PlanDayPositionRoute
+  PlanMealPlannedMealIdRoute: typeof PlanMealPlannedMealIdRoute
   PlanPickPositionRoute: typeof PlanPickPositionRoute
   MoreHistoryIndexRoute: typeof MoreHistoryIndexRoute
   MoreItemsIndexRoute: typeof MoreItemsIndexRoute
@@ -298,11 +298,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MoreItemsItemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plan/day/$position': {
-      id: '/plan/day/$position'
-      path: '/plan/day/$position'
-      fullPath: '/plan/day/$position'
-      preLoaderRoute: typeof PlanDayPositionRouteImport
+    '/plan/meal/$plannedMealId': {
+      id: '/plan/meal/$plannedMealId'
+      path: '/plan/meal/$plannedMealId'
+      fullPath: '/plan/meal/$plannedMealId'
+      preLoaderRoute: typeof PlanMealPlannedMealIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan/pick/$position': {
@@ -326,7 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopIndexRoute: ShopIndexRoute,
   MoreHistoryArchivedIdRoute: MoreHistoryArchivedIdRoute,
   MoreItemsItemIdRoute: MoreItemsItemIdRoute,
-  PlanDayPositionRoute: PlanDayPositionRoute,
+  PlanMealPlannedMealIdRoute: PlanMealPlannedMealIdRoute,
   PlanPickPositionRoute: PlanPickPositionRoute,
   MoreHistoryIndexRoute: MoreHistoryIndexRoute,
   MoreItemsIndexRoute: MoreItemsIndexRoute,
