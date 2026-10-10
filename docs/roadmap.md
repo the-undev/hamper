@@ -20,16 +20,6 @@ The dev and live-test instances are on the developer's machine. A phone needs
 to reach one over the LAN, or through a dev tunnel, to exercise offline and
 install before a release.
 
-## Reported
-
-Found by the owner using the app on a phone in Firefox over Tailscale on 9
-October 2026, each to be triaged.
-
-### Breakdown edits read as meal edits
-
-Make from plan shows each day's lines and lets items be added. The add changes
-that day, and it reads as a change to the meal.
-
 ## Parked
 
 ### Swap an item on a line

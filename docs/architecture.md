@@ -11,7 +11,7 @@ PWA added.
 | Database | SQLite through EF Core (`Microsoft.EntityFrameworkCore.Sqlite`), migrations in the repo |
 | Frontend | React 19, TypeScript strict, Vite, Tailwind CSS v4, TanStack Router and Query, pnpm, Biome |
 | Components | shadcn's AlertDialog, Badge, Button, Checkbox, Command (cmdk), Dialog, Input, Label, Popover, Sheet, Sonner and Tabs, on Radix UI, with lucide-react icons |
-| Drag and drop | dnd-kit (`@dnd-kit/core`, `@dnd-kit/sortable`) |
+| Drag and drop | dnd-kit (`@dnd-kit/core`, `@dnd-kit/sortable`), sortable across containers: one per day of the plan |
 | On-device store | Dexie (IndexedDB), read through `dexie-react-hooks` live queries |
 | Real time | Server-sent events |
 | PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode, and `workbox-window` under its register module: the web app manifest, and a service worker for the app shell and viewed images |

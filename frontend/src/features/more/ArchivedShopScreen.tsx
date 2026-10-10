@@ -3,12 +3,24 @@ import { fetchArchivedShop, historyKey } from "@/api/rest";
 import { EmptyState } from "@/components/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, listBox, sectionLabel } from "@/components/styles";
-import { dayDate } from "@/domain/display";
+import { byPlanOrder, dayDate } from "@/domain/display";
 import { formatDay, formatTimestampDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import type { ShopMeal } from "@/store/types";
 import { CopyMealsButton } from "./CopyMealsButton";
 
 const back = { to: "/more/history", label: "History" } as const;
+
+/** An archived shop's meals grouped by day, the days in order and each day's meals in their order. */
+function mealsByDay(
+  meals: readonly ShopMeal[],
+): [position: number, dayMeals: ShopMeal[]][] {
+  const byDay = new Map<number, ShopMeal[]>();
+  for (const meal of [...meals].sort(byPlanOrder)) {
+    byDay.set(meal.position, [...(byDay.get(meal.position) ?? []), meal]);
+  }
+  return [...byDay];
+}
 
 /** One archived shop, read only: its meals by day and its lines as they were. */
 export function ArchivedShopScreen({ archivedId }: { archivedId: string }) {
@@ -43,13 +55,19 @@ export function ArchivedShopScreen({ archivedId }: { archivedId: string }) {
         <>
           <h3 className={sectionLabel}>Meals</h3>
           <ul className={`${listBox} m-0 list-none p-0`}>
-            {shop.meals.map((meal) => (
+            {mealsByDay(shop.meals).map(([position, dayMeals]) => (
               <li
-                key={`${meal.position}-${meal.rank}`}
+                key={position}
                 className="flex justify-between gap-3 border-line border-t px-3 py-2.5 text-sm first:border-t-0"
               >
-                <span className="text-muted">{dayLabel(meal.position)}</span>
-                <b className="font-semibold">{meal.name}</b>
+                <span className="text-muted">{dayLabel(position)}</span>
+                <span className="flex flex-col items-end">
+                  {dayMeals.map((meal) => (
+                    <b key={meal.rank} className="font-semibold">
+                      {meal.name}
+                    </b>
+                  ))}
+                </span>
               </li>
             ))}
           </ul>

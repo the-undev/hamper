@@ -4,7 +4,7 @@ import { WaitingForServer } from "@/components/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint, sectionLabel } from "@/components/styles";
 import { Button } from "@/components/ui/button";
-import { byPlanOrder, dayDate } from "@/domain/display";
+import { dayDate } from "@/domain/display";
 import { generateShop } from "@/domain/shops";
 import { PlannedMealLines } from "@/features/plan/PlannedMealLines";
 import { WantedLines } from "@/features/plan/WantedLines";
@@ -16,15 +16,15 @@ import {
 } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
 import { formatDay, nowIso } from "@/lib/dates";
-import type { Item, Plan, PlannedMeal, PlannedMealLine } from "@/store/types";
+import type { Item, PlannedMeal, PlannedMealLine } from "@/store/types";
 
 const back = { to: "/shop", label: "Cancel" } as const;
 
-/** Everything a list is made from, edited straight into the plan, then Generate. */
+/** Everything a list is made from, day by day and then the extras, edited straight into the plan, then Generate. */
 export function Breakdown() {
   const plan = usePlan();
-  const days = usePlannedMealsByPosition();
-  const linesByDay = usePlannedMealLinesByPlannedMeal();
+  const mealsByPosition = usePlannedMealsByPosition();
+  const linesByPlannedMeal = usePlannedMealLinesByPlannedMeal();
   const itemsById = useItemsById();
   const write = useWrite();
   const navigate = useNavigate();
@@ -38,15 +38,11 @@ export function Breakdown() {
       </>
     );
   }
-  if (!plan || !days || !linesByDay || !itemsById) {
+  if (!plan || !mealsByPosition || !linesByPlannedMeal || !itemsById) {
     return <ScreenHeader title="Breakdown" back={back} />;
   }
 
-  // Each planned meal is listed on its own in plan order until Part 2 groups them by day.
-  const plannedDays = [...days.values()]
-    .flat()
-    .filter((day) => day.position < plan.lengthDays)
-    .sort(byPlanOrder);
+  const positions = Array.from({ length: plan.lengthDays }, (_, at) => at);
 
   const generate = async (): Promise<void> => {
     const name = `Shop ${formatDay(plan.startDate)}`;
@@ -63,12 +59,12 @@ export function Breakdown() {
         Everything the list will be made from. Changes here are saved to the
         plan.
       </p>
-      {plannedDays.map((day) => (
+      {positions.map((position) => (
         <BreakdownDay
-          key={day.id}
-          plan={plan}
-          day={day}
-          lines={linesByDay.get(day.id) ?? []}
+          key={position}
+          date={formatDay(dayDate(plan, position))}
+          plannedMeals={mealsByPosition.get(position) ?? []}
+          linesByPlannedMeal={linesByPlannedMeal}
           itemsById={itemsById}
         />
       ))}
@@ -93,32 +89,66 @@ export function Breakdown() {
   );
 }
 
+/** One day of the breakdown: its date, then each of its planned meals with its lines, or "nothing planned". */
 function BreakdownDay({
-  plan,
-  day,
+  date,
+  plannedMeals,
+  linesByPlannedMeal,
+  itemsById,
+}: {
+  date: string;
+  plannedMeals: readonly PlannedMeal[];
+  linesByPlannedMeal: ReadonlyMap<string, PlannedMealLine[]>;
+  itemsById: ReadonlyMap<string, Item>;
+}) {
+  const dateId = useId();
+  return (
+    <section aria-labelledby={dateId} className="flex flex-col gap-2">
+      <h2 className={sectionLabel}>
+        <span id={dateId}>{date}</span>
+        {plannedMeals.length > 0 && (
+          <span className="font-medium normal-case tracking-normal">
+            this day's meal only
+          </span>
+        )}
+      </h2>
+      {plannedMeals.length === 0 && <p className={hint}>nothing planned</p>}
+      {plannedMeals.map((plannedMeal) => (
+        <BreakdownMeal
+          key={plannedMeal.id}
+          date={date}
+          plannedMeal={plannedMeal}
+          lines={linesByPlannedMeal.get(plannedMeal.id) ?? []}
+          itemsById={itemsById}
+        />
+      ))}
+    </section>
+  );
+}
+
+/** One planned meal in the breakdown: its name and its lines, edited for it only. */
+function BreakdownMeal({
+  date,
+  plannedMeal,
   lines,
   itemsById,
 }: {
-  plan: Plan;
-  day: PlannedMeal;
+  date: string;
+  plannedMeal: PlannedMeal;
   lines: readonly PlannedMealLine[];
   itemsById: ReadonlyMap<string, Item>;
 }) {
-  const headingId = useId();
-  const date = formatDay(dayDate(plan, day.position));
+  const nameId = useId();
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-2">
-      <h2 id={headingId} className={sectionLabel}>
-        {date}{" "}
-        <span className="font-medium normal-case tracking-normal">
-          {day.name}
-        </span>
-      </h2>
+    <section aria-labelledby={nameId} className="flex flex-col gap-2">
+      <h3 id={nameId} className="m-0 text-[15px] font-semibold">
+        {plannedMeal.name}
+      </h3>
       <PlannedMealLines
-        plannedMealId={day.id}
+        plannedMealId={plannedMeal.id}
         lines={lines}
         itemsById={itemsById}
-        typeAheadLabel={`Add an item for ${date}`}
+        typeAheadLabel={`Add an item for ${plannedMeal.name} on ${date}`}
       />
     </section>
   );

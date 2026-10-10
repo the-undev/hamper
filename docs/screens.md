@@ -54,9 +54,11 @@ showing the same progress. Tapping a card opens the list. Under the cards,
 "Make from plan" and "Start empty". With no list open, a note says so above
 the two.
 
-**Breakdown.** Reached by "Make from plan". Every day with its lines, then the
-extras list, all editable with the same controls as the Planned meal screen and the
-Extras view, and every edit saved to the plan. "Generate the list" at the
+**Breakdown.** Reached by "Make from plan". Every day of the plan under its
+date, with "this day's meal only" beside it: each of its planned meals by name
+with its lines, or "nothing planned". Then the extras list. All of it is
+editable with the same controls as the Planned meal screen and the Extras
+view, and every edit is saved to the plan. "Generate the list" at the
 bottom, Cancel at the top. The list is named after the plan's start date, "Shop Mon 1 Jun"; an
 empty one is "Quick shop" and today's date.
 
@@ -104,7 +106,9 @@ screen, then the same fields as the item sheet (see Everywhere), which save as
 they are edited, with Done or the merge offer in the footer.
 
 **History.** Archived shops by date, each with its meals and a count of lines.
-Tapping one opens it read only. "Copy these meals to the plan" on each.
+Tapping one opens it read only, with each day's meals in order. "Copy these
+meals to the plan" on each, after a confirm, fills each day with that shop's
+meals for it in order and clears the days it does not mention.
 History needs the server, and says so while offline.
 
 ## Everywhere

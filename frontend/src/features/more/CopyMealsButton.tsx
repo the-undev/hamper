@@ -7,7 +7,7 @@ import { useWrite } from "@/hooks/useWrite";
 import { nowIso } from "@/lib/dates";
 import type { ShopMeal } from "@/store/types";
 
-/** "Copy these meals to the plan", which fills the days from an archived shop after a confirm and opens the plan. */
+/** "Copy these meals to the plan", which fills each day with the archived shop's meals for it after a confirm and opens the plan. */
 export function CopyMealsButton({
   shopName,
   meals,
@@ -37,7 +37,7 @@ export function CopyMealsButton({
         open={confirming}
         onOpenChange={setConfirming}
         title="Copy these meals to the plan?"
-        description="Each day takes the meal this shop had at its position, replacing what is there. Days it does not mention are cleared."
+        description="Each day takes the meals this shop had on it, in their order, replacing what is there. Days it does not mention are cleared."
         confirmLabel="Copy meals"
         onConfirm={async () => {
           await write((w) => copyMealsFromArchived(w, meals, nowIso()));

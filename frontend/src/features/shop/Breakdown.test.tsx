@@ -86,17 +86,17 @@ test("make_from_plan_goes_through_the_breakdown_and_generate_sums_the_lines", as
 
 test("an_edit_in_the_breakdown_is_saved_to_the_plan", async () => {
   const { user } = renderApp("/shop/breakdown", db, fakeLoop());
-  const currySection = await screen.findByRole("region", {
-    name: `${formatDay("2026-06-01")} Curry`,
+  const monday = formatDay("2026-06-01");
+  const mondaySection = await screen.findByRole("region", { name: monday });
+  const currySection = within(mondaySection).getByRole("region", {
+    name: "Curry",
   });
 
   await user.click(
     within(currySection).getByRole("button", { name: "One more Rice" }),
   );
   await user.type(
-    within(currySection).getByLabelText(
-      `Add an item for ${formatDay("2026-06-01")}`,
-    ),
+    within(currySection).getByLabelText(`Add an item for Curry on ${monday}`),
     "milk{Enter}",
   );
   const extrasSection = screen.getByRole("region", { name: "Extras" });
@@ -114,6 +114,42 @@ test("an_edit_in_the_breakdown_is_saved_to_the_plan", async () => {
   ).toHaveLength(1);
   expect((await live(db, "wantedLines")).map((line) => line.itemId)).toEqual([
     rice.id,
+  ]);
+});
+
+test("the_breakdown_lists_every_day_with_its_meals_in_order_and_says_when_nothing_is_planned", async () => {
+  await seed(db, {
+    plannedMeals: [aPlannedMeal(0, "Rice pudding", null, 1)],
+  });
+  renderApp("/shop/breakdown", db, fakeLoop());
+
+  const monday = await screen.findByRole("region", {
+    name: formatDay("2026-06-01"),
+  });
+  await waitFor(() =>
+    expect(
+      within(monday)
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent),
+    ).toEqual(["Curry", "Rice pudding"]),
+  );
+  expect(within(monday).getAllByText("this day's meal only")).toHaveLength(1);
+  const tuesday = screen.getByRole("region", { name: formatDay("2026-06-02") });
+  expect(within(tuesday).getByText("nothing planned")).toBeInTheDocument();
+  expect(within(tuesday).queryByText("this day's meal only")).toBeNull();
+  expect(
+    screen
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent),
+  ).toEqual([
+    `${formatDay("2026-06-01")}this day's meal only`,
+    formatDay("2026-06-02"),
+    `${formatDay("2026-06-03")}this day's meal only`,
+    formatDay("2026-06-04"),
+    formatDay("2026-06-05"),
+    formatDay("2026-06-06"),
+    formatDay("2026-06-07"),
+    "Extras",
   ]);
 });
 
