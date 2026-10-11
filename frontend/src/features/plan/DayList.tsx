@@ -130,7 +130,7 @@ export function DayList({
     useSensor(MouseSensor, plannedMealDragSensorOptions.mouse),
     useSensor(TouchSensor, plannedMealDragSensorOptions.touch),
     useSensor(KeyboardSensor, {
-      coordinateGetter: dropKeyboardCoordinates,
+      coordinateGetter: dropKeyboardCoordinates(() => landingRef.current),
     }),
   );
 

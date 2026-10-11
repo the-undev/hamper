@@ -65,32 +65,39 @@ export const dropCollisions: CollisionDetection = (args) => {
   });
 };
 
-/** The arrow keys step a lifted meal to the next row or "Add a meal" row up or down the page, passing over its own slot. */
-export const dropKeyboardCoordinates: KeyboardCoordinateGetter = (
-  event,
-  { active, context },
-) => {
-  const step =
-    event.code === "ArrowDown" ? 1 : event.code === "ArrowUp" ? -1 : 0;
-  const { collisionRect, droppableRects, droppableContainers } = context;
-  if (step === 0 || !collisionRect) {
-    return undefined;
-  }
-  event.preventDefault();
-  let next: { left: number; top: number } | null = null;
-  for (const container of droppableContainers.getEnabled()) {
-    const rect = droppableRects.get(container.id);
-    if (!rect || container.id === active || isDayCard(container.id)) {
-      continue;
+/** The arrow keys step a lifted meal to the nearest row or "Add a meal" row up or down the page that would land it somewhere new, passing over its own slot. */
+export function dropKeyboardCoordinates(
+  landingNow: () => Landing | null,
+): KeyboardCoordinateGetter {
+  return (event, { active, context }) => {
+    const step =
+      event.code === "ArrowDown" ? 1 : event.code === "ArrowUp" ? -1 : 0;
+    const { collisionRect, droppableRects, droppableContainers } = context;
+    const landing = landingNow();
+    if (step === 0 || !collisionRect || !landing) {
+      return undefined;
     }
-    // A pixel's slack, so a row the drag already sits on is not the next one.
-    const ahead = (rect.top - collisionRect.top) * step > 1;
-    if (ahead && (!next || (rect.top - next.top) * step < 0)) {
-      next = rect;
-    }
-  }
-  return next ? { x: next.left, y: next.top } : undefined;
-};
+    event.preventDefault();
+    const current = landingPlace(landing);
+    const ahead = droppableContainers
+      .getEnabled()
+      .flatMap((container) => {
+        const rect = droppableRects.get(container.id);
+        // A pixel's slack, so a row the drag already sits on is not ahead of it.
+        return rect &&
+          container.id !== active &&
+          !isDayCard(container.id) &&
+          (rect.top - collisionRect.top) * step > 1
+          ? [{ rect, data: container.data.current as DropData | undefined }]
+          : [];
+      })
+      .sort((first, second) => (first.rect.top - second.rect.top) * step);
+    const next = ahead.find(
+      ({ data }) => !samePlace(dropPlace(landing, data, null), current),
+    );
+    return next ? { x: next.rect.left, y: next.rect.top } : undefined;
+  };
+}
 
 /** Each day's order as the live data has it. */
 export function orderOf(

@@ -283,7 +283,6 @@ test("moving_a_meal_to_another_day_with_the_keyboard_lands_it_between_the_meals_
   const user = await liftAndMove("Curry", monday, [
     "[ArrowDown]",
     "[ArrowDown]",
-    "[ArrowDown]",
   ]);
 
   const gap = slotAt(1).querySelector("[data-gap]");
@@ -310,13 +309,49 @@ test("moving_a_meal_to_another_day_with_the_keyboard_lands_it_between_the_meals_
   ).toBeInTheDocument();
 });
 
+test("down_from_a_days_last_meal_lands_at_the_start_of_the_next_day", async () => {
+  layDaysOut();
+  await seed(db, {
+    plannedMeals: [aPlannedMeal(0, "Curry", curry), aPlannedMeal(1, "Roast")],
+  });
+  const user = await liftAndMove("Curry", monday, ["[ArrowDown]"]);
+
+  expect(
+    slotAt(1).querySelector("[data-gap]")?.nextElementSibling,
+  ).toHaveTextContent("Roast");
+  await user.keyboard("[Space]");
+
+  await waitFor(async () =>
+    expect(await namesAt(1)).toEqual(["Curry", "Roast"]),
+  );
+});
+
+test("up_from_a_days_first_meal_lands_at_the_end_of_the_day_above", async () => {
+  layDaysOut();
+  await seed(db, {
+    plannedMeals: [
+      aPlannedMeal(0, "Soup", null, 0),
+      aPlannedMeal(0, "Pudding", null, 1),
+      aPlannedMeal(1, "Curry", curry),
+    ],
+  });
+  const user = await liftAndMove("Curry", tuesday, ["[ArrowUp]"]);
+
+  expect(
+    slotAt(0).querySelector("[data-gap]")?.previousElementSibling,
+  ).toHaveTextContent("Pudding");
+  await user.keyboard("[Space]");
+
+  await waitFor(async () =>
+    expect(await namesAt(0)).toEqual(["Soup", "Pudding", "Curry"]),
+  );
+  expect(await namesAt(1)).toEqual([]);
+});
+
 test("moving_a_meal_onto_an_empty_days_add_a_meal_row_moves_it_there", async () => {
   layDaysOut();
   await seed(db, { plannedMeals: [aPlannedMeal(0, "Curry", curry)] });
-  const user = await liftAndMove("Curry", monday, [
-    "[ArrowDown]",
-    "[ArrowDown]",
-  ]);
+  const user = await liftAndMove("Curry", monday, ["[ArrowDown]"]);
 
   expect(slotAt(1).querySelector("[data-gap]")).not.toBeNull();
   await user.keyboard("[Space]");

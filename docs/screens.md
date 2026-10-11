@@ -150,8 +150,8 @@ History needs the server, and says so while offline.
   and the day cards below, slide to their new places. On release the meal
   settles into the gap and the stand-in closes; released over nothing, or
   with Escape, the meal goes back. With the keyboard, a row's Move button
-  lifts it, the arrow keys move the gap through the days and Space drops
-  it.
+  lifts it, each arrow key moves the gap one place up or down through the
+  days, and Space drops it.
 - The type-ahead is the same control wherever a line is added: type, then
   pick an existing item or take the row that creates one. The suggestions
   float over the content under the box, about five rows high, and scroll; a
