@@ -283,12 +283,20 @@ test("moving_a_meal_to_another_day_with_the_keyboard_lands_it_between_the_meals_
   const user = await liftAndMove("Curry", monday, [
     "[ArrowDown]",
     "[ArrowDown]",
-    "[ArrowDown]",
   ]);
 
-  const dropLine = slotAt(1).querySelector("[data-drop-line]");
-  expect(dropLine?.nextElementSibling).toHaveTextContent("Roast");
+  const gap = slotAt(1).querySelector("[data-gap]");
+  expect(gap?.nextElementSibling).toHaveTextContent("Roast");
+  expect(slotAt(0).querySelector("[data-stand-in]")).toHaveTextContent("Curry");
+  expect(liveRegion()).toHaveTextContent(
+    `Curry would go to ${tuesday}, before Roast.`,
+  );
   await user.keyboard("[Space]");
+
+  // The row shows where it landed, with no gap or stand-in left behind.
+  expect(slotAt(1).querySelector("[data-gap], [data-stand-in]")).toBeNull();
+  expect(within(slotAt(1)).getByRole("link", { name: /Curry/ })).toBeVisible();
+  expect(slotAt(0).querySelector("[data-stand-in]")).toBeNull();
 
   await waitFor(async () =>
     expect(await namesAt(1)).toEqual(["Curry", "Roast"]),
@@ -301,22 +309,58 @@ test("moving_a_meal_to_another_day_with_the_keyboard_lands_it_between_the_meals_
   ).toBeInTheDocument();
 });
 
+test("down_from_a_days_last_meal_lands_at_the_start_of_the_next_day", async () => {
+  layDaysOut();
+  await seed(db, {
+    plannedMeals: [aPlannedMeal(0, "Curry", curry), aPlannedMeal(1, "Roast")],
+  });
+  const user = await liftAndMove("Curry", monday, ["[ArrowDown]"]);
+
+  expect(
+    slotAt(1).querySelector("[data-gap]")?.nextElementSibling,
+  ).toHaveTextContent("Roast");
+  await user.keyboard("[Space]");
+
+  await waitFor(async () =>
+    expect(await namesAt(1)).toEqual(["Curry", "Roast"]),
+  );
+});
+
+test("up_from_a_days_first_meal_lands_at_the_end_of_the_day_above", async () => {
+  layDaysOut();
+  await seed(db, {
+    plannedMeals: [
+      aPlannedMeal(0, "Soup", null, 0),
+      aPlannedMeal(0, "Pudding", null, 1),
+      aPlannedMeal(1, "Curry", curry),
+    ],
+  });
+  const user = await liftAndMove("Curry", tuesday, ["[ArrowUp]"]);
+
+  expect(
+    slotAt(0).querySelector("[data-gap]")?.previousElementSibling,
+  ).toHaveTextContent("Pudding");
+  await user.keyboard("[Space]");
+
+  await waitFor(async () =>
+    expect(await namesAt(0)).toEqual(["Soup", "Pudding", "Curry"]),
+  );
+  expect(await namesAt(1)).toEqual([]);
+});
+
 test("moving_a_meal_onto_an_empty_days_add_a_meal_row_moves_it_there", async () => {
   layDaysOut();
   await seed(db, { plannedMeals: [aPlannedMeal(0, "Curry", curry)] });
-  const user = await liftAndMove("Curry", monday, [
-    "[ArrowDown]",
-    "[ArrowDown]",
-  ]);
+  const user = await liftAndMove("Curry", monday, ["[ArrowDown]"]);
 
-  expect(slotAt(1).querySelector("[data-drop-line]")).not.toBeNull();
+  expect(slotAt(1).querySelector("[data-gap]")).not.toBeNull();
   await user.keyboard("[Space]");
 
   await waitFor(async () => expect(await namesAt(1)).toEqual(["Curry"]));
   expect(await namesAt(0)).toEqual([]);
 });
 
-test("escape_puts_a_lifted_meal_back_and_clears_the_line", async () => {
+test("escape_puts_a_lifted_meal_back_and_closes_the_gap", async () => {
   layDaysOut();
   await seed(db, {
     plannedMeals: [aPlannedMeal(0, "Curry", curry), aPlannedMeal(1, "Roast")],
@@ -325,11 +369,12 @@ test("escape_puts_a_lifted_meal_back_and_clears_the_line", async () => {
     "[ArrowDown]",
     "[ArrowDown]",
   ]);
-  expect(document.querySelector("[data-drop-line]")).not.toBeNull();
+  expect(slotAt(1).querySelector("[data-gap]")).not.toBeNull();
 
   await user.keyboard("[Escape]");
 
-  expect(document.querySelector("[data-drop-line]")).toBeNull();
+  expect(document.querySelector("[data-gap], [data-stand-in]")).toBeNull();
+  expect(within(slotAt(0)).getByRole("link", { name: /Curry/ })).toBeVisible();
   expect(await namesAt(0)).toEqual(["Curry"]);
   expect(await namesAt(1)).toEqual(["Roast"]);
 });
@@ -364,12 +409,29 @@ test("a_filled_days_link_is_not_natively_draggable", async () => {
   );
 });
 
+test("an_add_a_meal_link_is_not_natively_draggable", async () => {
+  renderApp("/plan", db, fakeLoop());
+
+  expect(
+    await screen.findByRole("link", { name: `Add a meal to ${monday}` }),
+  ).toHaveAttribute("draggable", "false");
+});
+
 function slotAt(position: number): HTMLElement {
   const element = document.querySelector<HTMLElement>(
     `[data-position="${position}"]`,
   );
   if (!element) {
     throw new Error(`No slot at ${position}`);
+  }
+  return element;
+}
+
+/** The live region dnd-kit announces a drag's progress in. */
+function liveRegion(): HTMLElement {
+  const element = document.querySelector<HTMLElement>('[id^="DndLiveRegion"]');
+  if (!element) {
+    throw new Error("No drag announcements");
   }
   return element;
 }
