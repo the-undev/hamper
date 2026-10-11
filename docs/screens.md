@@ -144,7 +144,8 @@ History needs the server, and says so while offline.
   mouse movement swipes it. The dragged meal follows
   the pointer, and a dimmed stand-in keeps its place in the day it came from,
   so nothing above the pointer moves. Where it would land, the rows part to
-  open a gap the height of a row, and the day is outlined. The upper half of
+  open a gap the height of a row, and the day is outlined. The gap appears
+  where it will land and does not travel from the stand-in. The upper half of
   a row puts the gap before it and the lower half after it; a day's "Add a
   meal" row or its header puts it at the end of the day. A pointer over the
   gap keeps it where it is, and one over the stand-in takes it back. Rows,

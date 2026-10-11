@@ -541,6 +541,10 @@ function jumpsIn(frames: readonly ProbeFrame[]): Jump[] {
     );
     const seen = new Set<number>();
     for (const [identity, slideKey, top] of current.tops) {
+      // The gap moves in one step to where it lands, by design, so only the slides are checked.
+      if (slideKey.startsWith("gap:")) {
+        continue;
+      }
       const was = before.get(identity);
       if (was === undefined) {
         continue;
@@ -654,6 +658,69 @@ test("nothing jumps while a meal drags down empty days and back", async ({
   await page.waitForTimeout(100);
   await removeFromDay(page, beans, dayLabels[1] ?? "");
   await removeFromDay(page, korma, firstDay);
+});
+
+test("the gap appears where it lands and does not slide from the stand-in", async ({
+  page,
+}) => {
+  const names = [
+    uniqueName("Chilli"),
+    uniqueName("Tagine"),
+    uniqueName("Gumbo"),
+  ];
+  await openApp(page, "/meals");
+  for (const name of names) {
+    await addMeal(page, name, []);
+  }
+  const day = await placeOnDay(page, names[0] ?? "", 0);
+  await placeOnDay(page, names[1] ?? "", 0);
+  await placeOnDay(page, names[2] ?? "", 0);
+  const [first, second, third] = names.map((name) => name);
+  const secondCentre = await centre(plannedMealRow(page, second ?? "", day));
+  const thirdSlideKey = await plannedMealRow(page, third ?? "", day)
+    .locator("xpath=ancestor::li[1]")
+    .getAttribute("data-slide");
+
+  const stopProbe = await startFrameProbe(page);
+  const from = await centre(plannedMealRow(page, first ?? "", day));
+  const held = await press(
+    page,
+    from,
+    test.info().project.use.hasTouch ? 300 : 0,
+  );
+  // A mouse lifts on 12px straight down; a path that goes sideways first is a swipe.
+  await held.moveTo({ x: from.x, y: from.y + 12 });
+  await held.sweepTo({ x: secondCentre.x, y: secondCentre.y + 15 });
+  await page.waitForTimeout(600);
+  const frames = await stopProbe();
+
+  const gapTops: number[] = [];
+  const thirdTops: number[] = [];
+  for (const frame of frames) {
+    for (const [, slideKey, top] of frame.tops) {
+      if (slideKey.startsWith("gap:")) {
+        gapTops.push(top);
+      } else if (slideKey === thirdSlideKey) {
+        thirdTops.push(top);
+      }
+    }
+  }
+  expect(gapTops.length).toBeGreaterThan(10);
+  for (const top of gapTops) {
+    expect(Math.abs(top - (gapTops[0] ?? 0))).toBeLessThanOrEqual(1);
+  }
+  const thirdStart = thirdTops[0] ?? 0;
+  const thirdEnd = thirdTops[thirdTops.length - 1] ?? 0;
+  expect(thirdEnd - thirdStart).toBeGreaterThan(20);
+  expect(
+    thirdTops.some((top) => top > thirdStart + 3 && top < thirdEnd - 3),
+  ).toBe(true);
+
+  await held.release();
+  await page.waitForTimeout(400);
+  await removeFromDay(page, first ?? "", day);
+  await removeFromDay(page, second ?? "", day);
+  await removeFromDay(page, third ?? "", day);
 });
 
 test("a swipe removes one meal from a day on a phone", async ({ page }) => {
