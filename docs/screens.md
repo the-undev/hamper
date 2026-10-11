@@ -12,9 +12,9 @@ switch between the two views, and a swipe does the same. The views slide, and
 during a swipe they follow the finger. The view last used is remembered.
 
 **Meals.** A read-only line says when the plan starts and ends: "Starts Mon
-1 Jun, ends Sun 7 Jun", with dates in the browser's locale. Below it, one
-card per day. Its header is the date, with "2 meals" when it holds more than
-one.
+1 Jun, ends Sun 7 Jun", with dates in British English on every phone. Below
+it, one card per day. Its header is the date, with "2 meals" when it holds more
+than one.
 
 - Each planned meal is a row: its picture, its name and its lines in one line
   underneath. Tapping a row opens the planned meal. A hold anywhere on a row

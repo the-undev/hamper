@@ -1,22 +1,22 @@
-const dayFormat = new Intl.DateTimeFormat(undefined, {
+const dayFormat = new Intl.DateTimeFormat("en-GB", {
   weekday: "short",
   day: "numeric",
   month: "short",
   timeZone: "UTC",
 });
 
-const weekdayFormat = new Intl.DateTimeFormat(undefined, {
+const weekdayFormat = new Intl.DateTimeFormat("en-GB", {
   weekday: "short",
   timeZone: "UTC",
 });
 
-const dayOfMonthFormat = new Intl.DateTimeFormat(undefined, {
+const dayOfMonthFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "short",
   timeZone: "UTC",
 });
 
-const timeFormat = new Intl.DateTimeFormat(undefined, {
+const timeFormat = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
 });
@@ -25,7 +25,7 @@ function utcDate(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00Z`);
 }
 
-/** Labels a yyyy-MM-dd date in the browser's locale, as "Mon 12 Oct" in English. */
+/** Labels a yyyy-MM-dd date in British English, as "Mon 12 Oct", on every phone. */
 export function formatDay(isoDate: string): string {
   return dayFormat.format(utcDate(isoDate));
 }
