@@ -16,31 +16,47 @@ export const Route = createRootRoute({
   ),
 });
 
-/** The header with the sync indicator, the screen, its footer and the tab bar, in a centred column. */
+/** Reserves the width of the scroll area's scrollbar, so the header and bottom bar line up with the column. */
+const gutter = "overflow-y-hidden [scrollbar-gutter:stable]";
+
+/** The header with the sync indicator, the screen, its footer and the tab bar, in a centred column, with the screen scrolling between the header and the bottom bar. */
 function Shell() {
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   const [footerSlot, setFooterSlot] = useState<HTMLElement | null>(null);
   const status = useSyncStatus(useSyncLoop());
   useUpdateToast();
   return (
-    <div className={`flex min-h-dvh flex-col bg-surface ${columnWidth}`}>
-      <header className="sticky top-0 z-10 flex min-h-14 items-center gap-1 border-line border-b bg-surface pt-[max(10px,env(safe-area-inset-top,0px))] pr-2 pb-2.5 pl-4">
-        <div
-          ref={setHeaderSlot}
-          className="flex min-w-0 flex-1 items-center justify-between gap-2"
-        />
-        <SyncIndicator status={status} />
-      </header>
-      <main className="flex flex-1 flex-col gap-3.5 px-4 pt-3 pb-6">
-        <HeaderSlotContext value={headerSlot}>
-          <FooterSlotContext value={footerSlot}>
-            <Outlet />
-          </FooterSlotContext>
-        </HeaderSlotContext>
-      </main>
-      <div className="sticky bottom-0 z-10">
-        <div ref={setFooterSlot} />
-        <TabBar />
+    <div className="flex h-dvh flex-col bg-surface">
+      <div className={`shrink-0 ${gutter}`}>
+        <header
+          className={`flex min-h-14 items-center gap-1 border-line border-b bg-surface pt-[max(10px,env(safe-area-inset-top,0px))] pr-2 pb-2.5 pl-4 ${columnWidth}`}
+        >
+          <div
+            ref={setHeaderSlot}
+            className="flex min-w-0 flex-1 items-center justify-between gap-2"
+          />
+          <SyncIndicator status={status} />
+        </header>
+      </div>
+      <div
+        data-scroll-area
+        className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
+      >
+        <main
+          className={`flex min-h-full flex-col gap-3.5 px-4 pt-3 pb-6 ${columnWidth}`}
+        >
+          <HeaderSlotContext value={headerSlot}>
+            <FooterSlotContext value={footerSlot}>
+              <Outlet />
+            </FooterSlotContext>
+          </HeaderSlotContext>
+        </main>
+      </div>
+      <div className={`shrink-0 ${gutter}`}>
+        <div className={columnWidth}>
+          <div ref={setFooterSlot} />
+          <TabBar />
+        </div>
       </div>
     </div>
   );
