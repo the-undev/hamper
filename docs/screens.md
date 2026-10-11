@@ -140,12 +140,18 @@ History needs the server, and says so while offline.
 - Targets are at least 44px. Lines swipe left to reveal actions; on a
   desktop, keyboard focus reaches them too. A planned meal drags after a
   250ms hold anywhere on its row on a phone, and a finger that moves sideways
-  first swipes instead; a mouse drags it after 8px. The rows stay put, the
-  dragged meal follows the pointer, the day it would land on is outlined and
-  a line shows where: between two meals, by which half of a row the pointer
-  is over, or at the end of a day over its "Add a meal" row or empty space.
-  With the keyboard, a row's Move button lifts it, the arrow keys move it
-  through the days and Space drops it.
+  first swipes instead; a mouse drags it after 8px. The dragged meal follows
+  the pointer, and a dimmed stand-in keeps its place in the day it came from,
+  so nothing above the pointer moves. Where it would land, the rows part to
+  open a gap the height of a row, and the day is outlined. The upper half of
+  a row puts the gap before it and the lower half after it; a day's "Add a
+  meal" row or its header puts it at the end of the day. A pointer over the
+  gap keeps it where it is, and one over the stand-in takes it back. The
+  rows of the day slide to their new places. On release the meal
+  settles into the gap and the stand-in closes; released over nothing, or
+  with Escape, the meal goes back. With the keyboard, a row's Move button
+  lifts it, the arrow keys move the gap through the days and Space drops
+  it.
 - The type-ahead is the same control wherever a line is added: type, then
   pick an existing item or take the row that creates one. The suggestions
   float over the content under the box, about five rows high, and scroll; a

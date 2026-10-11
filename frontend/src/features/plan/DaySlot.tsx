@@ -1,13 +1,13 @@
 import { useDroppable } from "@dnd-kit/core";
-import { useSortable } from "@dnd-kit/sortable";
+import { type AnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
 import { Link } from "@tanstack/react-router";
-import { Fragment, useId } from "react";
+import { type CSSProperties, useId } from "react";
 import { Picture } from "@/components/Picture";
 import { SwipeRow } from "@/components/SwipeRow";
 import { formatDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { PlannedMeal } from "@/store/types";
-import { type DropData, dayCardId, dayEndId } from "./drop";
+import { type DropData, dayCardId, dayEndId, standInId } from "./drop";
 
 /** A planned meal as a row shows it: the meal, its picture and its lines in one line. */
 export interface PlannedMealView {
@@ -18,36 +18,62 @@ export interface PlannedMealView {
   summary: string;
 }
 
-/** The line a drop would land on, drawn on the border between two rows without moving them. */
-function DropLine() {
-  return (
-    <li aria-hidden data-drop-line className="relative h-0">
-      <div className="absolute inset-x-2 -top-[2px] z-[2] h-[3px] rounded-full bg-accent" />
-    </li>
-  );
+/** One row of a day's card: a planned meal and how it shows during a drag. */
+export interface SlotRow {
+  view: PlannedMealView;
+  /** Plain; held where it came from; the gap where a held meal would land; or the stand-in it leaves where it came from. */
+  look: "plain" | "held" | "gap" | "standIn";
 }
 
-/** One planned meal: tapping opens it, a hold anywhere on it (a press with a mouse) lifts it, and a swipe left reveals Remove. */
+/** A row slides to its new place during a drag and just after the drop, and nowhere else. */
+const animateWhileSorting: AnimateLayoutChanges = ({
+  isSorting,
+  wasDragging,
+}) => isSorting || wasDragging;
+
+/** The style that slides a row to its new place. */
+function slideStyle({
+  transform,
+  transition,
+}: Pick<ReturnType<typeof useSortable>, "transform" | "transition">):
+  | CSSProperties
+  | undefined {
+  return {
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
+    transition,
+  };
+}
+
+/** One planned meal: tapping opens it, a hold anywhere on it (a press with a mouse) lifts it, and a swipe left reveals Remove; while it is held elsewhere it is the gap where it would land. */
 function PlannedMealRow({
-  view,
+  row,
   index,
   dayLabel,
   onRemove,
 }: {
-  view: PlannedMealView;
+  row: SlotRow;
   index: number;
   dayLabel: string;
   onRemove: () => void;
 }) {
-  const { plannedMeal, imageId, summary } = view;
+  const { plannedMeal, imageId, summary } = row.view;
   const data: DropData = { kind: "meal", plannedMeal };
-  const { setNodeRef, setActivatorNodeRef, attributes, listeners, isDragging } =
-    useSortable({ id: plannedMeal.id, data });
+  const { setNodeRef, setActivatorNodeRef, attributes, listeners, ...slide } =
+    useSortable({
+      id: plannedMeal.id,
+      data,
+      animateLayoutChanges: animateWhileSorting,
+    });
+  const gap = row.look === "gap";
   return (
     <li
       ref={setNodeRef}
       data-row-index={index}
-      className="border-line border-t"
+      data-gap={gap || undefined}
+      style={slideStyle(slide)}
+      className={cn("border-line border-t", gap && "bg-soft *:invisible")}
     >
       <SwipeRow
         subject={`${plannedMeal.name} from ${dayLabel}`}
@@ -58,7 +84,7 @@ function PlannedMealRow({
           {...listeners}
           className={cn(
             "flex min-h-[62px] cursor-grab items-center gap-2.5 px-2.5 py-2 [-webkit-touch-callout:none]",
-            isDragging && "opacity-40",
+            row.look === "held" && "opacity-40",
           )}
         >
           <Picture name={plannedMeal.name} imageId={imageId} size="row" />
@@ -90,6 +116,40 @@ function PlannedMealRow({
   );
 }
 
+/** What a held meal leaves where it came from while it would land elsewhere: the row dimmed, which takes it back when the pointer returns to it. */
+function StandInRow({ row, index }: { row: SlotRow; index: number }) {
+  const { plannedMeal, imageId, summary } = row.view;
+  const data: DropData = { kind: "standIn" };
+  const { setNodeRef, ...slide } = useSortable({
+    id: standInId,
+    data,
+    disabled: { draggable: true, droppable: false },
+    animateLayoutChanges: animateWhileSorting,
+  });
+  return (
+    <li
+      ref={setNodeRef}
+      aria-hidden
+      data-row-index={index}
+      data-stand-in
+      style={slideStyle(slide)}
+      className="border-line border-t"
+    >
+      <div className="flex min-h-[62px] items-center gap-2.5 px-2.5 py-2 opacity-40">
+        <Picture name={plannedMeal.name} imageId={imageId} size="row" />
+        <div className="flex min-h-11 min-w-0 flex-1 flex-col justify-center">
+          <b className="truncate text-[15px] font-semibold">
+            {plannedMeal.name}
+          </b>
+          <small className="truncate text-xs text-muted">
+            {summary || "nothing to buy"}
+          </small>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 /** The "Add a meal" row at the end of a day, which opens the picker and takes a drop at the end of the day. */
 function AddMealRow({
   position,
@@ -101,11 +161,17 @@ function AddMealRow({
   dayLabel: string;
 }) {
   const data: DropData = { kind: "day", position };
-  const { setNodeRef } = useDroppable({ id: dayEndId(position), data });
+  const { setNodeRef, ...slide } = useSortable({
+    id: dayEndId(position),
+    data,
+    disabled: { draggable: true, droppable: false },
+    animateLayoutChanges: animateWhileSorting,
+  });
   return (
     <li
       ref={setNodeRef}
       data-row-index={index}
+      style={slideStyle(slide)}
       className="border-line border-t"
     >
       <Link
@@ -120,20 +186,18 @@ function AddMealRow({
   );
 }
 
-/** One day of the plan as a card: the date, its planned meals in their order, and "Add a meal"; during a drag it shows where a drop lands. */
+/** One day of the plan as a card: the date, its planned meals in their order, and "Add a meal"; during a drag it opens a gap where a drop lands. */
 export function DaySlot({
   position,
   date,
-  meals,
-  dropLineAt,
+  rows,
   targeted,
   onRemove,
 }: {
   position: number;
   date: string;
-  meals: readonly PlannedMealView[];
-  /** The index in `meals` the dragged meal would land before, `meals.length` for the end, or null when a drop would not land here. */
-  dropLineAt: number | null;
+  /** The day's rows in order, with any gap and stand-in of a drag. */
+  rows: readonly SlotRow[];
   /** Whether a drop would land on this day. */
   targeted: boolean;
   onRemove: (plannedMeal: PlannedMeal) => void;
@@ -142,6 +206,7 @@ export function DaySlot({
   const data: DropData = { kind: "day", position };
   const { setNodeRef } = useDroppable({ id: dayCardId(position), data });
   const label = formatDay(date);
+  const mealCount = rows.filter((row) => row.look !== "standIn").length;
   return (
     <li
       ref={setNodeRef}
@@ -156,24 +221,25 @@ export function DaySlot({
         <h2 id={headingId} className="m-0 text-[13px] font-bold">
           {label}
         </h2>
-        {meals.length > 1 && (
-          <span className="text-xs text-muted">{meals.length} meals</span>
+        {mealCount > 1 && (
+          <span className="text-xs text-muted">{mealCount} meals</span>
         )}
       </div>
       <ul className="m-0 list-none p-0">
-        {meals.map((view, index) => (
-          <Fragment key={view.plannedMeal.id}>
-            {dropLineAt === index && <DropLine />}
+        {rows.map((row, index) =>
+          row.look === "standIn" ? (
+            <StandInRow key={standInId} row={row} index={index} />
+          ) : (
             <PlannedMealRow
-              view={view}
+              key={row.view.plannedMeal.id}
+              row={row}
               index={index}
               dayLabel={label}
-              onRemove={() => onRemove(view.plannedMeal)}
+              onRemove={() => onRemove(row.view.plannedMeal)}
             />
-          </Fragment>
-        ))}
-        {dropLineAt === meals.length && <DropLine />}
-        <AddMealRow position={position} index={meals.length} dayLabel={label} />
+          ),
+        )}
+        <AddMealRow position={position} index={rows.length} dayLabel={label} />
       </ul>
     </li>
   );

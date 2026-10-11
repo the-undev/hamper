@@ -204,18 +204,43 @@ async function touch(
   });
 }
 
-/** Moves a pointer from one point to another: a finger on a touch project, the mouse otherwise; a hold waits before moving. */
-export async function drag(
+/** Waits until no day card or row on the Plan is still sliding to its place. */
+async function plannedRowsSettled(page: Page): Promise<void> {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          animation.playState !== "running" ||
+          !(
+            animation.effect instanceof KeyframeEffect &&
+            animation.effect.target?.closest("[data-position]")
+          ),
+      ),
+  );
+}
+
+/** A pointer held down on the page: a finger on a touch project, the mouse otherwise. */
+export interface Press {
+  /** Moves the pointer to a point in twelve steps, then waits for the Plan's rows to settle. */
+  moveTo(to: Point): Promise<void>;
+  /** Lifts the pointer where it is. */
+  release(): Promise<void>;
+}
+
+/** Presses a pointer at a point, a finger on a touch project and the mouse otherwise, and holds it there for a while. */
+export async function press(
   page: Page,
   from: Point,
-  to: Point,
   holdMs: number,
-): Promise<void> {
+): Promise<Press> {
   const steps = 12;
-  const at = (step: number): Point => ({
-    x: from.x + ((to.x - from.x) * step) / steps,
-    y: from.y + ((to.y - from.y) * step) / steps,
-  });
+  let at = from;
+  const pathTo = (to: Point): Point[] =>
+    Array.from({ length: steps }, (_, step) => ({
+      x: at.x + ((to.x - at.x) * (step + 1)) / steps,
+      y: at.y + ((to.y - at.y) * (step + 1)) / steps,
+    }));
   if (test.info().project.use.hasTouch) {
     // One session for the whole gesture: the protocol tracks the touch per session.
     const session = await page.context().newCDPSession(page);
@@ -223,23 +248,46 @@ export async function drag(
     if (holdMs > 0) {
       await page.waitForTimeout(holdMs);
     }
-    for (let step = 1; step <= steps; step += 1) {
-      await touch(session, "touchMove", at(step));
-    }
-    await touch(session, "touchEnd", to);
-    await session.detach();
-    return;
+    return {
+      moveTo: async (to) => {
+        for (const point of pathTo(to)) {
+          await touch(session, "touchMove", point);
+        }
+        at = to;
+        await plannedRowsSettled(page);
+      },
+      release: async () => {
+        await touch(session, "touchEnd", at);
+        await session.detach();
+      },
+    };
   }
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
   if (holdMs > 0) {
     await page.waitForTimeout(holdMs);
   }
-  for (let step = 1; step <= steps; step += 1) {
-    const point = at(step);
-    await page.mouse.move(point.x, point.y);
-  }
-  await page.mouse.up();
+  return {
+    moveTo: async (to) => {
+      for (const point of pathTo(to)) {
+        await page.mouse.move(point.x, point.y);
+      }
+      at = to;
+    },
+    release: () => page.mouse.up(),
+  };
+}
+
+/** Moves a pointer from one point to another: a finger on a touch project, the mouse otherwise; a hold waits before moving. */
+export async function drag(
+  page: Page,
+  from: Point,
+  to: Point,
+  holdMs: number,
+): Promise<void> {
+  const held = await press(page, from, holdMs);
+  await held.moveTo(to);
+  await held.release();
 }
 
 /** Where an element sits once the page has stopped moving: the same box twice running. */

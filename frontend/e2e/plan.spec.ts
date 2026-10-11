@@ -3,7 +3,6 @@ import {
   addMeal,
   centre,
   dayCard,
-  drag,
   expect,
   expectCount,
   line,
@@ -12,8 +11,10 @@ import {
   placeOnDay,
   plannedMealRow,
   planView,
+  press,
   removeFromDay,
   swipeLeft,
+  syncState,
   test,
   uniqueName,
 } from "./helpers.ts";
@@ -191,14 +192,26 @@ test("a hold anywhere on a meal lifts it onto another day on a phone", async ({
   const secondDay = await placeOnDay(page, second, 1);
 
   // A finger lifts the meal after a 250 ms hold; "Add a meal" takes a drop at the end of its day.
-  await drag(
+  const addMealRow = dayCard(page, secondDay).getByRole("link", {
+    name: /^Add a meal to /,
+  });
+  const held = await press(
     page,
     await centre(plannedMealRow(page, first, firstDay)),
-    await centre(
-      dayCard(page, secondDay).getByRole("link", { name: /^Add a meal to / }),
-    ),
     300,
   );
+  await held.moveTo(await centre(addMealRow));
+  // Passing over the upper half of the meal there opened a gap before it, which moved the rows down; aim again.
+  await held.moveTo(await centre(addMealRow));
+
+  const gap = dayCard(page, secondDay).locator("[data-gap]");
+  await expect(gap).toBeVisible();
+  await expect(
+    dayCard(page, firstDay).locator("[data-stand-in]"),
+  ).toBeVisible();
+  const secondBox = await plannedMealRow(page, second, secondDay).boundingBox();
+  expect((await gap.boundingBox())?.y).toBeGreaterThan(secondBox?.y ?? 0);
+  await held.release();
 
   await expect(plannedMealRow(page, first, secondDay)).toBeVisible();
   await expect(plannedMealRow(page, first, firstDay)).toHaveCount(0);
@@ -212,47 +225,134 @@ test("a hold anywhere on a meal lifts it onto another day on a phone", async ({
   await removeFromDay(page, second, secondDay);
 });
 
-test("a mouse drag reorders a day, showing where it lands without moving the page", async ({
+test("a mouse drag opens a gap where the meal lands, moving only what is below it", async ({
   page,
 }) => {
   test.skip(!!test.info().project.use.hasTouch, "a mouse drag is a desktop's");
   const first = uniqueName("Hash");
   const second = uniqueName("Bake");
+  const third = uniqueName("Stew");
+  await openApp(page, "/meals");
+  for (const name of [first, second, third]) {
+    await addMeal(page, name, []);
+  }
+  const day = await placeOnDay(page, first);
+  await placeOnDay(page, second);
+  await placeOnDay(page, third);
+  const names = [first, second, third];
+  expect(await orderOf(page, day, names)).toEqual(names);
+  const firstRow = plannedMealRow(page, first, day);
+  const rowHeight =
+    (await firstRow.locator("xpath=ancestor::li[1]").boundingBox())?.height ??
+    0;
+  const from = await centre(firstRow);
+  const secondBefore = await centre(plannedMealRow(page, second, day));
+  const thirdBefore = await centre(plannedMealRow(page, third, day));
+  const cardTop = async () => (await dayCard(page, day).boundingBox())?.y;
+  const cardTopBefore = await cardTop();
+
+  // The upper half of a row lands before it; the pointer passes slowly over the row between.
+  const held = await press(page, from, 0);
+  await held.moveTo({ x: thirdBefore.x, y: thirdBefore.y - 15 });
+
+  const thirdRow = plannedMealRow(page, third, day);
+  await expect
+    .poll(async () => Math.round((await centre(thirdRow)).y - thirdBefore.y))
+    .toBe(Math.round(rowHeight));
+  const gap = dayCard(page, day).locator("[data-gap]");
+  const gapBox = await gap.boundingBox();
+  expect(Math.round(gapBox?.height ?? 0)).toBe(Math.round(rowHeight));
+  expect(gapBox?.y ?? 0).toBeLessThan(thirdBefore.y - 15);
+  expect((gapBox?.y ?? 0) + (gapBox?.height ?? 0)).toBeGreaterThan(
+    thirdBefore.y - 15,
+  );
+  expect(await centre(plannedMealRow(page, second, day))).toEqual(secondBefore);
+  expect(await cardTop()).toBe(cardTopBefore);
+  // A pointer that stays put keeps the gap where it is.
+  await page.waitForTimeout(400);
+  expect(Math.round((await centre(thirdRow)).y - thirdBefore.y)).toBe(
+    Math.round(rowHeight),
+  );
+
+  await held.release();
+  await expect
+    .poll(() => orderOf(page, day, names))
+    .toEqual([second, first, third]);
+  await page.waitForTimeout(100);
+  for (const name of names) {
+    await removeFromDay(page, name, day);
+  }
+});
+
+test("a dropped meal lands in its gap and does not return to where it came from", async ({
+  page,
+}) => {
+  test.skip(!!test.info().project.use.hasTouch, "a mouse drag is a desktop's");
+  const first = uniqueName("Broth");
+  const second = uniqueName("Pilaf");
   await openApp(page, "/meals");
   await addMeal(page, first, []);
   await addMeal(page, second, []);
-  const day = await placeOnDay(page, first);
-  await placeOnDay(page, second);
-  expect(await orderOf(page, day, [first, second])).toEqual([first, second]);
-  const from = await centre(plannedMealRow(page, first, day));
-  const secondCentre = await centre(plannedMealRow(page, second, day));
-  // The lower half of a row drops after it.
-  const to = { x: secondCentre.x, y: secondCentre.y + 15 };
-  const scrollHeight = () =>
-    page.evaluate(() => document.documentElement.scrollHeight);
-  const before = await scrollHeight();
+  const firstDay = await placeOnDay(page, first, 0);
+  const secondDay = await placeOnDay(page, second, 1);
+  const secondCentre = await centre(plannedMealRow(page, second, secondDay));
 
-  const heights: number[] = [];
-  await page.mouse.move(from.x, from.y);
-  await page.mouse.down();
-  for (let step = 1; step <= 12; step += 1) {
-    await page.mouse.move(
-      from.x + ((to.x - from.x) * step) / 12,
-      from.y + ((to.y - from.y) * step) / 12,
+  const held = await press(
+    page,
+    await centre(plannedMealRow(page, first, firstDay)),
+    0,
+  );
+  await held.moveTo({ x: secondCentre.x, y: secondCentre.y - 15 });
+  await expect(dayCard(page, secondDay).locator("[data-gap]")).toHaveCount(1);
+  // Records where the row is once React has handled the release, in the same task, before any store write can finish.
+  await page.evaluate((mealName) => {
+    const whereIsRow = () => {
+      const row = [...document.querySelectorAll("[data-position] li")].find(
+        (item) =>
+          !item.matches("[data-gap], [data-stand-in]") &&
+          item.querySelector("a b")?.textContent === mealName,
+      );
+      return {
+        day: row?.closest("[data-position]")?.querySelector("h2")?.textContent,
+        gaps: document.querySelectorAll("[data-gap]").length,
+        standIns: document.querySelectorAll("[data-stand-in]").length,
+      };
+    };
+    window.addEventListener(
+      "mouseup",
+      () =>
+        queueMicrotask(() => {
+          Object.assign(window, { landedOnRelease: whereIsRow() });
+        }),
+      { once: true },
     );
-    heights.push(await scrollHeight());
-  }
-  await expect(dayCard(page, day).locator("[data-drop-line]")).toHaveCount(1);
-  await page.mouse.up();
-  await expect
-    .poll(() => orderOf(page, day, [first, second]))
-    .toEqual([second, first]);
-  heights.push(await scrollHeight());
+    Object.assign(window, { whereIsRow });
+  }, first);
+  await held.release();
 
-  expect(heights).toEqual(heights.map(() => before));
+  const landed = await page.evaluate(() => {
+    const probe = window as unknown as {
+      landedOnRelease: unknown;
+      whereIsRow: () => unknown;
+    };
+    return { onRelease: probe.landedOnRelease, now: probe.whereIsRow() };
+  });
+  const inTheTargetDay = { day: secondDay, gaps: 0, standIns: 0 };
+  expect(landed).toEqual({ onRelease: inTheTargetDay, now: inTheTargetDay });
+
+  await expect.poll(() => syncState(page)).toBeNull();
+  await expect(plannedMealRow(page, first, secondDay)).toBeVisible();
+  await expect(plannedMealRow(page, first, firstDay)).toHaveCount(0);
+  await expect(dayCard(page, firstDay).locator("[data-stand-in]")).toHaveCount(
+    0,
+  );
+  expect(await orderOf(page, secondDay, [first, second])).toEqual([
+    first,
+    second,
+  ]);
   await page.waitForTimeout(100);
-  await removeFromDay(page, first, day);
-  await removeFromDay(page, second, day);
+  await removeFromDay(page, first, secondDay);
+  await removeFromDay(page, second, secondDay);
 });
 
 test("a swipe removes one meal from a day on a phone", async ({ page }) => {
