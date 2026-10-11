@@ -58,6 +58,7 @@ function PlannedMealRow({
       className={cn("border-line border-t", gap && "bg-soft *:invisible")}
     >
       <SwipeRow
+        held={row.look === "held" || gap}
         subject={`${plannedMeal.name} from ${dayLabel}`}
         actions={[{ label: "Remove", tone: "danger", onAction: onRemove }]}
       >

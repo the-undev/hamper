@@ -141,8 +141,8 @@ History needs the server, and says so while offline.
   desktop, keyboard focus reaches them too. A planned meal drags after a
   250ms hold anywhere on its row on a phone, and a finger that moves sideways
   first swipes instead; a mouse lifts it after 8px up or down, and a sideways
-  mouse movement swipes it. The dragged meal follows
-  the pointer, and a dimmed stand-in keeps its place in the day it came from,
+  mouse movement swipes it. A lifted meal never swipes, and it moves only
+  up and down. A dimmed stand-in keeps its place in the day it came from,
   so nothing above the pointer moves. Where it would land, the rows part to
   open a gap the height of a row, and the day is outlined. The gap appears
   where it will land and does not travel from the stand-in. The upper half of

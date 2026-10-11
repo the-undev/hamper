@@ -225,6 +225,36 @@ test("a hold anywhere on a meal lifts it onto another day on a phone", async ({
   await removeFromDay(page, second, secondDay);
 });
 
+test("a lifted meal moves only up and down and a sideways finger does not reveal Remove", async ({
+  page,
+}) => {
+  test.skip(!test.info().project.use.hasTouch, "a hold needs a finger");
+  const meal = uniqueName("Soup");
+  await openApp(page, "/meals");
+  await addMeal(page, meal, []);
+  const day = await placeOnDay(page, meal);
+  const row = plannedMealRow(page, meal, day);
+  const rowItem = row.locator("xpath=ancestor::li[1]");
+  const rowLeft = (await rowItem.boundingBox())?.x ?? 0;
+  const from = await centre(row);
+
+  const held = await press(page, from, 300);
+  await held.moveTo({ x: from.x + 60, y: from.y });
+
+  const overlay = page.locator("[data-drag-overlay]");
+  await expect(overlay).toBeVisible();
+  expect((await overlay.boundingBox())?.x).toBeCloseTo(rowLeft, 0);
+  await expect(
+    row.locator("xpath=ancestor::*[@data-swipe-row][1]/div[1]"),
+  ).toHaveCSS("transform", "none");
+  await held.release();
+
+  await expect(row).toBeVisible();
+  // dnd-kit swallows every click for 50 ms after a drop, which no hand is quick enough to meet.
+  await page.waitForTimeout(100);
+  await removeFromDay(page, meal, day);
+});
+
 test("a mouse drag opens a gap where the meal lands, moving only what is below it", async ({
   page,
 }) => {

@@ -25,6 +25,7 @@ export function ShopLineRow({
     .join(" · ");
   return (
     <SwipeRow
+      held={false}
       subject={name}
       actions={[
         {
