@@ -61,7 +61,8 @@ test.describe("the column grows with the viewport up to 760px", () => {
     const measure = () =>
       page.evaluate(() => {
         const box = document.querySelector("main")?.getBoundingClientRect();
-        const contentWidth = document.body.clientWidth;
+        const contentWidth =
+          document.querySelector("[data-scroll-area]")?.clientWidth ?? 0;
         return {
           x: box?.x ?? 0,
           width: box?.width ?? 0,
@@ -126,7 +127,9 @@ test.describe("the column grows with the viewport up to 760px", () => {
       .evaluate((main) => getComputedStyle(main).paddingLeft);
 
     expect(column.width).toBe(
-      await page.evaluate(() => document.body.clientWidth),
+      await page.evaluate(
+        () => document.querySelector("[data-scroll-area]")?.clientWidth,
+      ),
     );
     expect(gutter).toBe("16px");
   });
@@ -172,4 +175,31 @@ test.describe("a placeholder is fainter than typed text", () => {
       expect(colours.placeholderGap).toBeLessThan(colours.typedGap);
     });
   }
+});
+
+test("the Plan tabs stay under the header while the days scroll", async ({
+  page,
+}) => {
+  await openApp(page, "/plan");
+  await planView(page, "Meals");
+  const scrollArea = page.locator("[data-scroll-area]");
+  const firstDay = page.getByRole("listitem").first();
+  await expect(firstDay).toBeVisible();
+  await scrollArea.evaluate((area) => area.scrollTo(0, 300));
+  await expect
+    .poll(() => scrollArea.evaluate((area) => area.scrollTop))
+    .toBeGreaterThan(100);
+
+  const tabList = page.getByRole("tablist", { name: "Plan view" });
+  await expect(tabList).toBeVisible();
+  const headerBox = await page.locator("header").boundingBox();
+  const tabListBox = await tabList.boundingBox();
+  const firstDayBox = await firstDay.boundingBox();
+  expect(tabListBox?.y).toBeCloseTo(
+    (headerBox?.y ?? 0) + (headerBox?.height ?? 0),
+    0,
+  );
+  expect(firstDayBox?.y ?? 0).toBeLessThan(
+    (tabListBox?.y ?? 0) + (tabListBox?.height ?? 0),
+  );
 });

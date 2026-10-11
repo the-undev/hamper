@@ -82,7 +82,7 @@ test("the_shell_column_uses_the_shared_width_and_no_source_file_hardcodes_480px"
   renderApp("/plan", db, fakeLoop());
   const main = await screen.findByRole("main");
 
-  expect(main.parentElement?.className).toContain(columnWidth);
+  expect(main.className).toContain(columnWidth);
 
   const sourceRoot = join(process.cwd(), "src");
   const hardcoded = (readdirSync(sourceRoot, { recursive: true }) as string[])

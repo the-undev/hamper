@@ -92,13 +92,15 @@ export function PlanScreen() {
         title="Plan"
         actions={plan ? <PlanRange plan={plan} /> : undefined}
       />
-      <TabsList aria-label="Plan view">
-        {views.map((planView) => (
-          <TabsTrigger key={planView.value} value={planView.value}>
-            {planView.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="sticky top-0 z-10 -mx-4 bg-surface px-4">
+        <TabsList aria-label="Plan view">
+          {views.map((planView) => (
+            <TabsTrigger key={planView.value} value={planView.value}>
+              {planView.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
       <div
         className="-mx-4 flex flex-1 touch-pan-y touch-pinch-zoom flex-col"
         {...handlers}

@@ -156,11 +156,10 @@ test("Done stays above the tabs on a long day and goes back", async ({
     await addLine(page, "Add an item for this day", uniqueName("Spice"));
   }
 
-  await page.evaluate(() => window.scrollTo(0, 0));
+  const scrollArea = page.locator("[data-scroll-area]");
+  await scrollArea.evaluate((area) => area.scrollTo(0, 0));
   expect(
-    await page.evaluate(
-      () => document.documentElement.scrollHeight > window.innerHeight,
-    ),
+    await scrollArea.evaluate((area) => area.scrollHeight > area.clientHeight),
   ).toBe(true);
   const done = page
     .getByRole("group", { name: "Screen actions" })

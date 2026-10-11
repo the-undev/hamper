@@ -281,6 +281,8 @@ export function DayList({
         droppable: { measure: settledRect },
       }}
       accessibility={{ announcements }}
+      // The scroll area is shorter than the window was, so its edge zones are narrower to keep a drag in the first days from scrolling it.
+      autoScroll={{ threshold: { x: 0.2, y: 0.1 } }}
       modifiers={[moveOnlyVertically]}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
