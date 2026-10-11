@@ -10,6 +10,7 @@ function renderRow() {
   const onOpen = vi.fn();
   render(
     <SwipeRow
+      held={false}
       subject="Milk"
       actions={[
         { label: "To extras", tone: "accent", onAction: onToExtras },
@@ -65,6 +66,7 @@ test("a_swipe_left_opens_the_row_and_does_not_count_as_a_tap", () => {
 test.each(["mouse", "touch"])("a_%s_swipes_a_draggable_row", (pointerType) => {
   render(
     <SwipeRow
+      held={false}
       subject="Curry"
       actions={[{ label: "Remove", tone: "danger", onAction: vi.fn() }]}
     >
@@ -90,7 +92,7 @@ test("the_sliding_element_does_not_select_text_under_a_mouse_swipe", () => {
 
 test("the_wrapper_clips_to_the_rows_rounding", () => {
   render(
-    <SwipeRow subject="Milk" actions={[]} rounded="rounded-[14px]">
+    <SwipeRow held={false} subject="Milk" actions={[]} rounded="rounded-[14px]">
       <button type="button">Milk</button>
     </SwipeRow>,
   );
@@ -103,6 +105,7 @@ test("the_wrapper_clips_to_the_rows_rounding", () => {
 test("a_press_on_a_tick_box_does_not_start_a_swipe", () => {
   render(
     <SwipeRow
+      held={false}
       subject="Milk"
       actions={[{ label: "Remove", tone: "danger", onAction: vi.fn() }]}
     >
@@ -117,4 +120,23 @@ test("a_press_on_a_tick_box_does_not_start_a_swipe", () => {
   fireEvent.pointerUp(tickBox, { clientX: 60, clientY: 12, pointerId: 1 });
 
   expect(front?.style.transform).toBe("");
+});
+
+test("a_held_row_does_not_swipe", () => {
+  render(
+    <SwipeRow
+      held
+      subject="Curry"
+      actions={[{ label: "Remove", tone: "danger", onAction: vi.fn() }]}
+    >
+      <div data-drag-handle>Curry</div>
+    </SwipeRow>,
+  );
+  const handle = screen.getByText("Curry");
+
+  fireEvent.pointerDown(handle, { clientX: 200, clientY: 10, pointerId: 1 });
+  fireEvent.pointerMove(handle, { clientX: 160, clientY: 10, pointerId: 1 });
+  fireEvent.pointerUp(handle, { clientX: 160, clientY: 10, pointerId: 1 });
+
+  expect(handle.parentElement?.style.transform).toBe("");
 });

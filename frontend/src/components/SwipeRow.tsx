@@ -31,6 +31,7 @@ export function SwipeRow({
   children,
   className,
   rounded,
+  held,
 }: {
   /** What the row is, for the action buttons' names: "Remove <subject>". */
   subject: string;
@@ -39,6 +40,8 @@ export function SwipeRow({
   className?: string;
   /** A rounding class for the row's shape; the wrapper takes it too, so the action strip is clipped to it. */
   rounded?: string;
+  /** Whether the row is lifted for a drag, which never swipes it. */
+  held: boolean;
 }) {
   const [offset, setOffset] = useState(0);
   const [open, setOpen] = useState(false);
@@ -81,6 +84,10 @@ export function SwipeRow({
   const onPointerMove = (event: PointerEvent<HTMLDivElement>): void => {
     const swipe = start.current;
     if (!swipe) {
+      return;
+    }
+    if (held) {
+      start.current = null;
       return;
     }
     const movedX = event.clientX - swipe.x;

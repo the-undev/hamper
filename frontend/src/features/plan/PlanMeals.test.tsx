@@ -146,6 +146,26 @@ test("each_day_is_a_card_of_its_meals_in_order_with_add_a_meal_and_a_count_past_
   expect(within(tuesdayCard).queryByText(/meals$/)).not.toBeInTheDocument();
 });
 
+test("whatever_puts_an_empty_meal_at_the_end_of_the_day_without_the_picker", async () => {
+  await seed(db, { plannedMeals: [aPlannedMeal(0, "Curry", curry)] });
+  const { user } = renderApp("/plan", db, fakeLoop());
+
+  await user.click(
+    await screen.findByRole("button", { name: `Add Whatever to ${monday}` }),
+  );
+
+  await waitFor(async () =>
+    expect(await namesAt(0)).toEqual(["Curry", "Whatever"]),
+  );
+  const mondayCard = screen.getByRole("listitem", { name: monday });
+  expect(
+    within(mondayCard).getByRole("link", { name: "Whatevernothing to buy" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: `Add a meal to ${monday}` }),
+  ).not.toBeInTheDocument();
+});
+
 test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_cancel_does_nothing", async () => {
   await seed(db, {
     plannedMeals: [aPlannedMeal(0, "Curry", curry)],

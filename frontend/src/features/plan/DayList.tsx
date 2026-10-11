@@ -6,6 +6,7 @@ import {
   DragOverlay,
   type DragStartEvent,
   KeyboardSensor,
+  type Modifier,
   MouseSensor,
   TouchSensor,
   useDndContext,
@@ -64,6 +65,12 @@ export const plannedMealDragSensorOptions = {
   mouse: { activationConstraint: { distance: { y: 8 }, tolerance: { x: 8 } } },
   touch: { activationConstraint: { delay: 250, tolerance: 8 } },
 } as const;
+
+/** Keeps a lifted meal on its column, so it moves only up and down. */
+const moveOnlyVertically: Modifier = ({ transform }) => ({
+  ...transform,
+  x: 0,
+});
 
 /** The sorting strategy shifts nothing: the rows move because the landing's order moves the lifted meal, and slide.ts animates every change of place. */
 const holdStill: SortingStrategy = () => null;
@@ -274,6 +281,7 @@ export function DayList({
         droppable: { measure: settledRect },
       }}
       accessibility={{ announcements }}
+      modifiers={[moveOnlyVertically]}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
       onDragOver={onDragMove}
@@ -314,7 +322,10 @@ export function DayList({
       </ol>
       <DragOverlay dropAnimation={{ duration: slideMs, easing: "ease" }}>
         {heldMeal && (
-          <div className="flex min-h-[62px] items-center gap-2.5 rounded-[14px] border border-accent bg-surface px-2.5 py-2 shadow-lg">
+          <div
+            data-drag-overlay
+            className="flex min-h-[62px] items-center gap-2.5 rounded-[14px] border border-accent bg-surface px-2.5 py-2 shadow-lg"
+          >
             <Picture
               name={heldMeal.name}
               imageId={viewOf(heldMeal).imageId}

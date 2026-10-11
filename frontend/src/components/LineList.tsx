@@ -39,6 +39,7 @@ export function LineList<L extends LineView>({
         {lines.map((line) => (
           <li key={line.id} className="border-line border-t first:border-t-0">
             <SwipeRow
+              held={false}
               subject={line.name}
               actions={[
                 {
