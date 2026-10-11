@@ -640,6 +640,9 @@ test("nothing jumps while a meal drags down empty days and back", async ({
     await centre(plannedMealRow(page, beans, firstDay)),
     test.info().project.use.hasTouch ? 300 : 0,
   );
+  // A mouse lifts on 8px down; a path that goes sideways first is a swipe.
+  const lifted = await centre(plannedMealRow(page, beans, firstDay));
+  await held.moveTo({ x: lifted.x, y: lifted.y + 12 });
   for (const dayIndex of [1, 2, 3, 2, 1]) {
     await held.moveTo(await centre(heading(dayIndex)));
   }
@@ -671,6 +674,34 @@ test("a swipe removes one meal from a day on a phone", async ({ page }) => {
   await expect(plannedMealRow(page, meal, day)).toHaveCount(0);
   await expect(plannedMealRow(page, other, day)).toBeVisible();
   await removeFromDay(page, other, day);
+});
+
+test("a mouse swipe left on a day's meal reveals Remove without lifting it", async ({
+  page,
+}) => {
+  test.skip(!!test.info().project.use.hasTouch, "a mouse swipe is a desktop's");
+  const meal = uniqueName("Chilli");
+  await openApp(page, "/meals");
+  await addMeal(page, meal, []);
+  const day = await placeOnDay(page, meal);
+  const row = plannedMealRow(page, meal, day);
+  const from = await centre(row);
+
+  const held = await press(page, from, 0);
+  await held.moveTo({ x: from.x - 60, y: from.y });
+  await held.release();
+
+  const remove = page.getByRole("button", {
+    name: `Remove ${meal} from ${day}`,
+    exact: true,
+  });
+  await expect(remove).toBeVisible();
+  await expect
+    .poll(async () => Math.round((await centre(row)).x - from.x))
+    .toBeLessThan(-20);
+  await expect(page.locator("[data-gap], [data-stand-in]")).toHaveCount(0);
+  await remove.click();
+  await expect(plannedMealRow(page, meal, day)).toHaveCount(0);
 });
 
 test("the Remove action opens by keyboard focus on a desktop", async ({

@@ -140,7 +140,8 @@ History needs the server, and says so while offline.
 - Targets are at least 44px. Lines swipe left to reveal actions; on a
   desktop, keyboard focus reaches them too. A planned meal drags after a
   250ms hold anywhere on its row on a phone, and a finger that moves sideways
-  first swipes instead; a mouse drags it after 8px. The dragged meal follows
+  first swipes instead; a mouse lifts it after 8px up or down, and a sideways
+  mouse movement swipes it. The dragged meal follows
   the pointer, and a dimmed stand-in keeps its place in the day it came from,
   so nothing above the pointer moves. Where it would land, the rows part to
   open a gap the height of a row, and the day is outlined. The upper half of
