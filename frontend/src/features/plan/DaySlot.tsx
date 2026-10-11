@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import { useId } from "react";
 import { Picture } from "@/components/Picture";
 import { SwipeRow } from "@/components/SwipeRow";
+import { placeAdHoc } from "@/domain/plan";
+import { useWrite } from "@/hooks/useWrite";
 import { formatDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { PlannedMeal } from "@/store/types";
@@ -128,7 +130,7 @@ function StandInRow({ row, index }: { row: SlotRow; index: number }) {
   );
 }
 
-/** The "Add a meal" row at the end of a day, which opens the picker and takes a drop at the end of the day. */
+/** The row at the end of a day: "Add a meal" opens the picker, "Whatever" adds an empty meal at once, and the whole row takes a drop at the end of the day. */
 function AddMealRow({
   position,
   index,
@@ -138,6 +140,7 @@ function AddMealRow({
   index: number;
   dayLabel: string;
 }) {
+  const write = useWrite();
   const data: DropData = { kind: "day", position };
   const { setNodeRef } = useDroppable({ id: dayEndId(position), data });
   return (
@@ -145,17 +148,25 @@ function AddMealRow({
       ref={setNodeRef}
       data-row-index={index}
       data-slide={dayEndId(position)}
-      className="border-line border-t"
+      className="flex border-line border-t"
     >
       <Link
         to="/plan/pick/$position"
         params={{ position: String(position) }}
         aria-label={`Add a meal to ${dayLabel}`}
         draggable={false}
-        className="flex min-h-12 items-center px-3 text-sm font-semibold text-accent hover:bg-soft"
+        className="flex min-h-12 flex-1 items-center px-3 text-sm font-semibold text-accent hover:bg-soft"
       >
         + Add a meal
       </Link>
+      <button
+        type="button"
+        aria-label={`Add Whatever to ${dayLabel}`}
+        onClick={() => void write((w) => placeAdHoc(w, position, "Whatever"))}
+        className="flex min-h-12 items-center px-3 text-sm font-semibold text-accent hover:bg-soft"
+      >
+        + Whatever
+      </button>
     </li>
   );
 }

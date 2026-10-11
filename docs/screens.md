@@ -28,7 +28,9 @@ than one.
   name that is a meal's, ignoring case and spaces at the ends, has no such
   row. Enter picks the meal of exactly that name, and otherwise uses the name
   as it is. The meal goes at the end of the day. Picking a library meal goes
-  back to the Plan; an ad-hoc meal opens in its place.
+  back to the Plan; an ad-hoc meal opens in its place. Beside "Add a meal",
+  "+ Whatever" adds an empty meal called Whatever to the day with no further
+  screen; it can be renamed and given lines from the meal's screen.
 - "Start new plan from <date>", a row under the last day, which asks for a
   confirm.
 
