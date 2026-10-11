@@ -51,7 +51,13 @@ import {
   settle,
   shownOrder,
 } from "./drop";
-import { type ShownAt, settledRect, shownNow, slideFrom } from "./slide";
+import {
+  type ShownAt,
+  settledRect,
+  shownNow,
+  slideFrom,
+  slideMs,
+} from "./slide";
 
 /** A mouse lifts a planned meal once it moves 8px; a finger lifts it after a 250ms hold, so a swipe or a scroll that starts on a row still swipes or scrolls. */
 export const plannedMealDragSensorOptions = {
@@ -306,7 +312,7 @@ export function DayList({
           );
         })}
       </ol>
-      <DragOverlay>
+      <DragOverlay dropAnimation={{ duration: slideMs, easing: "ease" }}>
         {heldMeal && (
           <div className="flex min-h-[62px] items-center gap-2.5 rounded-[14px] border border-accent bg-surface px-2.5 py-2 shadow-lg">
             <Picture

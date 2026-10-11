@@ -465,6 +465,155 @@ test("the days below slide to make room for a gap and slide back when the stand-
   await removeFromDay(page, second, secondDay);
 });
 
+/** One frame of the probe: when it was drawn, and each sliding element's identity, slide key and top on the screen. */
+interface ProbeFrame {
+  time: number;
+  tops: [number, string, number][];
+}
+
+/** Samples every card and row with a slide key on every frame until the returned function stops it and hands back the frames. */
+async function startFrameProbe(
+  page: Parameters<typeof mealNamesOn>[0],
+): Promise<() => Promise<ProbeFrame[]>> {
+  await page.evaluate(() => {
+    const identities = new WeakMap<Element, number>();
+    let nextIdentity = 0;
+    const probe = { frames: [] as ProbeFrame[], running: true };
+    const frame = (time: number) => {
+      const tops: [number, string, number][] = [];
+      for (const element of document.querySelectorAll<HTMLElement>(
+        "[data-slide]",
+      )) {
+        if (!identities.has(element)) {
+          identities.set(element, nextIdentity);
+          nextIdentity += 1;
+        }
+        tops.push([
+          identities.get(element) ?? 0,
+          element.dataset.slide ?? "",
+          element.getBoundingClientRect().top,
+        ]);
+      }
+      probe.frames.push({ time, tops });
+      if (probe.running) {
+        requestAnimationFrame(frame);
+      }
+    };
+    requestAnimationFrame(frame);
+    Object.assign(window, { frameProbe: probe });
+  });
+  return () =>
+    page.evaluate(() => {
+      const probe = (
+        window as unknown as {
+          frameProbe: { frames: ProbeFrame[]; running: boolean };
+        }
+      ).frameProbe;
+      probe.running = false;
+      return probe.frames;
+    });
+}
+
+/** A change of speed no slide makes: which element, its speeds before and after in pixels a frame, and when. */
+interface Jump {
+  slideKey: string;
+  time: number;
+  speeds: [number, number];
+}
+
+/** Every element that stayed mounted and changed speed by more than 20 pixels a frame from one frame to the next; an eased 200ms slide of two rows changes by about 10. */
+function jumpsIn(frames: readonly ProbeFrame[]): Jump[] {
+  const jumps: Jump[] = [];
+  const speeds = new Map<number, number>();
+  for (let at = 1; at < frames.length; at += 1) {
+    const previous = frames[at - 1];
+    const current = frames[at];
+    if (!previous || !current) {
+      continue;
+    }
+    // Speeds are per 60Hz frame, so a dropped frame does not read as a jump.
+    const frameShare = (current.time - previous.time) / (1000 / 60);
+    const before = new Map(
+      previous.tops.map(([identity, , top]) => [identity, top]),
+    );
+    const seen = new Set<number>();
+    for (const [identity, slideKey, top] of current.tops) {
+      const was = before.get(identity);
+      if (was === undefined) {
+        continue;
+      }
+      seen.add(identity);
+      const speed = (top - was) / frameShare;
+      const lastSpeed = speeds.get(identity) ?? 0;
+      if (Math.abs(speed - lastSpeed) > 20) {
+        jumps.push({
+          slideKey,
+          time: Math.round(current.time),
+          speeds: [Math.round(lastSpeed), Math.round(speed)],
+        });
+      }
+      speeds.set(identity, speed);
+    }
+    for (const identity of speeds.keys()) {
+      if (!seen.has(identity)) {
+        speeds.delete(identity);
+      }
+    }
+  }
+  return jumps;
+}
+
+test("no card or row jumps while a meal drags across days and lands", async ({
+  page,
+}) => {
+  const names = [uniqueName("Ramen"), uniqueName("Dal"), uniqueName("Pho")];
+  const other = uniqueName("Laksa");
+  await openApp(page, "/meals");
+  for (const name of [...names, other]) {
+    await addMeal(page, name, []);
+  }
+  const day = await placeOnDay(page, names[0] ?? "", 0);
+  await placeOnDay(page, names[1] ?? "", 0);
+  await placeOnDay(page, names[2] ?? "", 0);
+  const otherDay = await placeOnDay(page, other, 1);
+  const [first, second] = names;
+  const secondCentre = await centre(plannedMealRow(page, second ?? "", day));
+  const otherCentre = await centre(plannedMealRow(page, other, otherDay));
+  const otherAddMeal = dayCard(page, otherDay).getByRole("link", {
+    name: /^Add a meal to /,
+  });
+
+  const stopProbe = await startFrameProbe(page);
+  const held = await press(
+    page,
+    await centre(plannedMealRow(page, first ?? "", day)),
+    test.info().project.use.hasTouch ? 300 : 0,
+  );
+  // A gap within the day, after the second meal.
+  await held.sweepTo({ x: secondCentre.x, y: secondCentre.y + 15 });
+  // On to the other day while the first slide still runs.
+  await held.sweepTo({ x: otherCentre.x, y: otherCentre.y - 15 });
+  // To the end of the other day.
+  await held.moveTo(await centre(otherAddMeal));
+  await held.moveTo(await centre(otherAddMeal));
+  await held.release();
+  await page.waitForTimeout(600);
+  const frames = await stopProbe();
+
+  expect(frames.length).toBeGreaterThan(60);
+  expect(jumpsIn(frames)).toEqual([]);
+  expect(await orderOf(page, otherDay, [first ?? "", other])).toEqual([
+    other,
+    first,
+  ]);
+
+  await page.waitForTimeout(100);
+  await removeFromDay(page, first ?? "", otherDay);
+  await removeFromDay(page, second ?? "", day);
+  await removeFromDay(page, names[2] ?? "", day);
+  await removeFromDay(page, other, otherDay);
+});
+
 test("a swipe removes one meal from a day on a phone", async ({ page }) => {
   test.skip(!test.info().project.use.hasTouch, "a swipe needs a finger");
   const meal = uniqueName("Curry");

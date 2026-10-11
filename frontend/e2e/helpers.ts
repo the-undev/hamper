@@ -231,6 +231,8 @@ async function plannedRowsSettled(page: Page): Promise<void> {
 export interface Press {
   /** Moves the pointer to a point in twelve steps, then waits for the Plan's rows to settle. */
   moveTo(to: Point): Promise<void>;
+  /** Moves the pointer to a point in twelve steps without waiting for anything to settle. */
+  sweepTo(to: Point): Promise<void>;
   /** Lifts the pointer where it is. */
   release(): Promise<void>;
 }
@@ -255,12 +257,16 @@ export async function press(
     if (holdMs > 0) {
       await page.waitForTimeout(holdMs);
     }
+    const sweepTo = async (to: Point) => {
+      for (const point of pathTo(to)) {
+        await touch(session, "touchMove", point);
+      }
+      at = to;
+    };
     return {
+      sweepTo,
       moveTo: async (to) => {
-        for (const point of pathTo(to)) {
-          await touch(session, "touchMove", point);
-        }
-        at = to;
+        await sweepTo(to);
         await plannedRowsSettled(page);
       },
       release: async () => {
@@ -274,12 +280,17 @@ export async function press(
   if (holdMs > 0) {
     await page.waitForTimeout(holdMs);
   }
+  const sweepTo = async (to: Point) => {
+    for (const point of pathTo(to)) {
+      await page.mouse.move(point.x, point.y);
+    }
+    at = to;
+  };
   return {
+    sweepTo,
     moveTo: async (to) => {
-      for (const point of pathTo(to)) {
-        await page.mouse.move(point.x, point.y);
-      }
-      at = to;
+      await sweepTo(to);
+      await plannedRowsSettled(page);
     },
     release: () => page.mouse.up(),
   };
