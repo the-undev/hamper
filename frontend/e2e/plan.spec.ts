@@ -471,7 +471,7 @@ interface ProbeFrame {
   tops: [number, string, number][];
 }
 
-/** Samples every card and row with a slide key on every frame until the returned function stops it and hands back the frames. */
+/** Samples every card, day header and row with a slide key on every frame until the returned function stops it and hands back the frames. */
 async function startFrameProbe(
   page: Parameters<typeof mealNamesOn>[0],
 ): Promise<() => Promise<ProbeFrame[]>> {
@@ -482,15 +482,18 @@ async function startFrameProbe(
     const frame = (time: number) => {
       const tops: [number, string, number][] = [];
       for (const element of document.querySelectorAll<HTMLElement>(
-        "[data-slide]",
+        "[data-slide], [data-position] h2",
       )) {
         if (!identities.has(element)) {
           identities.set(element, nextIdentity);
           nextIdentity += 1;
         }
+        const key =
+          element.dataset.slide ??
+          `header-${element.closest<HTMLElement>("[data-position]")?.dataset.position}`;
         tops.push([
           identities.get(element) ?? 0,
-          element.dataset.slide ?? "",
+          element.hasAttribute("data-gap") ? `gap:${key}` : key,
           element.getBoundingClientRect().top,
         ]);
       }
@@ -612,6 +615,42 @@ test("no card or row jumps while a meal drags across days and lands", async ({
   await removeFromDay(page, second ?? "", day);
   await removeFromDay(page, names[2] ?? "", day);
   await removeFromDay(page, other, otherDay);
+});
+
+test("nothing jumps while a meal drags down empty days and back", async ({
+  page,
+}) => {
+  const korma = uniqueName("Korma");
+  const beans = uniqueName("Beans on toast");
+  await openApp(page, "/meals");
+  await addMeal(page, korma, []);
+  await addMeal(page, beans, []);
+  const firstDay = await placeOnDay(page, korma, 0);
+  await placeOnDay(page, beans, 0);
+  const dayLabels = await page.locator("[data-position] h2").allTextContents();
+  const heading = (dayIndex: number) =>
+    dayCard(page, dayLabels[dayIndex] ?? "").getByRole("heading");
+  for (const dayIndex of [1, 2, 3]) {
+    expect(await mealNamesOn(page, dayLabels[dayIndex] ?? "")).toEqual([]);
+  }
+
+  const stopProbe = await startFrameProbe(page);
+  const held = await press(
+    page,
+    await centre(plannedMealRow(page, beans, firstDay)),
+    test.info().project.use.hasTouch ? 300 : 0,
+  );
+  for (const dayIndex of [1, 2, 3, 2, 1]) {
+    await held.moveTo(await centre(heading(dayIndex)));
+  }
+  await held.release();
+  await page.waitForTimeout(600);
+  const frames = await stopProbe();
+  expect(jumpsIn(frames)).toEqual([]);
+  await expect(plannedMealRow(page, beans, dayLabels[1] ?? "")).toBeVisible();
+  await page.waitForTimeout(100);
+  await removeFromDay(page, beans, dayLabels[1] ?? "");
+  await removeFromDay(page, korma, firstDay);
 });
 
 test("a swipe removes one meal from a day on a phone", async ({ page }) => {
