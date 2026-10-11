@@ -355,6 +355,116 @@ test("a dropped meal lands in its gap and does not return to where it came from"
   await removeFromDay(page, second, secondDay);
 });
 
+/** Records the screen top of each named day card on every frame until the returned function stops it and hands back the tops. */
+async function watchCardTops(
+  page: Parameters<typeof mealNamesOn>[0],
+  dayLabels: readonly string[],
+): Promise<() => Promise<Record<string, number[]>>> {
+  await page.evaluate((labels) => {
+    const tops: Record<string, number[]> = Object.fromEntries(
+      labels.map((label) => [label, []]),
+    );
+    const watch = { tops, running: true };
+    const frame = () => {
+      for (const card of document.querySelectorAll("[data-position]")) {
+        const label = card.querySelector("h2")?.textContent ?? "";
+        tops[label]?.push(card.getBoundingClientRect().top);
+      }
+      if (watch.running) {
+        requestAnimationFrame(frame);
+      }
+    };
+    requestAnimationFrame(frame);
+    Object.assign(window, { cardWatch: watch });
+  }, dayLabels);
+  return () =>
+    page.evaluate(() => {
+      const watch = (
+        window as unknown as {
+          cardWatch: { tops: Record<string, number[]>; running: boolean };
+        }
+      ).cardWatch;
+      watch.running = false;
+      return watch.tops;
+    });
+}
+
+/** Whether a card's tops went from one place to another through at least one place between. */
+function slid(tops: readonly number[], from: number, to: number): boolean {
+  const low = Math.min(from, to) + 1;
+  const high = Math.max(from, to) - 1;
+  return (
+    Math.abs((tops[0] ?? 0) - from) < 1 &&
+    Math.abs((tops.at(-1) ?? 0) - to) < 1 &&
+    tops.some((top) => top > low && top < high)
+  );
+}
+
+test("the days below slide to make room for a gap and slide back when the stand-in goes", async ({
+  page,
+}) => {
+  const first = uniqueName("Tagine");
+  const second = uniqueName("Gnocchi");
+  await openApp(page, "/meals");
+  await addMeal(page, first, []);
+  await addMeal(page, second, []);
+  const firstDay = await placeOnDay(page, first, 0);
+  const secondDay = await placeOnDay(page, second, 1);
+  const thirdDay =
+    (
+      await page
+        .getByRole("link", { name: /^Add a meal to / })
+        .nth(2)
+        .getAttribute("aria-label")
+    )?.replace("Add a meal to ", "") ?? "";
+  const cardTop = async (dayLabel: string) =>
+    (await dayCard(page, dayLabel).boundingBox())?.y ?? 0;
+  const rowHeight =
+    (
+      await plannedMealRow(page, first, firstDay)
+        .locator("xpath=ancestor::li[1]")
+        .boundingBox()
+    )?.height ?? 0;
+  const secondTop = await cardTop(secondDay);
+  const thirdTop = await cardTop(thirdDay);
+  const secondCentre = await centre(plannedMealRow(page, second, secondDay));
+
+  const held = await press(
+    page,
+    await centre(plannedMealRow(page, first, firstDay)),
+    test.info().project.use.hasTouch ? 300 : 0,
+  );
+  const opening = await watchCardTops(page, [secondDay, thirdDay]);
+  await held.moveTo({ x: secondCentre.x, y: secondCentre.y - 15 });
+  await expect
+    .poll(async () => Math.round(await cardTop(thirdDay)))
+    .toBe(Math.round(thirdTop + rowHeight));
+  const opened = await opening();
+  await expect(dayCard(page, secondDay).locator("[data-gap]")).toHaveCount(1);
+  expect(slid(opened[thirdDay] ?? [], thirdTop, thirdTop + rowHeight)).toBe(
+    true,
+  );
+  expect(opened[secondDay]?.every((top) => top === secondTop)).toBe(true);
+
+  const closing = await watchCardTops(page, [secondDay, thirdDay]);
+  await held.release();
+  await expect
+    .poll(async () => Math.round(await cardTop(secondDay)))
+    .toBe(Math.round(secondTop - rowHeight));
+  await page.waitForTimeout(300);
+  const closed = await closing();
+  expect(slid(closed[secondDay] ?? [], secondTop, secondTop - rowHeight)).toBe(
+    true,
+  );
+  expect(slid(closed[thirdDay] ?? [], thirdTop + rowHeight, thirdTop)).toBe(
+    true,
+  );
+
+  await page.waitForTimeout(100);
+  await removeFromDay(page, first, secondDay);
+  await removeFromDay(page, second, secondDay);
+});
+
 test("a swipe removes one meal from a day on a phone", async ({ page }) => {
   test.skip(!test.info().project.use.hasTouch, "a swipe needs a finger");
   const meal = uniqueName("Curry");

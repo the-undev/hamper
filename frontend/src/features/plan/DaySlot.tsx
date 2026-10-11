@@ -1,7 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { type AnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
 import { Link } from "@tanstack/react-router";
-import { type CSSProperties, useId } from "react";
+import { useId } from "react";
 import { Picture } from "@/components/Picture";
 import { SwipeRow } from "@/components/SwipeRow";
 import { formatDay } from "@/lib/dates";
@@ -25,26 +25,8 @@ export interface SlotRow {
   look: "plain" | "held" | "gap" | "standIn";
 }
 
-/** A row slides to its new place during a drag and just after the drop, and nowhere else. */
-const animateWhileSorting: AnimateLayoutChanges = ({
-  isSorting,
-  wasDragging,
-}) => isSorting || wasDragging;
-
-/** The style that slides a row to its new place. */
-function slideStyle({
-  transform,
-  transition,
-}: Pick<ReturnType<typeof useSortable>, "transform" | "transition">):
-  | CSSProperties
-  | undefined {
-  return {
-    transform: transform
-      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      : undefined,
-    transition,
-  };
-}
+/** The rows slide through slide.ts with their cards, so dnd-kit animates none of them. */
+const noLayoutAnimation: AnimateLayoutChanges = () => false;
 
 /** One planned meal: tapping opens it, a hold anywhere on it (a press with a mouse) lifts it, and a swipe left reveals Remove; while it is held elsewhere it is the gap where it would land. */
 function PlannedMealRow({
@@ -60,11 +42,11 @@ function PlannedMealRow({
 }) {
   const { plannedMeal, imageId, summary } = row.view;
   const data: DropData = { kind: "meal", plannedMeal };
-  const { setNodeRef, setActivatorNodeRef, attributes, listeners, ...slide } =
+  const { setNodeRef, setActivatorNodeRef, attributes, listeners } =
     useSortable({
       id: plannedMeal.id,
       data,
-      animateLayoutChanges: animateWhileSorting,
+      animateLayoutChanges: noLayoutAnimation,
     });
   const gap = row.look === "gap";
   return (
@@ -72,7 +54,7 @@ function PlannedMealRow({
       ref={setNodeRef}
       data-row-index={index}
       data-gap={gap || undefined}
-      style={slideStyle(slide)}
+      data-slide={plannedMeal.id}
       className={cn("border-line border-t", gap && "bg-soft *:invisible")}
     >
       <SwipeRow
@@ -120,19 +102,14 @@ function PlannedMealRow({
 function StandInRow({ row, index }: { row: SlotRow; index: number }) {
   const { plannedMeal, imageId, summary } = row.view;
   const data: DropData = { kind: "standIn" };
-  const { setNodeRef, ...slide } = useSortable({
-    id: standInId,
-    data,
-    disabled: { draggable: true, droppable: false },
-    animateLayoutChanges: animateWhileSorting,
-  });
+  const { setNodeRef } = useDroppable({ id: standInId, data });
   return (
     <li
       ref={setNodeRef}
       aria-hidden
       data-row-index={index}
       data-stand-in
-      style={slideStyle(slide)}
+      data-slide={standInId}
       className="border-line border-t"
     >
       <div className="flex min-h-[62px] items-center gap-2.5 px-2.5 py-2 opacity-40">
@@ -161,17 +138,12 @@ function AddMealRow({
   dayLabel: string;
 }) {
   const data: DropData = { kind: "day", position };
-  const { setNodeRef, ...slide } = useSortable({
-    id: dayEndId(position),
-    data,
-    disabled: { draggable: true, droppable: false },
-    animateLayoutChanges: animateWhileSorting,
-  });
+  const { setNodeRef } = useDroppable({ id: dayEndId(position), data });
   return (
     <li
       ref={setNodeRef}
       data-row-index={index}
-      style={slideStyle(slide)}
+      data-slide={dayEndId(position)}
       className="border-line border-t"
     >
       <Link
@@ -211,6 +183,7 @@ export function DaySlot({
     <li
       ref={setNodeRef}
       data-position={position}
+      data-slide={dayCardId(position)}
       aria-labelledby={headingId}
       className={cn(
         "overflow-hidden rounded-[14px] border border-line bg-surface",

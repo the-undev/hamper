@@ -71,3 +71,9 @@ Element.prototype.hasPointerCapture = () => false;
 
 // jsdom has no ResizeObserver; tests report sizes through resizeTo.
 window.ResizeObserver = FakeResizeObserver;
+
+// jsdom has no Web Animations; the Plan slides its cards and rows with them.
+Element.prototype.getAnimations = () => [];
+Element.prototype.animate = () =>
+  // Nothing in a test reads the animation back.
+  ({ cancel: () => {} }) as unknown as Animation;

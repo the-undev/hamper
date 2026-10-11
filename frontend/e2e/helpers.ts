@@ -206,6 +206,13 @@ async function touch(
 
 /** Waits until no day card or row on the Plan is still sliding to its place. */
 async function plannedRowsSettled(page: Page): Promise<void> {
+  // Two frames give the page time to render the last move and start any slide it causes.
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
   await page.waitForFunction(() =>
     document
       .getAnimations()

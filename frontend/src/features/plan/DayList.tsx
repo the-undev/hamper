@@ -37,7 +37,6 @@ import { DaySlot, type PlannedMealView, type SlotRow } from "./DaySlot";
 import {
   type DropData,
   type DropPlace,
-  dayEndId,
   dropCollisions,
   dropKeyboardCoordinates,
   dropPlace,
@@ -51,8 +50,8 @@ import {
   rowsOf,
   settle,
   shownOrder,
-  standInId,
 } from "./drop";
+import { type ShownAt, settledRect, shownNow, slideFrom } from "./slide";
 
 /** A mouse lifts a planned meal once it moves 8px; a finger lifts it after a 250ms hold, so a swipe or a scroll that starts on a row still swipes or scrolls. */
 export const plannedMealDragSensorOptions = {
@@ -60,7 +59,7 @@ export const plannedMealDragSensorOptions = {
   touch: { activationConstraint: { delay: 250, tolerance: 8 } },
 } as const;
 
-/** The sorting strategy shifts nothing: the rows move because the landing's order moves the lifted meal, and each row animates its own change of place. */
+/** The sorting strategy shifts nothing: the rows move because the landing's order moves the lifted meal, and slide.ts animates every change of place. */
 const holdStill: SortingStrategy = () => null;
 
 /** Where a drag over a droppable would land the lifted meal, with the pointer's height deciding before or after the row under it. */
@@ -105,10 +104,28 @@ export function DayList({
   // The ref holds the landing the handlers last set, which a render may not have caught up with.
   const landingRef = useRef<Landing | null>(null);
   const [landing, setLandingState] = useState<Landing | null>(null);
+  const listRef = useRef<HTMLOListElement>(null);
+  // Where the cards and rows showed before the landing changed, until the change is on the screen.
+  const shownBefore = useRef<Map<string, ShownAt> | null>(null);
   const setLanding = useCallback((next: Landing | null): void => {
+    if (
+      next !== landingRef.current &&
+      listRef.current &&
+      !shownBefore.current
+    ) {
+      shownBefore.current = shownNow(listRef.current);
+    }
     landingRef.current = next;
     setLandingState(next);
   }, []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new landing is what moved the cards and rows; the effect does not read it.
+  useLayoutEffect(() => {
+    const before = shownBefore.current;
+    shownBefore.current = null;
+    if (before && listRef.current) {
+      slideFrom(listRef.current, before);
+    }
+  }, [landing]);
   const sensors = useSensors(
     useSensor(MouseSensor, plannedMealDragSensorOptions.mouse),
     useSensor(TouchSensor, plannedMealDragSensorOptions.touch),
@@ -246,6 +263,10 @@ export function DayList({
     <DndContext
       sensors={sensors}
       collisionDetection={dropCollisions}
+      measuring={{
+        draggable: { measure: settledRect },
+        droppable: { measure: settledRect },
+      }}
       accessibility={{ announcements }}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
@@ -254,19 +275,16 @@ export function DayList({
       onDragCancel={() => setLanding(null)}
     >
       <MeasureAfterMoves trigger={shown} />
-      <ol className="m-0 flex list-none flex-col gap-2 p-0">
+      <ol ref={listRef} className="m-0 flex list-none flex-col gap-2 p-0">
         {positions.map((position) => {
           const rows = slotRowsAt(position);
           return (
             <SortableContext
               key={position}
               id={`day-meals-${position}`}
-              items={[
-                ...rows.map((row) =>
-                  row.look === "standIn" ? standInId : row.view.plannedMeal.id,
-                ),
-                dayEndId(position),
-              ]}
+              items={rows.flatMap((row) =>
+                row.look === "standIn" ? [] : [row.view.plannedMeal.id],
+              )}
               strategy={holdStill}
             >
               <DaySlot

@@ -146,8 +146,8 @@ History needs the server, and says so while offline.
   open a gap the height of a row, and the day is outlined. The upper half of
   a row puts the gap before it and the lower half after it; a day's "Add a
   meal" row or its header puts it at the end of the day. A pointer over the
-  gap keeps it where it is, and one over the stand-in takes it back. The
-  rows of the day slide to their new places. On release the meal
+  gap keeps it where it is, and one over the stand-in takes it back. Rows,
+  and the day cards below, slide to their new places. On release the meal
   settles into the gap and the stand-in closes; released over nothing, or
   with Escape, the meal goes back. With the keyboard, a row's Move button
   lifts it, the arrow keys move the gap through the days and Space drops
