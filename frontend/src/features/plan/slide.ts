@@ -46,7 +46,7 @@ export function shownNow(list: HTMLElement): Map<string, ShownAt> {
   return shown;
 }
 
-/** Slides every card and row from where it shows to where the layout now puts it; a row inside a card slides only by its move within the card, and a row that changed card appears in place. */
+/** Slides every card and row from where it shows to where the layout now puts it; a row inside a card slides only by its move within the card. A row that changed card, and the gap (the lifted meal's own row), appear where they land and ride only their card's slide. */
 export function slideFrom(
   list: HTMLElement,
   before: ReadonlyMap<string, ShownAt>,
@@ -70,6 +70,9 @@ export function slideFrom(
   // Cards come before their rows in the document, so a row finds its card's slide already worked out.
   const shifts = new Map<HTMLElement, number>();
   for (const element of elements) {
+    if (element.hasAttribute("data-gap")) {
+      continue;
+    }
     const was = before.get(element.dataset.slide ?? "");
     const card = cardOf(element);
     if (!was || was.card !== (card?.dataset.slide ?? null)) {

@@ -59,9 +59,9 @@ import {
   slideMs,
 } from "./slide";
 
-/** A mouse lifts a planned meal once it moves 8px; a finger lifts it after a 250ms hold, so a swipe or a scroll that starts on a row still swipes or scrolls. */
+/** A mouse lifts a planned meal once it moves 8px up or down and lets go of it if it moves 8px sideways first, so a sideways swipe reaches the row; a finger lifts it after a 250ms hold, so a swipe or a scroll that starts on a row still swipes or scrolls. */
 export const plannedMealDragSensorOptions = {
-  mouse: { activationConstraint: { distance: 8 } },
+  mouse: { activationConstraint: { distance: { y: 8 }, tolerance: { x: 8 } } },
   touch: { activationConstraint: { delay: 250, tolerance: 8 } },
 } as const;
 

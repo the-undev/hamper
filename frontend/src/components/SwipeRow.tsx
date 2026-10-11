@@ -74,10 +74,6 @@ export function SwipeRow({
     if (target.closest('input, [role="checkbox"]')) {
       return;
     }
-    // A mouse press on a draggable row drags it; a finger swipes before the hold that lifts it.
-    if (event.pointerType === "mouse" && target.closest("[data-drag-handle]")) {
-      return;
-    }
     start.current = { x: event.clientX, y: event.clientY, swiping: false };
     swiped.current = false;
   };

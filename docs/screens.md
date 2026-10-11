@@ -140,10 +140,12 @@ History needs the server, and says so while offline.
 - Targets are at least 44px. Lines swipe left to reveal actions; on a
   desktop, keyboard focus reaches them too. A planned meal drags after a
   250ms hold anywhere on its row on a phone, and a finger that moves sideways
-  first swipes instead; a mouse drags it after 8px. The dragged meal follows
+  first swipes instead; a mouse lifts it after 8px up or down, and a sideways
+  mouse movement swipes it. The dragged meal follows
   the pointer, and a dimmed stand-in keeps its place in the day it came from,
   so nothing above the pointer moves. Where it would land, the rows part to
-  open a gap the height of a row, and the day is outlined. The upper half of
+  open a gap the height of a row, and the day is outlined. The gap appears
+  where it will land and does not travel from the stand-in. The upper half of
   a row puts the gap before it and the lower half after it; a day's "Add a
   meal" row or its header puts it at the end of the day. A pointer over the
   gap keeps it where it is, and one over the stand-in takes it back. Rows,
