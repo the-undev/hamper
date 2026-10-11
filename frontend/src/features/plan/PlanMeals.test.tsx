@@ -409,6 +409,14 @@ test("a_filled_days_link_is_not_natively_draggable", async () => {
   );
 });
 
+test("an_add_a_meal_link_is_not_natively_draggable", async () => {
+  renderApp("/plan", db, fakeLoop());
+
+  expect(
+    await screen.findByRole("link", { name: `Add a meal to ${monday}` }),
+  ).toHaveAttribute("draggable", "false");
+});
+
 function slotAt(position: number): HTMLElement {
   const element = document.querySelector<HTMLElement>(
     `[data-position="${position}"]`,

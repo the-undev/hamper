@@ -150,6 +150,7 @@ function AddMealRow({
         to="/plan/pick/$position"
         params={{ position: String(position) }}
         aria-label={`Add a meal to ${dayLabel}`}
+        draggable={false}
         className="flex min-h-12 items-center px-3 text-sm font-semibold text-accent hover:bg-soft"
       >
         + Add a meal
