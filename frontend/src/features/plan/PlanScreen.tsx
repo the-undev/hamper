@@ -92,7 +92,7 @@ export function PlanScreen() {
         title="Plan"
         actions={plan ? <PlanRange plan={plan} /> : undefined}
       />
-      <div className="sticky top-0 z-10 -mx-4 bg-surface px-4">
+      <div className="sticky top-0 z-10 -mx-4 -mt-3 bg-surface px-4 pt-3">
         <TabsList aria-label="Plan view">
           {views.map((planView) => (
             <TabsTrigger key={planView.value} value={planView.value}>
