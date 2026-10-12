@@ -8,7 +8,7 @@ test("the_manifest_opens_hamper_standalone_at_the_root_with_its_icons", () => {
     display: "standalone",
     start_url: "/",
     theme_color: "#2f7d4a",
-    background_color: "#ffffff",
+    background_color: "#2f7d4a",
   });
   expect(
     manifest.icons?.map((icon) => `${icon.src} ${icon.sizes} ${icon.purpose}`),

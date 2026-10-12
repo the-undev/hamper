@@ -61,6 +61,18 @@ A reverse proxy on the host with a certificate for a local name would give
 every device on the local network the full app without a VPN. It is a host
 change, not an app change; only the address moves.
 
+### Firefox for Android home screen icon
+
+Installing from Firefox for Android gives a blank home screen icon, while
+Chrome on the same phone shows the basket. The server, the image, the
+manifest, the icons and the precache were checked and are right. Firefox
+downloads the manifest icons with its own client, and when that fails it draws
+a fallback: the first letter of the host in white on the manifest background
+colour. With a white background that fallback was blank, so the background is
+now the accent green and the fallback is at least visible. Why the download
+fails over the household's HTTPS Tailscale route is unknown. The open Firefox
+report is https://github.com/mozilla-mobile/fenix/issues/9916.
+
 ### Who changed what
 
 A proxy that knows who is connecting can pass the name in a request header

@@ -177,29 +177,40 @@ test.describe("a placeholder is fainter than typed text", () => {
   }
 });
 
-test("the Plan tabs stay under the header while the days scroll", async ({
-  page,
-}) => {
+test("the Plan tabs do not move while the days scroll", async ({ page }) => {
   await openApp(page, "/plan");
   await planView(page, "Meals");
   const scrollArea = page.locator("[data-scroll-area]");
   const firstDay = page.getByRole("listitem").first();
   await expect(firstDay).toBeVisible();
+  const tabList = page.getByRole("tablist", { name: "Plan view" });
+  await expect(tabList).toBeVisible();
+  const restingTabListBox = await tabList.boundingBox();
+  const restingFirstDayBox = await firstDay.boundingBox();
+  expect(restingFirstDayBox?.y ?? 0).toBeGreaterThanOrEqual(
+    (restingTabListBox?.y ?? 0) + (restingTabListBox?.height ?? 0) + 14,
+  );
+
   await scrollArea.evaluate((area) => area.scrollTo(0, 300));
   await expect
     .poll(() => scrollArea.evaluate((area) => area.scrollTop))
     .toBeGreaterThan(100);
 
-  const tabList = page.getByRole("tablist", { name: "Plan view" });
-  await expect(tabList).toBeVisible();
-  const headerBox = await page.locator("header").boundingBox();
   const tabListBox = await tabList.boundingBox();
   const firstDayBox = await firstDay.boundingBox();
-  expect(tabListBox?.y).toBeCloseTo(
-    (headerBox?.y ?? 0) + (headerBox?.height ?? 0),
-    0,
-  );
+  expect(tabListBox?.y ?? 0).toBeCloseTo(restingTabListBox?.y ?? 0, 0);
   expect(firstDayBox?.y ?? 0).toBeLessThan(
     (tabListBox?.y ?? 0) + (tabListBox?.height ?? 0),
   );
+
+  const probe = {
+    x: (tabListBox?.x ?? 0) + (tabListBox?.width ?? 0) / 2,
+    y: (tabListBox?.y ?? 0) + (tabListBox?.height ?? 0) + 6,
+  };
+  const probeInsideDayCard = await page.evaluate(
+    ({ x, y }) =>
+      document.elementFromPoint(x, y)?.closest("[data-position]") !== null,
+    probe,
+  );
+  expect(probeInsideDayCard).toBe(false);
 });
