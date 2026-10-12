@@ -1,6 +1,6 @@
 import type { ManifestOptions } from "vite-plugin-pwa";
 
-/** The web app manifest; the colours are the light theme's `--accent` and `--background` tokens. */
+/** The web app manifest; its theme and background colours are both the light theme's `--accent`. */
 export const manifest: Partial<ManifestOptions> = {
   name: "hamper",
   short_name: "hamper",
@@ -9,7 +9,7 @@ export const manifest: Partial<ManifestOptions> = {
   start_url: "/",
   scope: "/",
   theme_color: "#2f7d4a",
-  background_color: "#ffffff",
+  background_color: "#2f7d4a",
   icons: [
     {
       src: "/icon-192.png",

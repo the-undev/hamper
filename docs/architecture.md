@@ -357,8 +357,9 @@ so. Share shows only on a secure context. Download writes the same text to a
 ## PWA
 
 The manifest, built by the plugin from `frontend/src/pwa/manifest.ts`, names
-the app `hamper`, opens `/` with `display: standalone`, and takes its theme
-and background colours from the light theme's `--accent` and `--background`.
+the app `hamper`, opens `/` with `display: standalone`, and takes both its
+theme and background colours from the light theme's `--accent` green, so a
+browser that cannot fetch the icons at install still draws a visible fallback.
 Its icons are `frontend/public/icon.svg` rasterised once to `icon-192.png`
 and `icon-512.png`, and to `icon-maskable-512.png` with the corners filled.
 `index.html` carries the same theme colour and `icon-192.png` as the Apple
