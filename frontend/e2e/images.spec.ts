@@ -28,9 +28,10 @@ async function samplePng(page: Page): Promise<Buffer> {
   return Buffer.from(dataUrl.replace("data:image/png;base64,", ""), "base64");
 }
 
-/** Waits until a picture has loaded from the server: the image answers 200 and has pixels. */
+/** Waits until a picture has loaded from the server: it is scrolled on screen, answers 200 and has pixels. */
 async function expectLoaded(picture: Locator): Promise<void> {
   await expect(picture).toBeVisible();
+  await picture.scrollIntoViewIfNeeded();
   await expect
     .poll(() =>
       picture.evaluate((image: HTMLImageElement) => image.naturalWidth),
