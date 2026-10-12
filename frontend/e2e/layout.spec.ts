@@ -186,6 +186,10 @@ test("the Plan tabs do not move while the days scroll", async ({ page }) => {
   const tabList = page.getByRole("tablist", { name: "Plan view" });
   await expect(tabList).toBeVisible();
   const restingTabListBox = await tabList.boundingBox();
+  const restingFirstDayBox = await firstDay.boundingBox();
+  expect(restingFirstDayBox?.y ?? 0).toBeGreaterThanOrEqual(
+    (restingTabListBox?.y ?? 0) + (restingTabListBox?.height ?? 0) + 14,
+  );
 
   await scrollArea.evaluate((area) => area.scrollTo(0, 300));
   await expect
@@ -198,4 +202,15 @@ test("the Plan tabs do not move while the days scroll", async ({ page }) => {
   expect(firstDayBox?.y ?? 0).toBeLessThan(
     (tabListBox?.y ?? 0) + (tabListBox?.height ?? 0),
   );
+
+  const probe = {
+    x: (tabListBox?.x ?? 0) + (tabListBox?.width ?? 0) / 2,
+    y: (tabListBox?.y ?? 0) + (tabListBox?.height ?? 0) + 6,
+  };
+  const probeInsideDayCard = await page.evaluate(
+    ({ x, y }) =>
+      document.elementFromPoint(x, y)?.closest("[data-position]") !== null,
+    probe,
+  );
+  expect(probeInsideDayCard).toBe(false);
 });
