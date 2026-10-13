@@ -39,11 +39,36 @@ async function mealLinks(): Promise<HTMLElement[]> {
   });
 }
 
-/** Whether a view's button in the control is the chosen one. */
+type User = ReturnType<typeof renderApp>["user"];
+
+/** Opens the header menu that chooses the view. */
+async function openViewMenu(user: User): Promise<HTMLElement> {
+  await user.click(screen.getByRole("button", { name: "Show meals as" }));
+  return screen.findByRole("menu");
+}
+
+/** Picks a view from the header menu. */
+async function chooseView(user: User, label: string): Promise<void> {
+  await openViewMenu(user);
+  await user.click(screen.getByRole("menuitemradio", { name: label }));
+}
+
+/** Whether a view's item in the open header menu is the chosen one. */
 function viewChecked(label: string): string | null {
-  return within(screen.getByRole("radiogroup", { name: "Show meals as" }))
-    .getByRole("radio", { name: label })
+  return screen
+    .getByRole("menuitemradio", { name: label })
     .getAttribute("aria-checked");
+}
+
+/** Opens the menu, reads whether a view is chosen, and closes the menu. */
+async function viewCheckedInMenu(
+  user: User,
+  label: string,
+): Promise<string | null> {
+  await openViewMenu(user);
+  const checked = viewChecked(label);
+  await user.keyboard("{Escape}");
+  return checked;
 }
 
 test("the_grid_lists_the_live_meals_and_the_search_filters_it", async () => {
@@ -118,7 +143,7 @@ test("a_card_shows_the_meals_picture", async () => {
 });
 
 test("the_meals_show_as_the_small_grid_by_default", async () => {
-  renderApp("/meals", db, fakeLoop());
+  const { user } = renderApp("/meals", db, fakeLoop());
 
   const cards = await mealLinks();
 
@@ -126,15 +151,19 @@ test("the_meals_show_as_the_small_grid_by_default", async () => {
   for (const card of cards) {
     expect(card.firstElementChild).toHaveClass(...pictureSizes.card.split(" "));
   }
-  expect(viewChecked("Small grid")).toBe("true");
-  expect(viewChecked("List")).toBe("false");
+  expect(screen.getByRole("button", { name: "Show meals as" })).toHaveAttribute(
+    "data-view",
+    "small",
+  );
+  expect(await viewCheckedInMenu(user, "Small grid")).toBe("true");
+  expect(await viewCheckedInMenu(user, "List")).toBe("false");
 });
 
 test("choosing_list_shows_each_meal_as_a_row_and_keeps_the_choice", async () => {
   const { user } = renderApp("/meals", db, fakeLoop());
   await mealLinks();
 
-  await user.click(screen.getByRole("radio", { name: "List" }));
+  await chooseView(user, "List");
 
   const rows = await mealLinks();
   expect(rows.map((row) => row.textContent)).toEqual([
@@ -145,8 +174,12 @@ test("choosing_list_shows_each_meal_as_a_row_and_keeps_the_choice", async () => 
     expect(row.firstElementChild).toHaveClass(...pictureSizes.row.split(" "));
   }
   expect(screen.getByRole("list")).not.toHaveClass(smallGrid);
-  expect(viewChecked("List")).toBe("true");
-  expect(viewChecked("Small grid")).toBe("false");
+  expect(screen.getByRole("button", { name: "Show meals as" })).toHaveAttribute(
+    "data-view",
+    "list",
+  );
+  expect(await viewCheckedInMenu(user, "List")).toBe("true");
+  expect(await viewCheckedInMenu(user, "Small grid")).toBe("false");
   expect(window.localStorage.getItem("hamper.mealsView")).toBe("list");
 });
 
@@ -154,7 +187,7 @@ test("choosing_large_grid_widens_the_cards_and_keeps_the_choice", async () => {
   const { user } = renderApp("/meals", db, fakeLoop());
   await mealLinks();
 
-  await user.click(screen.getByRole("radio", { name: "Large grid" }));
+  await chooseView(user, "Large grid");
 
   const cards = await mealLinks();
   expect(screen.getByRole("list")).toHaveClass(
@@ -164,21 +197,25 @@ test("choosing_large_grid_widens_the_cards_and_keeps_the_choice", async () => {
   for (const card of cards) {
     expect(card.firstElementChild).toHaveClass(...pictureSizes.card.split(" "));
   }
-  expect(viewChecked("Large grid")).toBe("true");
-  expect(viewChecked("Small grid")).toBe("false");
+  expect(screen.getByRole("button", { name: "Show meals as" })).toHaveAttribute(
+    "data-view",
+    "large",
+  );
+  expect(await viewCheckedInMenu(user, "Large grid")).toBe("true");
+  expect(await viewCheckedInMenu(user, "Small grid")).toBe("false");
   expect(window.localStorage.getItem("hamper.mealsView")).toBe("large");
 });
 
 test("a_list_chosen_before_shows_on_opening", async () => {
   window.localStorage.setItem("hamper.mealsView", "list");
-  renderApp("/meals", db, fakeLoop());
+  const { user } = renderApp("/meals", db, fakeLoop());
 
   const rows = await mealLinks();
 
   for (const row of rows) {
     expect(row.firstElementChild).toHaveClass(...pictureSizes.row.split(" "));
   }
-  expect(viewChecked("List")).toBe("true");
+  expect(await viewCheckedInMenu(user, "List")).toBe("true");
 });
 
 test("a_phone_that_blocks_storage_gets_the_small_grid_and_can_still_choose", async () => {
@@ -192,7 +229,7 @@ test("a_phone_that_blocks_storage_gets_the_small_grid_and_can_still_choose", asy
   await mealLinks();
   expect(screen.getByRole("list")).toHaveClass(smallGrid);
 
-  await user.click(screen.getByRole("radio", { name: "List" }));
+  await chooseView(user, "List");
 
-  expect(viewChecked("List")).toBe("true");
+  expect(await viewCheckedInMenu(user, "List")).toBe("true");
 });

@@ -285,11 +285,9 @@ test.describe("the Meals grid on a narrow phone", () => {
       return boxes.filter((box) => box.y === boxes[0]?.y).length;
     };
     const choose = async (label: string) => {
-      const choice = page
-        .getByRole("radiogroup", { name: "Show meals as" })
-        .getByRole("radio", { name: label });
-      await choice.tap();
-      await expect(choice).toHaveAttribute("aria-checked", "true");
+      await page.getByRole("button", { name: "Show meals as" }).tap();
+      await page.getByRole("menuitemradio", { name: label }).tap();
+      await expect(page.getByRole("menu")).toHaveCount(0);
     };
 
     await choose("Large grid");

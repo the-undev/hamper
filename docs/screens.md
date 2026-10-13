@@ -88,9 +88,9 @@ has no action.
 ## Meals
 
 A search and add bar, then the library. A name matching nothing offers "Add
-as a new meal". Under the bar, at the right, icon buttons choose how the
-library shows. List shows a row per meal: a small picture, the name and how
-many items it holds. Small grid shows a card per meal: a square picture over
+as a new meal". A button in the header beside the title, showing the
+current view's icon, opens a menu with the three choices. List shows a row per
+meal: a small picture, the name and how many items it holds. Small grid shows a card per meal: a square picture over
 the name and the item count, three cards across on a phone. Large grid shows
 the same cards wider, two across on a phone. The phone keeps the choice; a new
 phone, or one that blocks storage, gets Small grid.

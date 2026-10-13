@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Grid2x2, Grid3x3, List } from "lucide-react";
-import { RadioGroup } from "radix-ui";
+import { Check, Grid2x2, Grid3x3, List, type LucideIcon } from "lucide-react";
+import { DropdownMenu } from "radix-ui";
 import { useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { Picture } from "@/components/Picture";
@@ -14,11 +14,19 @@ import { useWrite } from "@/hooks/useWrite";
 import { type MealsView, parseMealsView } from "./mealsView";
 import { useMealsView } from "./useMealsView";
 
+/** The icon that stands for each view. */
+const viewIcons = {
+  list: List,
+  small: Grid3x3,
+  large: Grid2x2,
+} satisfies Record<MealsView, LucideIcon>;
+
+/** The views in the order the menu lists them. */
 const viewChoices = [
-  { view: "list", label: "List", Icon: List },
-  { view: "small", label: "Small grid", Icon: Grid3x3 },
-  { view: "large", label: "Large grid", Icon: Grid2x2 },
-] as const;
+  { view: "list", label: "List" },
+  { view: "small", label: "Small grid" },
+  { view: "large", label: "Large grid" },
+] as const satisfies readonly { view: MealsView; label: string }[];
 
 /** Each grid's columns: three cards across a phone for the small grid, two for the large. */
 const gridColumns = {
@@ -26,33 +34,54 @@ const gridColumns = {
   large: "grid-cols-[repeat(auto-fill,minmax(150px,1fr))]",
 } as const;
 
-/** The three icon buttons that choose how the library shows, the chosen one in the accent colour. */
-function MealsViewChoice({
+/** The header button showing the current view's icon, opening a menu of the three views. */
+function MealsViewMenu({
   view,
   onChoose,
 }: {
   view: MealsView;
   onChoose: (view: MealsView) => void;
 }) {
+  const CurrentIcon = viewIcons[view];
   return (
-    <RadioGroup.Root
-      aria-label="Show meals as"
-      orientation="horizontal"
-      value={view}
-      onValueChange={(value) => onChoose(parseMealsView(value))}
-      className="flex self-end"
-    >
-      {viewChoices.map(({ view: choice, label, Icon }) => (
-        <RadioGroup.Item
-          key={choice}
-          value={choice}
-          aria-label={label}
-          className="grid size-11 place-items-center rounded-[10px] text-muted hover:bg-soft data-[state=checked]:text-accent"
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger
+        aria-label="Show meals as"
+        data-view={view}
+        className="grid size-11 place-items-center rounded-[10px] text-muted hover:bg-soft"
+      >
+        <CurrentIcon aria-hidden="true" className="size-5" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={4}
+          className="z-50 min-w-40 rounded-lg bg-popover p-1 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden"
         >
-          <Icon aria-hidden="true" className="size-5" />
-        </RadioGroup.Item>
-      ))}
-    </RadioGroup.Root>
+          <DropdownMenu.RadioGroup
+            value={view}
+            onValueChange={(value) => onChoose(parseMealsView(value))}
+          >
+            {viewChoices.map(({ view: choice, label }) => {
+              const Icon = viewIcons[choice];
+              return (
+                <DropdownMenu.RadioItem
+                  key={choice}
+                  value={choice}
+                  className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-hidden data-highlighted:bg-soft data-[state=checked]:font-semibold data-[state=checked]:text-accent"
+                >
+                  <Icon aria-hidden="true" className="size-5" />
+                  <span className="flex-1">{label}</span>
+                  <DropdownMenu.ItemIndicator>
+                    <Check aria-hidden="true" className="size-4" />
+                  </DropdownMenu.ItemIndicator>
+                </DropdownMenu.RadioItem>
+              );
+            })}
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 
@@ -85,7 +114,10 @@ export function MealsScreen() {
 
   return (
     <>
-      <ScreenHeader title="Meals" />
+      <ScreenHeader
+        title="Meals"
+        actions={<MealsViewMenu view={view} onChoose={setView} />}
+      />
       <Input
         type="search"
         aria-label="Search or add a meal"
@@ -121,7 +153,6 @@ export function MealsScreen() {
       {meals.length === 0 && (
         <EmptyState>No meals yet. Type a name above to add one.</EmptyState>
       )}
-      <MealsViewChoice view={view} onChoose={setView} />
       {view === "list" ? (
         <ul className={listBox}>
           {shownMeals.map((meal) => (
