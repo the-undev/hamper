@@ -26,6 +26,8 @@ beforeEach(() => {
     clearRect: vi.fn(),
     drawImage,
   } as unknown as CanvasRenderingContext2D);
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:picture");
+  vi.spyOn(URL, "revokeObjectURL").mockReturnValue(undefined);
   vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
     (callback: BlobCallback) => callback(jpeg),
   );
@@ -60,10 +62,24 @@ test("use_photo_posts_the_cropped_jpeg_to_the_items_image_endpoint_and_syncs", a
   const upload = calls.find((call) => call.method === "POST");
   expect(upload?.path).toBe(`/api/items/${milk.id}/image`);
   expect(upload?.body).toBe(jpeg);
-  // Centred at zoom 1, a 1600 by 1000 picture covers the 1200 square by its height.
-  expect(drawImage).toHaveBeenLastCalledWith(bitmap, -360, 0, 1920, 1200);
+  // The frame starts as the largest square centred on the 1600 by 1000 picture.
+  expect(drawImage).toHaveBeenLastCalledWith(
+    bitmap,
+    300,
+    0,
+    1000,
+    1000,
+    0,
+    0,
+    1200,
+    1200,
+  );
   expect(loop.syncNow).toHaveBeenCalledTimes(2);
   expect(bitmap.close).toHaveBeenCalled();
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:picture");
+  expect(createImageBitmap).toHaveBeenCalledWith(expect.any(File), {
+    imageOrientation: "from-image",
+  });
 });
 
 test("a_pending_edit_keeps_the_new_image_id", async () => {

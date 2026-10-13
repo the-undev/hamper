@@ -1,11 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
-import {
-  type ChangeEvent,
-  type PointerEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ChangeEvent, useRef, useState } from "react";
+import ReactCrop, { type PercentCrop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 import {
   deleteImage,
   type PictureTable,
@@ -25,13 +21,7 @@ import {
 import { useDb, useSyncLoop } from "@/store/provider";
 import { write } from "@/store/write";
 import { useSyncStatus } from "@/sync/loop";
-import {
-  type Crop,
-  clampCrop,
-  cropPlacement,
-  initialCrop,
-  maxZoom,
-} from "./crop";
+import { type Crop, cropFromPercent, largestCentredSquare } from "./crop";
 
 /** The edge of the JPEG sent to the server, in pixels. */
 const uploadEdge = 1200;
@@ -39,36 +29,35 @@ const uploadEdge = 1200;
 /** The JPEG quality of the upload; the server encodes again at its own. */
 const uploadQuality = 0.9;
 
-/** The crop box canvas's own resolution, sharp on a high-density phone screen. */
-const previewEdge = 640;
+/** The smallest the frame goes, in screen pixels. */
+const minFrameEdge = 48;
 
-/** Draws the cropped picture onto a square canvas, filling it. */
-function drawCrop(
-  canvas: HTMLCanvasElement,
-  source: ImageBitmap,
-  crop: Crop,
-): void {
-  const context = canvas.getContext("2d");
-  if (!context) {
-    return;
-  }
-  const placement = cropPlacement(crop, source, canvas.width);
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(
-    source,
-    placement.x,
-    placement.y,
-    placement.width,
-    placement.height,
-  );
+/** The picture being cropped: its pixels, turned upright from its EXIF data, and a URL the dialog shows it from. */
+interface CropSource {
+  bitmap: ImageBitmap;
+  url: string;
 }
 
-/** Renders the crop at the upload size as a JPEG. */
+/** Draws the frame's region of the picture at the upload size as a JPEG. */
 function exportJpeg(source: ImageBitmap, crop: Crop): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = uploadEdge;
   canvas.height = uploadEdge;
-  drawCrop(canvas, source, crop);
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return Promise.reject(new Error("This phone cannot draw the photo"));
+  }
+  context.drawImage(
+    source,
+    crop.x,
+    crop.y,
+    crop.size,
+    crop.size,
+    0,
+    0,
+    uploadEdge,
+    uploadEdge,
+  );
   return new Promise((resolve, reject) =>
     canvas.toBlob(
       (blob) =>
@@ -94,7 +83,7 @@ export function CropUpload({
   const { online } = useSyncStatus(loop);
   const cameraInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const [source, setSource] = useState<ImageBitmap | null>(null);
+  const [source, setSource] = useState<CropSource | null>(null);
 
   const showRestError = (error: Error): void =>
     showToast(error instanceof RestError ? error.title : error.message);
@@ -125,7 +114,10 @@ export function CropUpload({
   });
 
   const closeCrop = (): void => {
-    source?.close();
+    if (source) {
+      source.bitmap.close();
+      URL.revokeObjectURL(source.url);
+    }
     setSource(null);
   };
 
@@ -138,7 +130,11 @@ export function CropUpload({
       return;
     }
     try {
-      setSource(await createImageBitmap(file));
+      // Turned upright as the dialog's <img> shows it, so the export draws what the frame was over.
+      const bitmap = await createImageBitmap(file, {
+        imageOrientation: "from-image",
+      });
+      setSource({ bitmap, url: URL.createObjectURL(file) });
     } catch {
       showToast("This phone cannot open that picture");
     }
@@ -209,7 +205,7 @@ export function CropUpload({
           uploading={upload.isPending}
           onCancel={closeCrop}
           onUse={(crop) =>
-            void exportJpeg(source, crop).then(
+            void exportJpeg(source.bitmap, crop).then(
               (jpeg) => upload.mutate(jpeg),
               showRestError,
             )
@@ -220,88 +216,42 @@ export function CropUpload({
   );
 }
 
-/** The square crop box: drag to pan, the slider to zoom, then Use photo. */
+/** The whole picture with a square frame over it: drag the frame to move it, its corners to resize it, then Use photo. */
 function CropDialog({
   source,
   uploading,
   onCancel,
   onUse,
 }: {
-  source: ImageBitmap;
+  source: CropSource;
   uploading: boolean;
   onCancel: () => void;
   onUse: (crop: Crop) => void;
 }) {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const dragFrom = useRef<{ x: number; y: number } | null>(null);
-  const [crop, setCrop] = useState<Crop>(initialCrop);
-
-  useEffect(() => {
-    if (canvas.current) {
-      drawCrop(canvas.current, source, crop);
-    }
-  }, [source, crop]);
-
-  const onPointerDown = (event: PointerEvent<HTMLCanvasElement>): void => {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragFrom.current = { x: event.clientX, y: event.clientY };
-  };
-  const onPointerMove = (event: PointerEvent<HTMLCanvasElement>): void => {
-    const from = dragFrom.current;
-    const boxEdge = event.currentTarget.getBoundingClientRect().width;
-    if (!from || boxEdge === 0) {
-      return;
-    }
-    dragFrom.current = { x: event.clientX, y: event.clientY };
-    setCrop((current) =>
-      clampCrop(
-        {
-          ...current,
-          offsetX: current.offsetX + (event.clientX - from.x) / boxEdge,
-          offsetY: current.offsetY + (event.clientY - from.y) / boxEdge,
-        },
-        source,
-      ),
-    );
-  };
-  const endDrag = (): void => {
-    dragFrom.current = null;
-  };
+  const [frame, setFrame] = useState<PercentCrop>(() =>
+    largestCentredSquare(source.bitmap),
+  );
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
       <DialogContent showCloseButton={false} className="bg-surface">
         <DialogTitle className="text-lg font-bold">Crop the photo</DialogTitle>
         <DialogDescription className="text-sm text-muted">
-          Drag to move it, and use the slider to zoom.
+          Move or resize the frame, then Use photo.
         </DialogDescription>
-        <canvas
-          ref={canvas}
-          width={previewEdge}
-          height={previewEdge}
-          aria-label="Crop box"
-          className="aspect-square w-full touch-none rounded-[14px] bg-soft"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-        />
-        <input
-          type="range"
-          aria-label="Zoom"
-          min={1}
-          max={maxZoom}
-          step={0.01}
-          value={crop.zoom}
-          onChange={(event) =>
-            setCrop((current) =>
-              clampCrop(
-                { ...current, zoom: Number(event.target.value) },
-                source,
-              ),
-            )
-          }
-        />
+        <div className="flex justify-center">
+          <ReactCrop
+            crop={frame}
+            aspect={1}
+            minWidth={minFrameEdge}
+            minHeight={minFrameEdge}
+            keepSelection
+            className="max-h-[60dvh]"
+            onChange={(_, percentFrame) => setFrame(percentFrame)}
+          >
+            <img src={source.url} alt="Being cropped" />
+          </ReactCrop>
+        </div>
         <div className="flex gap-2">
           <DialogClose className="min-h-11 flex-1 rounded-[10px] border border-line font-semibold">
             Cancel
@@ -309,7 +259,7 @@ function CropDialog({
           <button
             type="button"
             disabled={uploading}
-            onClick={() => onUse(crop)}
+            onClick={() => onUse(cropFromPercent(frame, source.bitmap))}
             className="min-h-11 flex-1 rounded-[10px] bg-accent font-semibold text-accent-foreground disabled:opacity-40"
           >
             {uploading ? "Uploading…" : "Use photo"}
