@@ -73,7 +73,7 @@ export function MealsScreen() {
       {meals.length === 0 && (
         <EmptyState>No meals yet. Type a name above to add one.</EmptyState>
       )}
-      <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5 p-0">
+      <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2.5 p-0">
         {shownMeals.map((meal) => (
           <li key={meal.id}>
             <Link
@@ -82,7 +82,7 @@ export function MealsScreen() {
               className="flex h-full flex-col overflow-hidden rounded-[14px] border border-line"
             >
               <Picture name={meal.name} imageId={meal.imageId} size="card" />
-              <span className="px-2.5 py-2 text-sm font-semibold">
+              <span className="px-2 py-1.5 text-sm font-semibold wrap-break-word">
                 {meal.name}
                 <small className="block text-xs font-normal text-muted">
                   {linesByMeal.get(meal.id)?.length ?? 0} items

@@ -1,29 +1,45 @@
 import { expect, test } from "vitest";
-import { clampCrop, cropPlacement, initialCrop } from "./crop";
+import { cropFromPercent, largestCentredSquare, rotateQuarter } from "./crop";
 
 const landscape = { width: 1600, height: 1000 };
+const portrait = { width: 900, height: 1200 };
 
-test("at_zoom_one_a_landscape_picture_covers_the_box_by_its_height_and_is_centred", () => {
-  expect(cropPlacement(initialCrop, landscape, 1200)).toEqual({
-    x: -360,
+test("the_frame_starts_as_the_largest_square_centred_on_a_landscape_picture", () => {
+  expect(cropFromPercent(largestCentredSquare(landscape), landscape)).toEqual({
+    x: 300,
     y: 0,
-    width: 1920,
-    height: 1200,
+    size: 1000,
   });
 });
 
-test("the_pan_stops_where_the_picture_would_leave_part_of_the_box_empty", () => {
-  const clamped = clampCrop({ zoom: 1, offsetX: 1, offsetY: 1 }, landscape);
-
-  expect(clamped.offsetX).toBeCloseTo(0.3);
-  expect(clamped.offsetY).toBe(0);
+test("the_frame_starts_as_the_largest_square_centred_on_a_portrait_picture", () => {
+  expect(cropFromPercent(largestCentredSquare(portrait), portrait)).toEqual({
+    x: 0,
+    y: 150,
+    size: 900,
+  });
 });
 
-test("the_zoom_stays_between_one_and_three", () => {
-  expect(clampCrop({ zoom: 5, offsetX: 0, offsetY: 0 }, landscape).zoom).toBe(
-    3,
-  );
-  expect(clampCrop({ zoom: 0.5, offsetX: 0, offsetY: 0 }, landscape).zoom).toBe(
-    1,
-  );
+test("a_percent_frame_converts_to_the_pictures_pixels", () => {
+  const frame = { unit: "%", x: 10, y: 20, width: 25, height: 40 } as const;
+
+  expect(cropFromPercent(frame, landscape)).toEqual({
+    x: 160,
+    y: 200,
+    size: 400,
+  });
+});
+
+test("a_frame_that_strays_past_an_edge_is_kept_inside_the_picture", () => {
+  const frame = { unit: "%", x: 80, y: -5, width: 25, height: 40 } as const;
+
+  expect(cropFromPercent(frame, landscape)).toEqual({
+    x: 1200,
+    y: 0,
+    size: 400,
+  });
+});
+
+test("a_quarter_turn_swaps_the_width_and_height", () => {
+  expect(rotateQuarter(landscape)).toEqual({ width: 1000, height: 1600 });
 });

@@ -15,17 +15,31 @@ let db: HamperDb;
 const jpeg = new Blob(["cropped"], { type: "image/jpeg" });
 const drawImage = vi.fn();
 const bitmap = { width: 1600, height: 1000, close: vi.fn() };
+let urlCount = 0;
 
 beforeEach(() => {
   db = freshDb();
+  urlCount = 0;
+  // A canvas, the rotated picture, gives a bitmap of its own size.
   vi.stubGlobal(
     "createImageBitmap",
-    vi.fn(async () => bitmap),
+    vi.fn(async (from: unknown) =>
+      from instanceof HTMLCanvasElement
+        ? { width: from.width, height: from.height, close: vi.fn() }
+        : bitmap,
+    ),
   );
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
     clearRect: vi.fn(),
     drawImage,
+    translate: vi.fn(),
+    rotate: vi.fn(),
   } as unknown as CanvasRenderingContext2D);
+  vi.spyOn(URL, "createObjectURL").mockImplementation(() => {
+    urlCount += 1;
+    return `blob:${urlCount}`;
+  });
+  vi.spyOn(URL, "revokeObjectURL").mockReturnValue(undefined);
   vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
     (callback: BlobCallback) => callback(jpeg),
   );
@@ -35,6 +49,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   drawImage.mockClear();
+  bitmap.close.mockClear();
   await db.delete();
 });
 
@@ -60,10 +75,24 @@ test("use_photo_posts_the_cropped_jpeg_to_the_items_image_endpoint_and_syncs", a
   const upload = calls.find((call) => call.method === "POST");
   expect(upload?.path).toBe(`/api/items/${milk.id}/image`);
   expect(upload?.body).toBe(jpeg);
-  // Centred at zoom 1, a 1600 by 1000 picture covers the 1200 square by its height.
-  expect(drawImage).toHaveBeenLastCalledWith(bitmap, -360, 0, 1920, 1200);
+  // The frame starts as the largest square centred on the 1600 by 1000 picture.
+  expect(drawImage).toHaveBeenLastCalledWith(
+    bitmap,
+    300,
+    0,
+    1000,
+    1000,
+    0,
+    0,
+    1200,
+    1200,
+  );
   expect(loop.syncNow).toHaveBeenCalledTimes(2);
   expect(bitmap.close).toHaveBeenCalled();
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:1");
+  expect(createImageBitmap).toHaveBeenCalledWith(expect.any(File), {
+    imageOrientation: "from-image",
+  });
 });
 
 test("a_pending_edit_keeps_the_new_image_id", async () => {
@@ -150,4 +179,70 @@ test("a_refused_upload_shows_the_servers_reason", async () => {
   await user.click(await screen.findByRole("button", { name: "Use photo" }));
 
   expect(await screen.findByText("Not an image")).toBeInTheDocument();
+});
+
+test("take_photo_opens_the_camera_and_choose_photo_the_library", async () => {
+  const milk = anItem("Milk");
+  await seed(db, { items: [milk] });
+  renderApp(`/more/items/${milk.id}`, db, fakeLoop());
+
+  expect(
+    await screen.findByRole("button", { name: "Take photo" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Choose photo" }),
+  ).toBeInTheDocument();
+  expect(screen.getByLabelText("Camera")).toHaveAttribute(
+    "capture",
+    "environment",
+  );
+  expect(screen.getByLabelText("Photo file")).not.toHaveAttribute("capture");
+  expect(screen.getByLabelText("Photo file")).toHaveAttribute(
+    "accept",
+    "image/*",
+  );
+});
+
+test("rotate_turns_the_picture_and_starts_the_frame_again_as_the_largest_centred_square", async () => {
+  const milk = anItem("Milk");
+  await seed(db, { items: [milk] });
+  fakeFetch({
+    [`POST /api/items/${milk.id}/image`]: () =>
+      Response.json({ imageId: "new-image" }),
+  });
+  const { user } = renderApp(`/more/items/${milk.id}`, db, fakeLoop());
+
+  await user.upload(
+    await screen.findByLabelText("Photo file"),
+    new File(["raw"], "photo.jpg", { type: "image/jpeg" }),
+  );
+  expect(
+    await screen.findByRole("img", { name: "Being cropped" }),
+  ).toHaveAttribute("src", "blob:1");
+  await user.click(screen.getByRole("button", { name: "Rotate" }));
+
+  await waitFor(() =>
+    expect(screen.getByRole("img", { name: "Being cropped" })).toHaveAttribute(
+      "src",
+      "blob:2",
+    ),
+  );
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:1");
+  expect(bitmap.close).toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Use photo" }));
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
+  // Turned, the 1600 by 1000 picture is 1000 by 1600, and the frame its largest centred square.
+  expect(drawImage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ width: 1000, height: 1600 }),
+    0,
+    300,
+    1000,
+    1000,
+    0,
+    0,
+    1200,
+    1200,
+  );
 });

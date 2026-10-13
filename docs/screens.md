@@ -38,7 +38,9 @@ than one.
 Until the first sync brings the plan, the plan's screens say they are waiting
 for the server.
 
-**Planned meal.** Headed with the day's date. The planned meal's name,
+**Planned meal.** Headed with the day's date. Under the header, the picture
+of the library meal it came from, large, when that meal has one; a planned
+meal with no picture shows nothing there. The planned meal's name,
 editable for this day, and a line saying which library meal it came from and
 whether it has been changed for this day, or that it is not a library meal.
 Reset to the meal, or Save as a meal for an ad-hoc one. Then the type-ahead
@@ -85,11 +87,15 @@ has no action.
 
 ## Meals
 
-A search and add bar, then the library as a grid of cards with pictures. A
-name matching nothing offers "Add as a new meal".
+A search and add bar, then the library as a grid of cards, each a square
+picture over the meal's name. A phone shows three cards across. A name
+matching nothing offers "Add as a new meal".
 
-**Meal.** The picture, Change photo (take or choose, crop square, upload) and,
-when there is a picture, Remove photo; both are disabled while offline. Then
+**Meal.** The picture, Take photo (the camera) and Choose photo (the
+library), which both crop the picture square and upload it, and, when there is
+a picture, Remove photo; all three are disabled while offline. The crop shows
+the whole picture with a square frame over it, which drags to move and resizes
+from its corners; Rotate turns the picture a quarter turn clockwise. Then
 the name, when it was last shopped for, and "Add to a day", which opens a
 sheet listing the plan's days, each with how many meals it holds, and adds
 the meal at the end of the day tapped. Beside it, "On 2 days" once days of
@@ -104,8 +110,8 @@ the last sync. Import says "Imported", or the reason the server refused the
 file.
 
 **Items.** A search, then every item with its usual size. Tapping one opens
-the editor: the picture with Change photo and Remove photo as on the Meal
-screen, then the same fields as the item sheet (see Everywhere), which save as
+the editor: the picture with Take photo, Choose photo and Remove photo as on
+the Meal screen, then the same fields as the item sheet (see Everywhere), which save as
 they are edited, with Done or the merge offer in the footer.
 
 **History.** Archived shops by date, each with its meals and a count of lines.

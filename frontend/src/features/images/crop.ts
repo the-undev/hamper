@@ -1,8 +1,10 @@
-/** Where the picture sits in the square crop box: a zoom of at least 1, and a pan as fractions of the box's edge from centred. */
+import { centerCrop, makeAspectCrop, type PercentCrop } from "react-image-crop";
+
+/** The square frame over the picture, in the picture's own pixels: its top-left corner and its edge. */
 export interface Crop {
-  zoom: number;
-  offsetX: number;
-  offsetY: number;
+  x: number;
+  y: number;
+  size: number;
 }
 
 /** The size of the picture being cropped, in pixels. */
@@ -11,49 +13,33 @@ export interface SourceSize {
   height: number;
 }
 
-/** The most the slider zooms in. */
-export const maxZoom = 3;
+/** The largest square that fits the picture, centred on it, as the crop library's percent frame. */
+export function largestCentredSquare(source: SourceSize): PercentCrop {
+  return centerCrop(
+    makeAspectCrop({ unit: "%", width: 100 }, 1, source.width, source.height),
+    source.width,
+    source.height,
+  );
+}
 
-/** Centred, at the zoom where the picture just covers the box. */
-export const initialCrop: Crop = { zoom: 1, offsetX: 0, offsetY: 0 };
-
-/** The picture's drawn width and height as fractions of the box's edge. */
-function coverSize(source: SourceSize, zoom: number): SourceSize {
+/** Converts the crop library's percent frame to a square in the picture's pixels, kept inside the picture. */
+export function cropFromPercent(frame: PercentCrop, source: SourceSize): Crop {
+  const size = Math.min(
+    (frame.width / 100) * source.width,
+    (frame.height / 100) * source.height,
+    source.width,
+    source.height,
+  );
+  const clamp = (start: number, edge: number) =>
+    Math.min(Math.max(0, start), edge - size);
   return {
-    width: zoom * Math.max(1, source.width / source.height),
-    height: zoom * Math.max(1, source.height / source.width),
+    x: clamp((frame.x / 100) * source.width, source.width),
+    y: clamp((frame.y / 100) * source.height, source.height),
+    size,
   };
 }
 
-function clampOffset(offset: number, drawn: number): number {
-  const limit = (drawn - 1) / 2;
-  return Math.min(limit, Math.max(-limit, offset));
-}
-
-/** Keeps the zoom in range and the pan where the picture still covers the whole box. */
-export function clampCrop(crop: Crop, source: SourceSize): Crop {
-  const zoom = Math.min(maxZoom, Math.max(1, crop.zoom));
-  const drawn = coverSize(source, zoom);
-  return {
-    zoom,
-    offsetX: clampOffset(crop.offsetX, drawn.width),
-    offsetY: clampOffset(crop.offsetY, drawn.height),
-  };
-}
-
-/** Where to draw the picture on a square canvas of the given edge: its top-left corner and its size, in pixels. */
-export function cropPlacement(
-  crop: Crop,
-  source: SourceSize,
-  edge: number,
-): { x: number; y: number; width: number; height: number } {
-  const drawn = coverSize(source, crop.zoom);
-  const width = drawn.width * edge;
-  const height = drawn.height * edge;
-  return {
-    x: (edge - width) / 2 + crop.offsetX * edge,
-    y: (edge - height) / 2 + crop.offsetY * edge,
-    width,
-    height,
-  };
+/** The picture's size once turned a quarter turn: its width and height swapped. */
+export function rotateQuarter(source: SourceSize): SourceSize {
+  return { width: source.height, height: source.width };
 }

@@ -15,7 +15,7 @@ PWA added.
 | On-device store | Dexie (IndexedDB), read through `dexie-react-hooks` live queries |
 | Real time | Server-sent events |
 | PWA | `vite-plugin-pwa` with Workbox in `generateSW` mode, and `workbox-window` under its register module: the web app manifest, and a service worker for the app shell and viewed images |
-| Images | Cropped on the phone with a canvas, resized on the server with Magick.NET (`Magick.NET-Q8-AnyCPU`, Apache 2.0) |
+| Images | Cropped on the phone with `react-image-crop` (ISC) and a canvas, resized on the server with Magick.NET (`Magick.NET-Q8-AnyCPU`, Apache 2.0) |
 | Tests | Backend: xUnit v3, integration through a `WebApplicationFactory` against a real SQLite file, never a mocked database, with `FakeTimeProvider`. Frontend: Vitest, Testing Library, jsdom and `fake-indexeddb`; a screen re-renders a few ticks after a write commits, so a test waits for the screen to show one write before an action that reads it. Browser: Playwright as a phone and a desktop in Chromium, and as a desktop in Firefox, against the API serving the built frontend on 8778 with its own temp database, run by `make e2e`; it covers the journeys in [screens](screens.md), live sync between two browsers, offline edits, swipes and drags by finger and mouse, pictures, export and import, and the service worker |
 
 One process: the API serves the built frontend from `wwwroot`. One `/data`
@@ -308,22 +308,27 @@ immutable`. An image id never changes its content; a new picture gets a new
 id. An unknown image, size or path under `/images` is a problem+json 404. The
 service worker caches responses it has seen.
 
-On the device, Change photo opens a file input that accepts `image/*`, so the
-phone offers the camera or the library. The picture is drawn on a canvas in a
-square crop box: dragging pans it, and a slider zooms from the size that just
-covers the box to three times that. Use photo draws the crop at 1200 by 1200
-and sends it as a JPEG through a TanStack Query mutation. The device syncs
+On the device, Take photo opens a file input that accepts `image/*` with
+`capture="environment"`, so a phone opens its back camera. Choose photo opens
+one without `capture`, so the phone offers its library. The crop dialog shows
+the whole picture, turned upright from its EXIF data, with a square frame from
+`react-image-crop` over it and the rest dimmed. The frame starts as the largest
+square centred on the picture. Dragging the frame moves it, and its corner
+handles resize it, down to 48 screen pixels. Rotate redraws the picture a
+quarter turn clockwise on a canvas and starts the frame again as the largest
+centred square. Use photo draws the frame's region of the picture at 1200 by
+1200 and sends it as a JPEG through a TanStack Query mutation. The device syncs
 before the upload, so the server has a row made offline. It then patches the
 returned `imageId` into its own copy of the row and syncs again, so a change to
 the row still waiting to be sent carries the new id. Remove photo calls the
-delete and patches in a null `imageId` the same way. Both need the server and are
-disabled while offline.
+delete and patches in a null `imageId` the same way. All three need the server
+and are disabled while offline.
 
 A picture shows the `thumb` in lists, on meal cards and on the plan, and the
-`large` on the meal screen. A planned meal shows the picture of the library
-meal it came from. With no image, or when the request fails, offline with nothing
-cached for example, the placeholder shows instead: a coloured block with the
-name's first letter.
+`large` on the meal screen and the planned meal screen. A planned meal shows
+the picture of the library meal it came from. With no image, or when the
+request fails, offline with nothing cached for example, the placeholder shows
+instead: a coloured block with the name's first letter.
 
 ## Export and import
 
