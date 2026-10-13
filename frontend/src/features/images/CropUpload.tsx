@@ -79,7 +79,7 @@ function exportJpeg(source: ImageBitmap, crop: Crop): Promise<Blob> {
   );
 }
 
-/** Change photo, which takes or chooses a picture and crops it square, and Remove photo; both need the server. */
+/** Take photo and Choose photo, which crop a picture square and upload it, and Remove photo; all need the server. */
 export function CropUpload({
   table,
   rowId,
@@ -92,6 +92,7 @@ export function CropUpload({
   const db = useDb();
   const loop = useSyncLoop();
   const { online } = useSyncStatus(loop);
+  const cameraInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [source, setSource] = useState<ImageBitmap | null>(null);
 
@@ -153,9 +154,19 @@ export function CropUpload({
           size="lg"
           className="flex-1"
           disabled={!online || busy}
+          onClick={() => cameraInput.current?.click()}
+        >
+          Take photo
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="flex-1"
+          disabled={!online || busy}
           onClick={() => fileInput.current?.click()}
         >
-          Change photo
+          Choose photo
         </Button>
         {hasImage && (
           <Button
@@ -175,6 +186,15 @@ export function CropUpload({
           Changing the photo needs a connection to the server.
         </p>
       )}
+      <input
+        ref={cameraInput}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        aria-label="Camera"
+        className="hidden"
+        onChange={(event) => void onFileChosen(event)}
+      />
       <input
         ref={fileInput}
         type="file"

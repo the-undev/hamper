@@ -151,3 +151,25 @@ test("a_refused_upload_shows_the_servers_reason", async () => {
 
   expect(await screen.findByText("Not an image")).toBeInTheDocument();
 });
+
+test("take_photo_opens_the_camera_and_choose_photo_the_library", async () => {
+  const milk = anItem("Milk");
+  await seed(db, { items: [milk] });
+  renderApp(`/more/items/${milk.id}`, db, fakeLoop());
+
+  expect(
+    await screen.findByRole("button", { name: "Take photo" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Choose photo" }),
+  ).toBeInTheDocument();
+  expect(screen.getByLabelText("Camera")).toHaveAttribute(
+    "capture",
+    "environment",
+  );
+  expect(screen.getByLabelText("Photo file")).not.toHaveAttribute("capture");
+  expect(screen.getByLabelText("Photo file")).toHaveAttribute(
+    "accept",
+    "image/*",
+  );
+});

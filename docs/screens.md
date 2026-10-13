@@ -89,8 +89,9 @@ A search and add bar, then the library as a grid of cards, each a square
 picture over the meal's name. A phone shows three cards across. A name
 matching nothing offers "Add as a new meal".
 
-**Meal.** The picture, Change photo (take or choose, crop square, upload) and,
-when there is a picture, Remove photo; both are disabled while offline. Then
+**Meal.** The picture, Take photo (the camera) and Choose photo (the
+library), which both crop the picture square and upload it, and, when there is
+a picture, Remove photo; all three are disabled while offline. Then
 the name, when it was last shopped for, and "Add to a day", which opens a
 sheet listing the plan's days, each with how many meals it holds, and adds
 the meal at the end of the day tapped. Beside it, "On 2 days" once days of
@@ -105,8 +106,8 @@ the last sync. Import says "Imported", or the reason the server refused the
 file.
 
 **Items.** A search, then every item with its usual size. Tapping one opens
-the editor: the picture with Change photo and Remove photo as on the Meal
-screen, then the same fields as the item sheet (see Everywhere), which save as
+the editor: the picture with Take photo, Choose photo and Remove photo as on
+the Meal screen, then the same fields as the item sheet (see Everywhere), which save as
 they are edited, with Done or the merge offer in the footer.
 
 **History.** Archived shops by date, each with its meals and a count of lines.

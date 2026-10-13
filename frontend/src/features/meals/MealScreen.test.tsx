@@ -217,7 +217,7 @@ test("last_shopped_shows_nothing_when_history_cannot_be_read", async () => {
   expect(screen.queryByText(/shopped/)).not.toBeInTheDocument();
 });
 
-test("change_photo_is_disabled_with_a_note_while_offline", async () => {
+test("take_photo_and_choose_photo_are_disabled_with_a_note_while_offline", async () => {
   renderApp(
     `/meals/${curry.id}`,
     db,
@@ -225,8 +225,9 @@ test("change_photo_is_disabled_with_a_note_while_offline", async () => {
   );
 
   expect(
-    await screen.findByRole("button", { name: "Change photo" }),
+    await screen.findByRole("button", { name: "Take photo" }),
   ).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Choose photo" })).toBeDisabled();
   expect(
     screen.getByText("Changing the photo needs a connection to the server."),
   ).toBeInTheDocument();

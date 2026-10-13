@@ -308,16 +308,17 @@ immutable`. An image id never changes its content; a new picture gets a new
 id. An unknown image, size or path under `/images` is a problem+json 404. The
 service worker caches responses it has seen.
 
-On the device, Change photo opens a file input that accepts `image/*`, so the
-phone offers the camera or the library. The picture is drawn on a canvas in a
+On the device, Take photo opens a file input that accepts `image/*` with
+`capture="environment"`, so a phone opens its back camera. Choose photo opens
+one without `capture`, so the phone offers its library. The picture is drawn on a canvas in a
 square crop box: dragging pans it, and a slider zooms from the size that just
 covers the box to three times that. Use photo draws the crop at 1200 by 1200
 and sends it as a JPEG through a TanStack Query mutation. The device syncs
 before the upload, so the server has a row made offline. It then patches the
 returned `imageId` into its own copy of the row and syncs again, so a change to
 the row still waiting to be sent carries the new id. Remove photo calls the
-delete and patches in a null `imageId` the same way. Both need the server and are
-disabled while offline.
+delete and patches in a null `imageId` the same way. All three need the server
+and are disabled while offline.
 
 A picture shows the `thumb` in lists, on meal cards and on the plan, and the
 `large` on the meal screen. A planned meal shows the picture of the library
