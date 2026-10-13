@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Grid3x3, List } from "lucide-react";
+import { Grid2x2, Grid3x3, List } from "lucide-react";
 import { RadioGroup } from "radix-ui";
 import { useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
@@ -17,9 +17,16 @@ import { useMealsView } from "./useMealsView";
 const viewChoices = [
   { view: "list", label: "List", Icon: List },
   { view: "small", label: "Small grid", Icon: Grid3x3 },
+  { view: "large", label: "Large grid", Icon: Grid2x2 },
 ] as const;
 
-/** The icon buttons that choose how the library shows, the chosen one in the accent colour. */
+/** Each grid's columns: three cards across a phone for the small grid, two for the large. */
+const gridColumns = {
+  small: "grid-cols-[repeat(auto-fill,minmax(96px,1fr))]",
+  large: "grid-cols-[repeat(auto-fill,minmax(150px,1fr))]",
+} as const;
+
+/** The three icon buttons that choose how the library shows, the chosen one in the accent colour. */
 function MealsViewChoice({
   view,
   onChoose,
@@ -138,7 +145,7 @@ export function MealsScreen() {
           ))}
         </ul>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2.5 p-0">
+        <ul className={`m-0 grid list-none gap-2.5 p-0 ${gridColumns[view]}`}>
           {shownMeals.map((meal) => (
             <li key={meal.id}>
               <Link

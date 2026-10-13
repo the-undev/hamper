@@ -257,4 +257,58 @@ test.describe("the Meals grid on a narrow phone", () => {
       expect(Math.abs(box.width - box.height)).toBeLessThanOrEqual(1);
     }
   });
+
+  test("the view choice shows two cards across, then rows, then three across", async ({
+    page,
+  }) => {
+    await openApp(page, "/meals");
+    const links = page.getByRole("main").getByRole("list").getByRole("link");
+    // The search shows once the meals have loaded.
+    await expect(
+      page.getByRole("searchbox", { name: "Search or add a meal" }),
+    ).toBeVisible();
+    for (let count = await links.count(); count < 3; count += 1) {
+      await addMeal(page, uniqueName("View"), []);
+    }
+    await page.goto("/meals");
+    await expect(links.nth(2)).toBeVisible();
+
+    const positions = () =>
+      links.evaluateAll((elements) =>
+        elements.map((element) => {
+          const box = element.getBoundingClientRect();
+          return { x: Math.round(box.x), y: Math.round(box.y) };
+        }),
+      );
+    const acrossFirstRow = async () => {
+      const boxes = await positions();
+      return boxes.filter((box) => box.y === boxes[0]?.y).length;
+    };
+    const choose = async (label: string) => {
+      const choice = page
+        .getByRole("radiogroup", { name: "Show meals as" })
+        .getByRole("radio", { name: label });
+      await choice.tap();
+      await expect(choice).toHaveAttribute("aria-checked", "true");
+    };
+
+    await choose("Large grid");
+    await expect.poll(acrossFirstRow).toBe(2);
+
+    await choose("List");
+    await expect
+      .poll(async () => {
+        const boxes = await positions();
+        return {
+          oneColumn: new Set(boxes.map((box) => box.x)).size === 1,
+          goingDown: boxes.every(
+            (box, index) => box.y > (boxes[index - 1]?.y ?? -1),
+          ),
+        };
+      })
+      .toEqual({ oneColumn: true, goingDown: true });
+
+    await choose("Small grid");
+    await expect.poll(acrossFirstRow).toBe(3);
+  });
 });

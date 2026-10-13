@@ -150,6 +150,25 @@ test("choosing_list_shows_each_meal_as_a_row_and_keeps_the_choice", async () => 
   expect(window.localStorage.getItem("hamper.mealsView")).toBe("list");
 });
 
+test("choosing_large_grid_widens_the_cards_and_keeps_the_choice", async () => {
+  const { user } = renderApp("/meals", db, fakeLoop());
+  await mealLinks();
+
+  await user.click(screen.getByRole("radio", { name: "Large grid" }));
+
+  const cards = await mealLinks();
+  expect(screen.getByRole("list")).toHaveClass(
+    "grid-cols-[repeat(auto-fill,minmax(150px,1fr))]",
+  );
+  expect(screen.getByRole("list")).not.toHaveClass(smallGrid);
+  for (const card of cards) {
+    expect(card.firstElementChild).toHaveClass(...pictureSizes.card.split(" "));
+  }
+  expect(viewChecked("Large grid")).toBe("true");
+  expect(viewChecked("Small grid")).toBe("false");
+  expect(window.localStorage.getItem("hamper.mealsView")).toBe("large");
+});
+
 test("a_list_chosen_before_shows_on_opening", async () => {
   window.localStorage.setItem("hamper.mealsView", "list");
   renderApp("/meals", db, fakeLoop());
