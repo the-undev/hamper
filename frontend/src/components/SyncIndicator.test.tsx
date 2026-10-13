@@ -1,15 +1,18 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { quietStatus } from "@/test/fake-loop";
-import { SyncIndicator } from "./SyncIndicator";
+import { SyncIndicator, syncStateLabel } from "./SyncIndicator";
 
-test("synced_shows_nothing_and_has_no_name", () => {
+test("synced_shows_a_cloud_named_synced", () => {
   render(<SyncIndicator status={quietStatus} />);
 
-  const slot = screen.getByRole("status");
-  expect(slot).not.toHaveAttribute("aria-label");
-  expect(slot).not.toHaveAttribute("title");
-  expect(slot).toBeEmptyDOMElement();
+  const slot = screen.getByRole("status", { name: "Synced" });
+  expect(slot).toHaveAttribute("title", "Synced");
+  expect(slot.querySelector("svg")).not.toBeNull();
+});
+
+test("state_label_for_the_in_sync_status_is_synced", () => {
+  expect(syncStateLabel(quietStatus)).toBe("Synced");
 });
 
 test("sending_shows_a_spinner_named_syncing", () => {

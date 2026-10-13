@@ -47,7 +47,7 @@ test("the pending count shows after an edit and clears once sent", async ({
   await expect
     .poll(() => syncState(page), { intervals: [20] })
     .toMatch(/^\d+ changes? to send$/);
-  await expect.poll(() => syncState(page), { timeout: 3000 }).toBeNull();
+  await expect.poll(() => syncState(page), { timeout: 3000 }).toBe("Synced");
 
   await swipeLeft(page, line(page, item).getByText(item, { exact: true }));
   await page.getByRole("button", { name: `Remove ${item}` }).click();
@@ -71,7 +71,7 @@ test("the header and the column stay put while changes wait and once they are se
       mainTop: document.querySelector("main")?.getBoundingClientRect().top,
     }));
   const before = await geometry();
-  expect(before.state).toBeNull();
+  expect(before.state).toBe("Synced");
 
   await page.getByRole("combobox", { name: "Add to extras" }).fill(item);
   await page.getByRole("option", { name: `Add “${item}”` }).click();
@@ -85,7 +85,7 @@ test("the header and the column stay put while changes wait and once they are se
       { intervals: [20] },
     )
     .toMatch(/^\d+ changes? to send$/);
-  await expect.poll(() => syncState(page), { timeout: 3000 }).toBeNull();
+  await expect.poll(() => syncState(page), { timeout: 3000 }).toBe("Synced");
   const after = await geometry();
 
   expect(waiting.headerHeight).toBe(before.headerHeight);
@@ -119,7 +119,7 @@ test("an edit made offline shows at once and reaches another device on reconnect
   await expect(line(otherPage, item)).toHaveCount(0);
 
   await context.setOffline(false);
-  await expect.poll(() => syncState(page), { timeout: 5000 }).toBeNull();
+  await expect.poll(() => syncState(page), { timeout: 5000 }).toBe("Synced");
   await expect(line(otherPage, item)).toBeVisible({ timeout: 5000 });
   await other.close();
 

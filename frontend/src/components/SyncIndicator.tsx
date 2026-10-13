@@ -1,8 +1,8 @@
-import { CloudOff, LoaderCircle } from "lucide-react";
+import { Cloud, CloudOff, LoaderCircle } from "lucide-react";
 import type { SyncStatus } from "@/sync/loop";
 
-/** The indicator's accessible name for a sync status: offline first, then sending, then the rows waiting, else none. */
-export function syncStateLabel(status: SyncStatus): string | undefined {
+/** The indicator's accessible name for a sync status: offline first, then sending, then the rows waiting, else synced. */
+export function syncStateLabel(status: SyncStatus): string {
   if (!status.online) {
     return "Offline. Changes are kept on this phone.";
   }
@@ -10,14 +10,14 @@ export function syncStateLabel(status: SyncStatus): string | undefined {
     return "Syncing";
   }
   if (status.pending === 0) {
-    return undefined;
+    return "Synced";
   }
   return status.pending === 1
     ? "1 change to send"
     : `${status.pending} changes to send`;
 }
 
-/** A fixed slot at the header's right end showing the sync state: nothing when synced, a spinner, a count of changes to send, or offline. */
+/** A fixed slot at the header's right end showing the sync state: a faint cloud when synced, a spinner, a count of changes to send, or offline. */
 export function SyncIndicator({ status }: { status: SyncStatus }) {
   const label = syncStateLabel(status);
   return (
@@ -32,7 +32,7 @@ export function SyncIndicator({ status }: { status: SyncStatus }) {
   );
 }
 
-/** The picture for a sync status, hidden from screen readers since the slot carries the name. */
+/** The picture for a sync status, hidden from screen readers since the slot carries the name, with a faint cloud when everything is synced. */
 function SyncGlyph({ status }: { status: SyncStatus }) {
   if (!status.online) {
     return <CloudOff aria-hidden className="size-5 text-warn" />;
@@ -46,7 +46,7 @@ function SyncGlyph({ status }: { status: SyncStatus }) {
     );
   }
   if (status.pending === 0) {
-    return null;
+    return <Cloud aria-hidden className="size-4 text-muted" />;
   }
   return (
     <span

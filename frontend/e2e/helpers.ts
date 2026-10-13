@@ -16,7 +16,13 @@ export const test = base.extend<{ sentEverything: undefined }>({
     async ({ page }, use) => {
       await use(undefined);
       // A closed context loses its outbox, so an edit not yet sent would never reach the server.
-      await expect.poll(() => syncState(page)).toBeNull();
+      // A skipped test's blank page has no app and nothing to send, so null passes too.
+      await expect
+        .poll(async () => {
+          const state = await syncState(page);
+          return state === null || state === "Synced";
+        })
+        .toBe(true);
     },
     { auto: true },
   ],
@@ -171,7 +177,7 @@ export async function removeFromDay(
   await expect(plannedMealRow(page, mealName, dayLabel)).toHaveCount(0);
 }
 
-/** The name of the header's sync indicator: "Syncing", "N changes to send" or the offline sentence, or null once everything is sent. */
+/** The name of the header's sync indicator, "Synced" once everything is sent, or null when the page has no app. */
 export async function syncState(page: Page): Promise<string | null> {
   // evaluateAll does not wait, so a page without the app, a skipped test's blank one, reads as null.
   return page

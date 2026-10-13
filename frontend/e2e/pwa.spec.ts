@@ -38,5 +38,5 @@ test("the worker installs, the manifest names the app, and the Plan opens offlin
     // Playwright's Firefox fires no online event for a page loaded while offline, so the test sends it.
     await page.evaluate(() => window.dispatchEvent(new Event("online")));
   }
-  await expect.poll(() => syncState(page)).toBeNull();
+  await expect.poll(() => syncState(page)).toBe("Synced");
 });
