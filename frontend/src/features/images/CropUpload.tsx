@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { RotateCw } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
 import ReactCrop, { type PercentCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -21,7 +22,12 @@ import {
 import { useDb, useSyncLoop } from "@/store/provider";
 import { write } from "@/store/write";
 import { useSyncStatus } from "@/sync/loop";
-import { type Crop, cropFromPercent, largestCentredSquare } from "./crop";
+import {
+  type Crop,
+  cropFromPercent,
+  largestCentredSquare,
+  rotateQuarter,
+} from "./crop";
 
 /** The edge of the JPEG sent to the server, in pixels. */
 const uploadEdge = 1200;
@@ -36,6 +42,44 @@ const minFrameEdge = 48;
 interface CropSource {
   bitmap: ImageBitmap;
   url: string;
+}
+
+/** Closes the picture's bitmap and revokes its URL. */
+function releaseSource(source: CropSource): void {
+  source.bitmap.close();
+  URL.revokeObjectURL(source.url);
+}
+
+/** Renders a canvas as a JPEG at the given quality. */
+function canvasJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (blob) =>
+        blob ? resolve(blob) : reject(new Error("The crop made no JPEG")),
+      "image/jpeg",
+      quality,
+    ),
+  );
+}
+
+/** Redraws the picture a quarter turn clockwise, as a new bitmap and a URL to show it from. */
+async function rotateClockwise(source: CropSource): Promise<CropSource> {
+  const turned = rotateQuarter(source.bitmap);
+  const canvas = document.createElement("canvas");
+  canvas.width = turned.width;
+  canvas.height = turned.height;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("This phone cannot turn the photo");
+  }
+  context.translate(turned.width, 0);
+  context.rotate(Math.PI / 2);
+  context.drawImage(source.bitmap, 0, 0);
+  const shown = await canvasJpeg(canvas, uploadQuality);
+  return {
+    bitmap: await createImageBitmap(canvas),
+    url: URL.createObjectURL(shown),
+  };
 }
 
 /** Draws the frame's region of the picture at the upload size as a JPEG. */
@@ -58,14 +102,7 @@ function exportJpeg(source: ImageBitmap, crop: Crop): Promise<Blob> {
     uploadEdge,
     uploadEdge,
   );
-  return new Promise((resolve, reject) =>
-    canvas.toBlob(
-      (blob) =>
-        blob ? resolve(blob) : reject(new Error("The crop made no JPEG")),
-      "image/jpeg",
-      uploadQuality,
-    ),
-  );
+  return canvasJpeg(canvas, uploadQuality);
 }
 
 /** Take photo and Choose photo, which crop a picture square and upload it, and Remove photo; all need the server. */
@@ -115,10 +152,19 @@ export function CropUpload({
 
   const closeCrop = (): void => {
     if (source) {
-      source.bitmap.close();
-      URL.revokeObjectURL(source.url);
+      releaseSource(source);
     }
     setSource(null);
+  };
+
+  const rotateSource = async (turning: CropSource): Promise<void> => {
+    try {
+      const turned = await rotateClockwise(turning);
+      releaseSource(turning);
+      setSource(turned);
+    } catch {
+      showToast("This phone cannot turn that picture");
+    }
   };
 
   const onFileChosen = async (
@@ -204,6 +250,7 @@ export function CropUpload({
           source={source}
           uploading={upload.isPending}
           onCancel={closeCrop}
+          onRotate={() => rotateSource(source)}
           onUse={(crop) =>
             void exportJpeg(source.bitmap, crop).then(
               (jpeg) => upload.mutate(jpeg),
@@ -216,21 +263,30 @@ export function CropUpload({
   );
 }
 
-/** The whole picture with a square frame over it: drag the frame to move it, its corners to resize it, then Use photo. */
+/** The whole picture with a square frame over it: drag the frame to move it, its corners to resize it, Rotate to turn the picture, then Use photo. */
 function CropDialog({
   source,
   uploading,
   onCancel,
+  onRotate,
   onUse,
 }: {
   source: CropSource;
   uploading: boolean;
   onCancel: () => void;
+  onRotate: () => Promise<void>;
   onUse: (crop: Crop) => void;
 }) {
-  const [frame, setFrame] = useState<PercentCrop>(() =>
-    largestCentredSquare(source.bitmap),
-  );
+  // A new picture, after Rotate, starts again from the largest centred square.
+  const [framed, setFramed] = useState<{
+    source: CropSource;
+    frame: PercentCrop;
+  }>(() => ({ source, frame: largestCentredSquare(source.bitmap) }));
+  const frame =
+    framed.source === source
+      ? framed.frame
+      : largestCentredSquare(source.bitmap);
+  const [rotating, setRotating] = useState(false);
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
@@ -247,11 +303,26 @@ function CropDialog({
             minHeight={minFrameEdge}
             keepSelection
             className="max-h-[60dvh]"
-            onChange={(_, percentFrame) => setFrame(percentFrame)}
+            onChange={(_, percentFrame) =>
+              setFramed({ source, frame: percentFrame })
+            }
           >
             <img src={source.url} alt="Being cropped" />
           </ReactCrop>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          disabled={rotating || uploading}
+          onClick={() => {
+            setRotating(true);
+            void onRotate().finally(() => setRotating(false));
+          }}
+        >
+          <RotateCw aria-hidden="true" />
+          Rotate
+        </Button>
         <div className="flex gap-2">
           <DialogClose className="min-h-11 flex-1 rounded-[10px] border border-line font-semibold">
             Cancel

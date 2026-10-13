@@ -314,13 +314,15 @@ one without `capture`, so the phone offers its library. The crop dialog shows
 the whole picture, turned upright from its EXIF data, with a square frame from
 `react-image-crop` over it and the rest dimmed. The frame starts as the largest
 square centred on the picture. Dragging the frame moves it, and its corner
-handles resize it, down to 48 screen pixels. Use photo draws the frame's region
-of the picture at 1200 by 1200 and sends it as a JPEG through a TanStack Query
-mutation. The device syncs before the upload, so the server has a row made
-offline. It then patches the returned `imageId` into its own copy of the row
-and syncs again, so a change to the row still waiting to be sent carries the
-new id. Remove photo calls the delete and patches in a null `imageId` the same
-way. All three need the server and are disabled while offline.
+handles resize it, down to 48 screen pixels. Rotate redraws the picture a
+quarter turn clockwise on a canvas and starts the frame again as the largest
+centred square. Use photo draws the frame's region of the picture at 1200 by
+1200 and sends it as a JPEG through a TanStack Query mutation. The device syncs
+before the upload, so the server has a row made offline. It then patches the
+returned `imageId` into its own copy of the row and syncs again, so a change to
+the row still waiting to be sent carries the new id. Remove photo calls the
+delete and patches in a null `imageId` the same way. All three need the server
+and are disabled while offline.
 
 A picture shows the `thumb` in lists, on meal cards and on the plan, and the
 `large` on the meal screen. A planned meal shows the picture of the library

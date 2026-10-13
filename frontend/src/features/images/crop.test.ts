@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { cropFromPercent, largestCentredSquare } from "./crop";
+import { cropFromPercent, largestCentredSquare, rotateQuarter } from "./crop";
 
 const landscape = { width: 1600, height: 1000 };
 const portrait = { width: 900, height: 1200 };
@@ -38,4 +38,8 @@ test("a_frame_that_strays_past_an_edge_is_kept_inside_the_picture", () => {
     y: 0,
     size: 400,
   });
+});
+
+test("a_quarter_turn_swaps_the_width_and_height", () => {
+  expect(rotateQuarter(landscape)).toEqual({ width: 1000, height: 1600 });
 });

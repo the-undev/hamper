@@ -38,3 +38,8 @@ export function cropFromPercent(frame: PercentCrop, source: SourceSize): Crop {
     size,
   };
 }
+
+/** The picture's size once turned a quarter turn: its width and height swapped. */
+export function rotateQuarter(source: SourceSize): SourceSize {
+  return { width: source.height, height: source.width };
+}

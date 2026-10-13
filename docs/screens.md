@@ -91,7 +91,9 @@ matching nothing offers "Add as a new meal".
 
 **Meal.** The picture, Take photo (the camera) and Choose photo (the
 library), which both crop the picture square and upload it, and, when there is
-a picture, Remove photo; all three are disabled while offline. Then
+a picture, Remove photo; all three are disabled while offline. The crop shows
+the whole picture with a square frame over it, which drags to move and resizes
+from its corners; Rotate turns the picture a quarter turn clockwise. Then
 the name, when it was last shopped for, and "Add to a day", which opens a
 sheet listing the plan's days, each with how many meals it holds, and adds
 the meal at the end of the day tapped. Beside it, "On 2 days" once days of
