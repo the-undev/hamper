@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { DoneButton } from "@/components/DoneButton";
 import { EmptyState, WaitingForServer } from "@/components/EmptyState";
+import { Picture } from "@/components/Picture";
 import { SavedField } from "@/components/SavedField";
 import { ScreenFooter } from "@/components/ScreenFooter";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -53,7 +54,7 @@ function originText(
 
 const back = { to: "/plan", label: "Plan" } as const;
 
-/** One planned meal: its day, its name, where it came from, and its lines for it only. */
+/** One planned meal: its day, its library meal's picture, its name, where it came from, and its lines for it only. */
 export function PlannedMealScreen({
   plannedMealId,
 }: {
@@ -116,6 +117,13 @@ export function PlannedMealScreen({
         title={formatDay(dayDate(plan, plannedMeal.position))}
         back={back}
       />
+      {linkedMeal?.imageId && (
+        <Picture
+          name={plannedMeal.name}
+          imageId={linkedMeal.imageId}
+          size="hero"
+        />
+      )}
       <SavedField
         key={plannedMeal.name}
         label="Name"

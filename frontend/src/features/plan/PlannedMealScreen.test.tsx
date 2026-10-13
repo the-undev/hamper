@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import { formatDay } from "@/lib/dates";
 import type { HamperDb } from "@/store/db";
+import type { PlannedMeal } from "@/store/types";
 import { renderApp } from "@/test/app";
 import { freshDb } from "@/test/db";
 import { fakeLoop } from "@/test/fake-loop";
@@ -234,4 +235,42 @@ test("done_goes_back_to_the_screen_the_planned_meal_was_opened_from", async () =
   await user.click(await screen.findByRole("button", { name: "Done" }));
 
   await waitFor(() => expect(router.state.location.pathname).toBe("/meals"));
+});
+
+test("a_planned_meal_from_a_meal_with_a_picture_shows_it_large_at_the_top", async () => {
+  const paella = { ...aMeal("Paella"), imageId: "paella-image" };
+  const paellaDinner = aPlannedMeal(1, "Paella", paella);
+  await seed(db, { meals: [paella], plannedMeals: [paellaDinner] });
+  openPlannedMeal(paellaDinner.id);
+
+  expect(await screen.findByLabelText("Name")).toHaveValue("Paella");
+  expect(screen.getByRole("main").querySelector("img")).toHaveAttribute(
+    "src",
+    "/images/paella-image/large",
+  );
+});
+
+/** Opens a planned meal and checks its screen shows no picture and no placeholder letter. */
+async function expectNoPicture(plannedMeal: PlannedMeal): Promise<void> {
+  openPlannedMeal(plannedMeal.id);
+
+  expect(await screen.findByLabelText("Name")).toHaveValue(plannedMeal.name);
+  const main = screen.getByRole("main");
+  expect(main.querySelector("img")).toBeNull();
+  expect(
+    within(main).queryByText(plannedMeal.name.charAt(0), { exact: true }),
+  ).not.toBeInTheDocument();
+}
+
+test("a_planned_meal_from_a_meal_with_no_picture_shows_neither_a_picture_nor_a_placeholder", async () => {
+  await seed(db, { plannedMeals: [curryDinner] });
+
+  await expectNoPicture(curryDinner);
+});
+
+test("an_ad_hoc_planned_meal_shows_neither_a_picture_nor_a_placeholder", async () => {
+  const whatever = aPlannedMeal(1, "Whatever", null, 1);
+  await seed(db, { plannedMeals: [whatever] });
+
+  await expectNoPicture(whatever);
 });

@@ -325,10 +325,10 @@ delete and patches in a null `imageId` the same way. All three need the server
 and are disabled while offline.
 
 A picture shows the `thumb` in lists, on meal cards and on the plan, and the
-`large` on the meal screen. A planned meal shows the picture of the library
-meal it came from. With no image, or when the request fails, offline with nothing
-cached for example, the placeholder shows instead: a coloured block with the
-name's first letter.
+`large` on the meal screen and the planned meal screen. A planned meal shows
+the picture of the library meal it came from. With no image, or when the
+request fails, offline with nothing cached for example, the placeholder shows
+instead: a coloured block with the name's first letter.
 
 ## Export and import
 

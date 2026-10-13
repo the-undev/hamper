@@ -38,7 +38,9 @@ than one.
 Until the first sync brings the plan, the plan's screens say they are waiting
 for the server.
 
-**Planned meal.** Headed with the day's date. The planned meal's name,
+**Planned meal.** Headed with the day's date. Under the header, the picture
+of the library meal it came from, large, when that meal has one; a planned
+meal with no picture shows nothing there. The planned meal's name,
 editable for this day, and a line saying which library meal it came from and
 whether it has been changed for this day, or that it is not a library meal.
 Reset to the meal, or Save as a meal for an ad-hoc one. Then the type-ahead
