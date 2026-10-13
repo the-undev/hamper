@@ -369,7 +369,7 @@ test("a dropped meal lands in its gap and does not return to where it came from"
   const inTheTargetDay = { day: secondDay, gaps: 0, standIns: 0 };
   expect(landed).toEqual({ onRelease: inTheTargetDay, now: inTheTargetDay });
 
-  await expect.poll(() => syncState(page)).toBeNull();
+  await expect.poll(() => syncState(page)).toBe("Synced");
   await expect(plannedMealRow(page, first, secondDay)).toBeVisible();
   await expect(plannedMealRow(page, first, firstDay)).toHaveCount(0);
   await expect(dayCard(page, firstDay).locator("[data-stand-in]")).toHaveCount(

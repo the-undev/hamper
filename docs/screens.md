@@ -87,9 +87,13 @@ has no action.
 
 ## Meals
 
-A search and add bar, then the library as a grid of cards, each a square
-picture over the meal's name. A phone shows three cards across. A name
-matching nothing offers "Add as a new meal".
+A search and add bar, then the library. A name matching nothing offers "Add
+as a new meal". A button in the header beside the title, showing the
+current view's icon, opens a menu with the three choices. List shows a row per
+meal: a small picture, the name and how many items it holds. Small grid shows a card per meal: a square picture over
+the name and the item count, three cards across on a phone. Large grid shows
+the same cards wider, two across on a phone. The phone keeps the choice; a new
+phone, or one that blocks storage, gets Small grid.
 
 **Meal.** The picture, Take photo (the camera) and Choose photo (the
 library), which both crop the picture square and upload it, and, when there is
@@ -124,11 +128,11 @@ History needs the server, and says so while offline.
 
 - A sync slot at the right end of the header, 36 by 44px, after the screen's
   own actions. It is always there, so nothing moves when the state changes.
-  Its state is its accessible name and tooltip. Synced shows nothing.
-  Sending shows a small spinner, "Syncing". Waiting shows a badge with the
-  count of rows not yet sent, "3 changes to send". Offline shows a crossed
-  cloud, "Offline. Changes are kept on this phone.", and wins over the
-  others.
+  Its state is its accessible name and tooltip. Synced shows a faint
+  cloud, "Synced". Sending shows a small spinner, "Syncing". Waiting shows a
+  badge with the count of rows not yet sent, "3 changes to send". Offline
+  shows a crossed cloud, "Offline. Changes are kept on this phone.", and wins
+  over the others.
 - When a new version is ready, a toast says "Update ready" with Reload, once
   per update.
 - Every edit is saved as it is made, except in the line editor, which saves
