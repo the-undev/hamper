@@ -87,9 +87,12 @@ has no action.
 
 ## Meals
 
-A search and add bar, then the library as a grid of cards, each a square
-picture over the meal's name. A phone shows three cards across. A name
-matching nothing offers "Add as a new meal".
+A search and add bar, then the library. A name matching nothing offers "Add
+as a new meal". Under the bar, at the right, icon buttons choose how the
+library shows. List shows a row per meal: a small picture, the name and how
+many items it holds. Small grid shows a card per meal: a square picture over
+the name and the item count, three cards across on a phone. The phone keeps
+the choice; a new phone, or one that blocks storage, gets Small grid.
 
 **Meal.** The picture, Take photo (the camera) and Choose photo (the
 library), which both crop the picture square and upload it, and, when there is
