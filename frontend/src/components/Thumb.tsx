@@ -22,7 +22,7 @@ export function colourFor(name: string): string {
 /** The box each picture size fills, shared by the placeholder and the image. */
 export const pictureSizes = {
   row: "size-11 rounded-[10px] text-base",
-  card: "h-21 w-full text-3xl",
+  card: "aspect-square w-full text-3xl",
   hero: "h-38 w-full rounded-2xl text-5xl",
 } as const;
 

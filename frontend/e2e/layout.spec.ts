@@ -1,5 +1,12 @@
 import type { Page } from "@playwright/test";
-import { expect, openApp, planView, test } from "./helpers.ts";
+import {
+  addMeal,
+  expect,
+  openApp,
+  planView,
+  test,
+  uniqueName,
+} from "./helpers.ts";
 
 // Chromium hides scrollbars under Playwright; a desktop shows them, and they take width.
 test.use({
@@ -213,4 +220,41 @@ test("the Plan tabs do not move while the days scroll", async ({ page }) => {
     probe,
   );
   expect(probeInsideDayCard).toBe(false);
+});
+
+test.describe("the Meals grid on a narrow phone", () => {
+  test.skip(({ hasTouch }) => !hasTouch, "the phone project covers it");
+  test.use({ viewport: { width: 360, height: 800 } });
+
+  test("shows three cards across with square pictures", async ({ page }) => {
+    await openApp(page, "/meals");
+    const cards = page
+      .getByRole("main")
+      .getByRole("list")
+      .getByRole("listitem");
+    // The search shows once the meals have loaded.
+    await expect(
+      page.getByRole("searchbox", { name: "Search or add a meal" }),
+    ).toBeVisible();
+    for (let count = await cards.count(); count < 3; count += 1) {
+      await addMeal(page, uniqueName("Grid"), []);
+    }
+    await page.goto("/meals");
+    await expect(cards.nth(2)).toBeVisible();
+
+    const boxes = [];
+    for (const index of [0, 1, 2]) {
+      const picture = cards.nth(index).getByRole("link").locator("> *").first();
+      const box = await picture.boundingBox();
+      expect(box).not.toBeNull();
+      boxes.push(box ?? { x: 0, y: 0, width: 0, height: 0 });
+    }
+
+    expect(new Set(boxes.map((box) => Math.round(box.y))).size).toBe(1);
+    expect(new Set(boxes.map((box) => Math.round(box.x))).size).toBe(3);
+    for (const box of boxes) {
+      expect(box.width).toBeGreaterThan(0);
+      expect(Math.abs(box.width - box.height)).toBeLessThanOrEqual(1);
+    }
+  });
 });

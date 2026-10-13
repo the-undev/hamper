@@ -85,8 +85,9 @@ has no action.
 
 ## Meals
 
-A search and add bar, then the library as a grid of cards with pictures. A
-name matching nothing offers "Add as a new meal".
+A search and add bar, then the library as a grid of cards, each a square
+picture over the meal's name. A phone shows three cards across. A name
+matching nothing offers "Add as a new meal".
 
 **Meal.** The picture, Change photo (take or choose, crop square, upload) and,
 when there is a picture, Remove photo; both are disabled while offline. Then
