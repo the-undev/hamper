@@ -168,8 +168,9 @@ the reason:
 
 - an unknown table;
 - a missing or malformed row id;
-- a row that does not fit its table: a column missing or of the wrong type,
-  or a property the table does not have;
+- a row that does not fit its table: a column missing, other than one the
+  schema change rules let a row leave out (see Schema changes), or of the
+  wrong type, or a property the table does not have;
 - a name empty after trimming, or longer than its maximum (items, meals and
   planned meals 200, an item's size 100);
 - a count below 1;
@@ -277,6 +278,25 @@ failing to reach the server. The loop's status holds that, the size of the
 outbox, when the last sync finished and the last problem the server
 reported, and whether a push and pull are running. The header's sync slot
 shows offline, sending, or the count waiting; the More screen shows the rest.
+
+### Schema changes
+
+A new column is nullable with a default. An EF migration adds it in the
+same commit as the model change. Before the migration runs, the server copies
+the database aside, as [deployment](deployment.md#backups) describes.
+
+The server accepts a pushed row that lacks a column added after the row's
+table first shipped. It keeps the stored value for that column, or the default
+on an insert. A phone still on the previous app keeps syncing until it
+reloads.
+
+A device upgrade adds the new column to the rows it holds, with its default,
+and keeps the outbox and the cursor. It never clears the store, because that
+drops edits not yet sent.
+
+A column is removed or renamed over two releases. The first adds the new
+column beside the old one. The second removes the old column once every
+device has moved to the new one.
 
 ## Images
 
