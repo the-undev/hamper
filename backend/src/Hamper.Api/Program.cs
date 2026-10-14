@@ -18,6 +18,7 @@ builder.Services.AddDbContext<HamperDbContext>((services, options) =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddSingleton<ImageStore>();
+builder.Services.AddSingleton<DatabaseBackup>();
 
 builder.Services.AddOptions<StorageOptions>()
     .BindConfiguration("Storage")
@@ -35,6 +36,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<HamperDbContext>();
     var time = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+    await app.Services.GetRequiredService<DatabaseBackup>().CopyBeforeMigrateAsync(db, CancellationToken.None);
     await db.Database.MigrateAsync();
     await app.Services.GetRequiredService<WriteGate>().RunAsync(
         ct => SeedPlan.EnsureAsync(db, time, ct),

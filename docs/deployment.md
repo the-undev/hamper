@@ -106,14 +106,27 @@ the update. A restart alone does not pull the new image.
 
 ## What the host provides
 
-- A directory mounted at `/data`. Everything mutable is in it: the database
-  and the images. Back that directory up and the instance can be rebuilt.
+- A directory mounted at `/data`. Everything mutable is in it: the database,
+  its copies from before each migration, and the images. Back that directory
+  up and the instance can be rebuilt.
 - A port mapped to `8080`.
 - A network that reaches nothing else. hamper calls no other service.
 - The process runs as root unless `PUID` and `PGID` are set. With both set,
   the entrypoint, which starts as root, gives `/data` to that uid and gid and
   runs the process as them, so files under `/data` are owned by the host's
   user. That suits hosts whose integrations need a root entrypoint.
+
+### Backups
+
+Before a migration runs, the server copies the database to `backups/` in the
+data directory as
+`hamper-<yyyyMMdd-HHmmss>-before-<first pending migration>.db`, the time in
+UTC. Each start that has migrations to apply makes one copy; a first start and
+an up-to-date database make none. The copies stay until the operator deletes
+them. The images are not copied, because a migration does not touch them.
+
+These copies cover a schema change only. The operator still backs up the
+whole data directory.
 
 ## HTTPS
 
