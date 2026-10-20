@@ -45,7 +45,7 @@ export function WantedLines({
             <button
               type="button"
               aria-label={`${line.name}: ${line.weekly ? "Weekly" : "Once"}`}
-              title="Weekly stays when a new plan starts; Once is cleared"
+              title="Weekly stays when the plan moves on; Once is cleared"
               onClick={() =>
                 void write((w) => setWantedWeekly(w, line.id, !line.weekly))
               }

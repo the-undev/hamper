@@ -937,7 +937,7 @@ test("the header keeps its height when the view switches", async ({ page }) => {
   await planView(page, "Meals");
 });
 
-test("Start new plan moves the start and clears Once lines, after a confirm", async ({
+test("Move plan on moves the start and clears Once lines, after a confirm", async ({
   page,
 }) => {
   const once = uniqueName("Bread");
@@ -961,21 +961,21 @@ test("Start new plan moves the start and clears Once lines, after a confirm", as
     .getByText(/^\d+ days$/)
     .textContent();
   const lengthDays = Number(lengthText?.replace(" days", ""));
-  const startNewPlan = page.getByRole("button", {
-    name: /^Start new plan from /,
+  const movePlanOn = page.getByRole("button", {
+    name: /^Move plan on to /,
   });
 
-  await startNewPlan.click();
+  await movePlanOn.click();
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Cancel" })
     .click();
   await expect(startDate).toHaveValue(before);
 
-  await startNewPlan.click();
+  await movePlanOn.click();
   await page
     .getByRole("alertdialog")
-    .getByRole("button", { name: "Start new plan" })
+    .getByRole("button", { name: "Move plan on" })
     .click();
   const expected = new Date(`${before}T00:00:00Z`);
   expected.setUTCDate(expected.getUTCDate() + lengthDays);
