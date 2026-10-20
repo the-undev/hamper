@@ -32,7 +32,7 @@ than one.
   back to the Plan; an ad-hoc meal opens in its place. Beside "Add a meal",
   "+ Whatever" adds an empty meal called Whatever to the day with no further
   screen; it can be renamed and given lines from the meal's screen.
-- "Start new plan from <date>", a row under the last day, which asks for a
+- "Move plan on to <date>", a row under the last day, which asks for a
   confirm.
 
 Until the first sync brings the plan, the plan's screens say they are waiting

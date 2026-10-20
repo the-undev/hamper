@@ -24,15 +24,18 @@ let db: HamperDb;
 
 const rice = anItem("Rice", "1kg bag");
 const naan = anItem("Naan");
+const curryItem = anItem("Curry paste");
 const curry = aMeal("Curry");
 const monday = formatDay("2026-06-01");
 const tuesday = formatDay("2026-06-02");
 const sunday = formatDay("2026-06-07");
 
 beforeEach(async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-05-30T12:00:00Z"));
   db = freshDb();
   await seed(db, {
-    items: [rice, naan],
+    items: [rice, naan, curryItem],
     meals: [curry],
     mealLines: [aMealLine(curry, rice, 1), aMealLine(curry, naan, 2)],
     plan: [thePlan("2026-06-01", 7)],
@@ -40,6 +43,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   await db.delete();
 });
@@ -166,14 +170,14 @@ test("whatever_puts_an_empty_meal_at_the_end_of_the_day_without_the_picker", asy
   ).not.toBeInTheDocument();
 });
 
-test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_cancel_does_nothing", async () => {
+test("move_plan_on_moves_the_date_and_removes_once_lines_after_a_confirm_and_cancel_does_nothing", async () => {
   await seed(db, {
     plannedMeals: [aPlannedMeal(0, "Curry", curry)],
     wantedLines: [aWantedLine(rice, 1, false), aWantedLine(naan, 1, true)],
   });
   const { user } = renderApp("/plan", db, fakeLoop());
   const startNew = {
-    name: `Start new plan from ${formatDay("2026-06-08")}`,
+    name: `Move plan on to ${formatDay("2026-06-08")}`,
   };
 
   await user.click(await screen.findByRole("button", startNew));
@@ -189,7 +193,7 @@ test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_c
   await user.click(screen.getByRole("button", startNew));
   await user.click(
     within(await screen.findByRole("alertdialog")).getByRole("button", {
-      name: "Start new plan",
+      name: "Move plan on",
     }),
   );
 
@@ -202,6 +206,95 @@ test("start_new_plan_moves_the_date_and_removes_once_lines_after_a_confirm_and_c
   expect((await live(db, "plannedMeals")).map((day) => day.name)).toEqual([
     "Curry",
   ]);
+});
+
+test("the_move_on_dialog_lists_the_named_once_items_with_their_count", async () => {
+  await seed(db, {
+    wantedLines: [
+      aWantedLine(rice, 1, false),
+      aWantedLine(naan, 1, false),
+      aWantedLine(curryItem, 1, true),
+    ],
+  });
+  const { user } = renderApp("/plan", db, fakeLoop());
+
+  await user.click(
+    await screen.findByRole("button", {
+      name: `Move plan on to ${formatDay("2026-06-08")}`,
+    }),
+  );
+
+  const dialog = await screen.findByRole("alertdialog");
+  expect(
+    within(dialog).getByText(`Move the plan on to ${formatDay("2026-06-08")}?`),
+  ).toBeInTheDocument();
+  expect(
+    within(dialog).getByText(
+      `Days become ${formatDay("2026-06-08")} to ${formatDay("2026-06-14")}. Meals stay on their days.`,
+    ),
+  ).toBeInTheDocument();
+  expect(within(dialog).getByText("Weekly items stay.")).toBeInTheDocument();
+  expect(
+    within(dialog).getByText("2 Once items are cleared: Naan, Rice."),
+  ).toBeInTheDocument();
+});
+
+test("the_move_on_dialog_says_so_when_there_are_no_once_items", async () => {
+  const { user } = renderApp("/plan", db, fakeLoop());
+
+  await user.click(
+    await screen.findByRole("button", {
+      name: `Move plan on to ${formatDay("2026-06-08")}`,
+    }),
+  );
+
+  expect(
+    within(await screen.findByRole("alertdialog")).getByText(
+      "No Once items to clear.",
+    ),
+  ).toBeInTheDocument();
+});
+
+test("the_ending_banner_is_hidden_when_the_end_is_more_than_two_days_away", async () => {
+  vi.setSystemTime(new Date("2026-06-04T12:00:00Z"));
+  renderApp("/plan", db, fakeLoop());
+
+  await screen.findByText(/Changing the dates keeps every meal/);
+  expect(screen.queryByText(/This plan end/)).not.toBeInTheDocument();
+});
+
+test("the_banner_says_the_plan_ends_on_the_day_before_the_end", async () => {
+  vi.setSystemTime(new Date("2026-06-06T12:00:00Z"));
+  renderApp("/plan", db, fakeLoop());
+
+  expect(
+    await screen.findByText(`This plan ends ${sunday}`),
+  ).toBeInTheDocument();
+});
+
+test("the_banner_says_the_plan_ended_after_the_end", async () => {
+  vi.setSystemTime(new Date("2026-06-09T12:00:00Z"));
+  renderApp("/plan", db, fakeLoop());
+
+  expect(
+    await screen.findByText(`This plan ended ${sunday}`),
+  ).toBeInTheDocument();
+});
+
+test("the_banner_button_opens_the_move_on_dialog", async () => {
+  vi.setSystemTime(new Date("2026-06-09T12:00:00Z"));
+  const { user } = renderApp("/plan", db, fakeLoop());
+  await screen.findByText(`This plan ended ${sunday}`);
+
+  const [bannerButton] = screen.getAllByRole("button", {
+    name: `Move plan on to ${formatDay("2026-06-08")}`,
+  });
+  if (!bannerButton) {
+    throw new Error("no banner button");
+  }
+  await user.click(bannerButton);
+
+  expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
 });
 
 test("the_plan_waits_for_the_server_until_the_first_pull_brings_it", async () => {

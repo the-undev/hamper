@@ -17,7 +17,7 @@ export function PlanItems() {
         <WantedLines itemsById={itemsById} typeAheadLabel="Add to extras" />
       )}
       <p className={hint}>
-        Weekly stays when a new plan starts. Once is cleared by it.
+        Weekly stays when the plan moves on. Once is cleared by it.
       </p>
     </>
   );

@@ -53,9 +53,11 @@ over from week to week and nothing changes it except a person.
 - An extras list: lines for things beyond what the days need, milk, loo roll,
   a cereal someone fancies. Each extras line is marked Once or Weekly. The
   extras list is `wantedLines` in the code and on the wire.
-- "Start new plan" moves the start date on by the length and removes the
-  Once lines. Planned meals and Weekly lines stay as they are. It asks for a
-  confirm.
+- "Move plan on" moves the start date on by the length and removes the
+  Once lines. Planned meals and Weekly lines stay as they are. It is a button
+  with a confirm that lists the Once lines it clears. The page shows that the
+  plan is ending from two days before the next plan date, with the button
+  beside the notice.
 - Clearing a day removes all its planned meals.
 - "Copy meals from a past week" fills each day's list from an archived shop's
   meals, by position and in their order, replacing what was there. A planned

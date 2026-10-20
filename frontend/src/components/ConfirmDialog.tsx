@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,7 @@ export function ConfirmDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description: string;
+  description: ReactNode;
   confirmLabel: string;
   onConfirm: () => void;
   danger?: boolean;
@@ -31,8 +32,8 @@ export function ConfirmDialog({
         <AlertDialogTitle className="text-lg font-bold">
           {title}
         </AlertDialogTitle>
-        <AlertDialogDescription className="text-sm text-muted">
-          {description}
+        <AlertDialogDescription asChild>
+          <div className="text-sm text-muted">{description}</div>
         </AlertDialogDescription>
         <div className="flex gap-2">
           <AlertDialogCancel
