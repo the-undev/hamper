@@ -19,7 +19,7 @@ import {
   usePlannedMealsByPosition,
 } from "@/hooks/data";
 import { useWrite } from "@/hooks/useWrite";
-import { formatDay, nowIso } from "@/lib/dates";
+import { formatDay, localIsoDate, nowIso } from "@/lib/dates";
 import { liveRows, useLive } from "@/store/live";
 import { useDb } from "@/store/provider";
 import type { Plan } from "@/store/types";
@@ -56,6 +56,8 @@ export function PlanMeals() {
 
   const nextStart = formatDay(dayDate(plan, plan.lengthDays));
   const endDate = dayDate(plan, plan.lengthDays - 1);
+  const today = localIsoDate(new Date());
+  const ending = today >= dayDate(plan, plan.lengthDays - 2);
   const onceNames = lineViews(
     wantedLines.filter((line) => !line.weekly),
     itemsById,
@@ -63,6 +65,20 @@ export function PlanMeals() {
 
   return (
     <>
+      {ending && (
+        <div className="flex items-center justify-between gap-3 rounded-[14px] border border-line bg-soft p-3">
+          <p className="m-0 text-sm font-semibold text-accent">
+            This plan {today > endDate ? "ended" : "ends"} {formatDay(endDate)}
+          </p>
+          <button
+            type="button"
+            className="min-h-11 flex-none rounded-[10px] border border-line bg-surface px-3 text-sm font-bold text-accent"
+            onClick={() => setConfirmingNewPlan(true)}
+          >
+            Move plan on to {nextStart}
+          </button>
+        </div>
+      )}
       <p className="m-0 text-[13px] text-muted">
         Starts <b className="text-foreground">{formatDay(plan.startDate)}</b>,
         ends <b className="text-foreground">{formatDay(endDate)}</b>.{" "}

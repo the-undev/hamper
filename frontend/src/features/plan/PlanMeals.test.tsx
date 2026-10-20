@@ -255,6 +255,48 @@ test("the_move_on_dialog_says_so_when_there_are_no_once_items", async () => {
   ).toBeInTheDocument();
 });
 
+test("the_ending_banner_is_hidden_when_the_end_is_more_than_two_days_away", async () => {
+  vi.setSystemTime(new Date("2026-06-04T12:00:00Z"));
+  renderApp("/plan", db, fakeLoop());
+
+  await screen.findByText(/Changing the dates keeps every meal/);
+  expect(screen.queryByText(/This plan end/)).not.toBeInTheDocument();
+});
+
+test("the_banner_says_the_plan_ends_on_the_day_before_the_end", async () => {
+  vi.setSystemTime(new Date("2026-06-06T12:00:00Z"));
+  renderApp("/plan", db, fakeLoop());
+
+  expect(
+    await screen.findByText(`This plan ends ${sunday}`),
+  ).toBeInTheDocument();
+});
+
+test("the_banner_says_the_plan_ended_after_the_end", async () => {
+  vi.setSystemTime(new Date("2026-06-09T12:00:00Z"));
+  renderApp("/plan", db, fakeLoop());
+
+  expect(
+    await screen.findByText(`This plan ended ${sunday}`),
+  ).toBeInTheDocument();
+});
+
+test("the_banner_button_opens_the_move_on_dialog", async () => {
+  vi.setSystemTime(new Date("2026-06-09T12:00:00Z"));
+  const { user } = renderApp("/plan", db, fakeLoop());
+  await screen.findByText(`This plan ended ${sunday}`);
+
+  const [bannerButton] = screen.getAllByRole("button", {
+    name: `Move plan on to ${formatDay("2026-06-08")}`,
+  });
+  if (!bannerButton) {
+    throw new Error("no banner button");
+  }
+  await user.click(bannerButton);
+
+  expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+});
+
 test("the_plan_waits_for_the_server_until_the_first_pull_brings_it", async () => {
   await db.plan.clear();
   renderApp("/plan", db, fakeLoop());
