@@ -55,6 +55,17 @@ browser suite; it runs before a merge and in CI.
 Chosen clear of skarrow (8766, 5273, 4273, 8767, 8768) and the legacy app
 (8765, 5173) on the same machine.
 
+## Migrations
+
+Every schema change ships an EF Core migration and a test that migrates data
+written on the previous schema. `make check` fails when the model has changed
+without a migration.
+
+At startup, `Infrastructure/Persistence/StartupMigrator.cs` refuses a database
+ahead of the image, backs up an existing database with pending migrations, and
+migrates. No code reads the database before it has run. See
+[deployment](deployment.md#on-start).
+
 ## API
 
 Every endpoint lives under `/api` except `/health`, the `/sync` endpoints and

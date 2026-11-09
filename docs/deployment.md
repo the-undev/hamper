@@ -94,7 +94,9 @@ To create `hamper-edge`:
 9. Open `/health` on the host port. It answers ok.
 
 The stable container is the same with `:latest`, its own appdata folder and
-its own host port (`8780` by default).
+its own host port (`8780` by default). The stable container and
+`hamper-edge` must never share a data folder: `hamper-edge` migrates the
+database to the newest schema, which the stable image then refuses.
 
 `unraid/hamper.xml` and `unraid/hamper-edge.xml` hold the same settings in
 Unraid's template form, for reference.
@@ -106,10 +108,57 @@ The ports, `8780` and `8781`, are defaults the operator changes to suit the
 host. To update `hamper-edge`, use Docker, then Check for Updates, then apply
 the update. A restart alone does not pull the new image.
 
+## Releases
+
+Versions are 0.x until the data model stops moving, when the version becomes
+1.0.0. Under 0.x, a minor release carries any added or changed behaviour, or
+anything the operator must act on. A patch release carries fixes only.
+
+To cut a release, tag a commit on `main` as `vX.Y.Z` and push the tag:
+
+```
+git tag v0.1.0 main
+git push origin v0.1.0
+```
+
+The Release workflow runs the gates, publishes the image as described under
+[The image](#the-image), and creates a GitHub Release for the tag with GitHub's
+generated notes. A 0.x version, or one with a `-`, is marked pre-release there.
+
+### Upgrading on Unraid
+
+The stable container runs `:latest`. Unraid pulls a new image only when Check
+for Updates is used and the update applied, so the container upgrades when the
+operator chooses. A version tag as the Repository, such as
+`ghcr.io/the-undev/hamper:0.1.0`, pins it harder: the container stays on that
+version until the Repository is changed.
+
+### On start
+
+Before anything reads the database, the app compares the migrations it has
+applied with the image's. A migration the image does not know, applied by a
+newer image, stops the start with an error that names it and points at the
+backups.
+
+When the database exists and has migrations pending, the app first copies it to
+`/data/backups/hamper-<last applied migration id>-<UTC yyyyMMddHHmmss>.db` with
+SQLite's online backup, then migrates. A database with no migration applied
+takes `empty` as the id. The five newest backups are kept and older ones are
+deleted. A fresh database, or one with nothing pending, is not backed up.
+
+### Rolling back
+
+1. Stop the container.
+2. Copy the backup taken before the upgrade over `hamper.db` in the data
+   folder, and delete `hamper.db-wal` and `hamper.db-shm` beside it if they
+   are there.
+3. Set the Repository to the previous version tag, such as
+   `ghcr.io/the-undev/hamper:0.1.0`, and start the container.
+
 ## What the host provides
 
-- A directory mounted at `/data`. Everything mutable is in it: the database
-  and the images. Back that directory up and the instance can be rebuilt.
+- A directory mounted at `/data`. Everything mutable is in it: the database,
+  the images and the backups taken before migrations. Back that directory up and the instance can be rebuilt.
 - A port mapped to `8080`.
 - A network that reaches nothing else. hamper calls no other service.
 - The process runs as root unless `PUID` and `PGID` are set. With both set,
