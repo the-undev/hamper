@@ -12,6 +12,9 @@ public interface IFileStorage
 
     void CreateDirectory(string path);
 
+    /// <summary>Returns the full paths of the files in the directory whose names match the pattern, or none when it does not exist.</summary>
+    IReadOnlyList<string> ListFiles(string directory, string searchPattern);
+
     /// <summary>Ensures the parent directory, lets the producer write to a sibling temp path, then moves it over the destination.</summary>
     Task WriteAtomicAsync(string destination, Func<string, Task> produceToTemp);
 

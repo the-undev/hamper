@@ -24,10 +24,13 @@ public class HamperApiFactory : WebApplicationFactory<Program>
     /// <summary>The app's data directory, which holds the images.</summary>
     public string DataDir => _dataDir.Path;
 
+    /// <summary>The database file, which a test may prepare before the app first starts.</summary>
+    public string DatabasePath => _dataDir.Sub("test.db");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("Storage:DataDir", _dataDir.Path);
-        builder.UseSetting("ConnectionStrings:Hamper", $"Data Source={_dataDir.Sub("test.db")}");
+        builder.UseSetting("ConnectionStrings:Hamper", $"Data Source={DatabasePath}");
         builder.ConfigureServices(_configureServices);
     }
 

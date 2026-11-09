@@ -18,6 +18,9 @@ public sealed class LocalFileStorage : IFileStorage
 
     public void CreateDirectory(string path) => Directory.CreateDirectory(path);
 
+    public IReadOnlyList<string> ListFiles(string directory, string searchPattern) =>
+        Directory.Exists(directory) ? Directory.GetFiles(directory, searchPattern) : [];
+
     public async Task WriteAtomicAsync(string destination, Func<string, Task> produceToTemp)
     {
         CreateDirectory(Path.GetDirectoryName(destination)!);
