@@ -38,6 +38,11 @@ found by hand.
 When an item or meal is deleted through sync, its image files stay under
 `/data/images`. Nothing removes them yet.
 
+### Restore from the app
+
+The app backs the database up to `/data/backups` before it migrates. Restoring
+one is a manual file operation on the host; the app offers no restore.
+
 ### Presets
 
 Named sets of meals ("Week A", "Week B") and of items, applied to the plan in

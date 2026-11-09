@@ -36,9 +36,9 @@ Makefile   setup, dev, live-test, check, e2e, image
 .github/workflows/   ci.yml (the gates), release.yml (the image on a v* tag)
 ```
 
-`make check` runs build, format, backend tests, lint, typecheck, frontend
-tests and the frontend build, which fails when it emits no `sw.js` or
-`manifest.webmanifest`. Nothing merges without it. `make e2e` runs the
+`make check` runs build, format, the missing-migration check, backend tests,
+lint, typecheck, frontend tests and the frontend build, which fails when it
+emits no `sw.js` or `manifest.webmanifest`. Nothing merges without it. `make e2e` runs the
 browser suite; it runs before a merge and in CI.
 
 ### Ports
@@ -55,6 +55,17 @@ browser suite; it runs before a merge and in CI.
 Chosen clear of skarrow (8766, 5273, 4273, 8767, 8768) and the legacy app
 (8765, 5173) on the same machine.
 
+## Migrations
+
+Every schema change ships an EF Core migration and a test that migrates data
+written on the previous schema. `make check` fails when the model has changed
+without a migration.
+
+At startup, `Infrastructure/Persistence/StartupMigrator.cs` refuses a database
+ahead of the image, backs up an existing database with pending migrations, and
+migrates. No code reads the database before it has run. See
+[deployment](deployment.md#on-start).
+
 ## API
 
 Every endpoint lives under `/api` except `/health`, the `/sync` endpoints and
@@ -62,7 +73,9 @@ Every endpoint lives under `/api` except `/health`, the `/sync` endpoints and
 unknown path under `/api`, `/sync` or `/images` is a problem+json 404; any
 other unknown path gets the app shell.
 
-- `GET /health`: the status for a monitor.
+- `GET /health`: the status for a monitor and the running version,
+  `{"status":"ok","version":"<informational version>"}`. The More screen
+  shows the version as "Server <version>".
 - `POST /api/shops/{id}/archive`: copies an open shop into history and
   tombstones it.
 - `GET /api/history`: archived shops, newest first, with a line count.

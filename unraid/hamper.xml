@@ -7,7 +7,7 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/the-undev/hamper</Support>
   <Project>https://github.com/the-undev/hamper</Project>
-  <Overview>What the household eats this week, and what to buy for it. A plan of meals against days, plus the other things wanted, becomes a shopping list that is edited against what is already in the kitchen and ticked off in the shop, on a phone, with or without signal.</Overview>
+  <Overview>What the household eats this week, and what to buy for it. A plan of meals against days, plus the other things wanted, becomes a shopping list that is edited against what is already in the kitchen and ticked off in the shop, on a phone, with or without signal. Early software in development: any 0.x minor release may change anything, so read the release notes before upgrading.</Overview>
   <Category>Tools:</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/the-undev/hamper/main/unraid/hamper.xml</TemplateURL>

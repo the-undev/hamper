@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using Hamper.Api.Features.Health;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -17,7 +18,20 @@ public sealed class GetHealthTests(HamperApiFactory factory) : IClassFixture<Ham
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
-        Assert.Equal("""{"status":"ok"}""", await response.Content.ReadAsStringAsync(ct));
+        Assert.Equal("""{"status":"ok","version":"0.0.0-dev"}""", await response.Content.ReadAsStringAsync(ct));
+    }
+
+    [Fact]
+    public async Task Health_reports_the_running_version()
+    {
+        using var client = factory.CreateClient();
+        var ct = TestContext.Current.CancellationToken;
+
+        var health = await client.GetFromJsonAsync<HealthResponse>(new Uri("/health", UriKind.Relative), ct);
+
+        // An unstamped build, as the tests run, carries the default from Directory.Build.props.
+        Assert.Equal("0.0.0-dev", health?.Version);
+        Assert.Equal(GetHealth.Version, health?.Version);
     }
 
     [Fact]
@@ -37,6 +51,6 @@ public sealed class GetHealthTests(HamperApiFactory factory) : IClassFixture<Ham
         var result = GetHealth.Respond(databaseReachable: true);
 
         var ok = Assert.IsType<Ok<HealthResponse>>(result);
-        Assert.Equal(new HealthResponse("ok"), ok.Value);
+        Assert.Equal(new HealthResponse("ok", GetHealth.Version), ok.Value);
     }
 }

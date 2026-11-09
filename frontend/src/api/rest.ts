@@ -54,6 +54,18 @@ async function send(url: string, init: RequestInit): Promise<Response> {
   return response;
 }
 
+/** What the server says about itself: that it is up, and which build it runs. */
+export interface Health {
+  status: string;
+  version: string;
+}
+
+/** Reads the server status and its running version. */
+export async function fetchHealth(): Promise<Health> {
+  const response = await send("/health", { method: "GET" });
+  return (await response.json()) as Health;
+}
+
 /** Moves an open shop to history on the server, which tombstones it. */
 export async function archiveShop(shopId: string): Promise<void> {
   await send(`/api/shops/${shopId}/archive`, { method: "POST" });
@@ -104,6 +116,9 @@ export async function deleteImage(
 ): Promise<void> {
   await send(`/api/${table}/${rowId}/image`, { method: "DELETE" });
 }
+
+/** The query key of the server status. */
+export const healthKey = ["health"] as const;
 
 /** The query key of the history list; archiving invalidates it. */
 export const historyKey = ["history"] as const;

@@ -66,8 +66,10 @@ docker run -d --name hamper -v <dir>:/data -p <port>:8080 ghcr.io/the-undev/hamp
 Use `:edge` to follow `main`. Use `:latest` or a version tag to stay put until
 the next release.
 
-Once it is up, `GET /health` on the mapped port answers `{"status":"ok"}`, or a
-503 problem when the database cannot be reached. The first start creates
+Once it is up, `GET /health` on the mapped port answers
+`{"status":"ok","version":"<informational version>"}`, or a 503 problem
+when the database cannot be reached. The version is the build's stamp, such as
+`0.1.0+abc1234`, and the More screen shows it. The first start creates
 `hamper.db` in `<dir>`.
 
 ## Unraid
@@ -92,7 +94,9 @@ To create `hamper-edge`:
 9. Open `/health` on the host port. It answers ok.
 
 The stable container is the same with `:latest`, its own appdata folder and
-its own host port (`8780` by default).
+its own host port (`8780` by default). The stable container and
+`hamper-edge` must never share a data folder: `hamper-edge` migrates the
+database to the newest schema, which the stable image then refuses.
 
 `unraid/hamper.xml` and `unraid/hamper-edge.xml` hold the same settings in
 Unraid's template form, for reference.
@@ -104,10 +108,57 @@ The ports, `8780` and `8781`, are defaults the operator changes to suit the
 host. To update `hamper-edge`, use Docker, then Check for Updates, then apply
 the update. A restart alone does not pull the new image.
 
+## Releases
+
+Versions are 0.x until the data model stops moving, when the version becomes
+1.0.0. Under 0.x, a minor release carries any added or changed behaviour, or
+anything the operator must act on. A patch release carries fixes only.
+
+To cut a release, tag a commit on `main` as `vX.Y.Z` and push the tag:
+
+```
+git tag v0.1.0 main
+git push origin v0.1.0
+```
+
+The Release workflow runs the gates, publishes the image as described under
+[The image](#the-image), and creates a GitHub Release for the tag with GitHub's
+generated notes. A 0.x version, or one with a `-`, is marked pre-release there.
+
+### Upgrading on Unraid
+
+The stable container runs `:latest`. Unraid pulls a new image only when Check
+for Updates is used and the update applied, so the container upgrades when the
+operator chooses. A version tag as the Repository, such as
+`ghcr.io/the-undev/hamper:0.1.0`, pins it harder: the container stays on that
+version until the Repository is changed.
+
+### On start
+
+Before anything reads the database, the app compares the migrations it has
+applied with the image's. A migration the image does not know, applied by a
+newer image, stops the start with an error that names it and points at the
+backups.
+
+When the database exists and has migrations pending, the app first copies it to
+`/data/backups/hamper-<last applied migration id>-<UTC yyyyMMddHHmmss>.db` with
+SQLite's online backup, then migrates. A database with no migration applied
+takes `empty` as the id. The five newest backups are kept and older ones are
+deleted. A fresh database, or one with nothing pending, is not backed up.
+
+### Rolling back
+
+1. Stop the container.
+2. Copy the backup taken before the upgrade over `hamper.db` in the data
+   folder, and delete `hamper.db-wal` and `hamper.db-shm` beside it if they
+   are there.
+3. Set the Repository to the previous version tag, such as
+   `ghcr.io/the-undev/hamper:0.1.0`, and start the container.
+
 ## What the host provides
 
-- A directory mounted at `/data`. Everything mutable is in it: the database
-  and the images. Back that directory up and the instance can be rebuilt.
+- A directory mounted at `/data`. Everything mutable is in it: the database,
+  the images and the backups taken before migrations. Back that directory up and the instance can be rebuilt.
 - A port mapped to `8080`.
 - A network that reaches nothing else. hamper calls no other service.
 - The process runs as root unless `PUID` and `PGID` are set. With both set,
@@ -137,12 +188,16 @@ commands. Development logs every command.
 
 ## Development
 
-`make setup` restores the .NET packages and installs the frontend's. `make dev`
+`make setup` restores the .NET packages, the `dotnet-ef` tool pinned in
+`backend/dotnet-tools.json`, and the frontend's packages. `make dev`
 runs the API on `localhost:8776` and Vite on 5276 against the developer's own
 database and data directory in the checkout. `make live-test` runs the API
 alone on `127.0.0.1:8777` with its own database and data directory under
 `/tmp/hamper-live-test`, which `LIVE_TEST_DIR` moves, for manual checks, and
-never touches the dev database. `make check` runs every gate. `make e2e`
+never touches the dev database. `make check` runs every gate. Among them, `make backend-migrations` runs
+`dotnet ef migrations has-pending-model-changes` against the build and fails
+when the model has changed since the last migration; the CI workflow runs it
+in the backend job. `make e2e`
 builds the frontend, starts the API on `127.0.0.1:8778` with its own temp
 database, data directory and the build as its web root, and runs the
 Playwright suite against it: a phone and a desktop in Chromium, and a desktop

@@ -14,7 +14,8 @@ test("the server answers health, the manifest and the worker", async ({
   request,
 }) => {
   const health = await request.get("/health");
-  expect(await health.json()).toEqual({ status: "ok" });
+  // The suite runs an unstamped build.
+  expect(await health.json()).toEqual({ status: "ok", version: "0.0.0-dev" });
   expect((await request.get("/manifest.webmanifest")).ok()).toBe(true);
   expect((await request.get("/sw.js")).ok()).toBe(true);
 });

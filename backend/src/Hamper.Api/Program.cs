@@ -6,6 +6,7 @@ using Hamper.Api.Infrastructure.Hosting;
 using Hamper.Api.Infrastructure.Persistence;
 using Hamper.Api.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +36,12 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<HamperDbContext>();
     var time = scope.ServiceProvider.GetRequiredService<TimeProvider>();
-    await db.Database.MigrateAsync();
+    await StartupMigrator.MigrateAsync(
+        db,
+        scope.ServiceProvider.GetRequiredService<IFileStorage>(),
+        time,
+        scope.ServiceProvider.GetRequiredService<IOptions<StorageOptions>>().Value.DataDir,
+        CancellationToken.None);
     await app.Services.GetRequiredService<WriteGate>().RunAsync(
         ct => SeedPlan.EnsureAsync(db, time, ct),
         CancellationToken.None);

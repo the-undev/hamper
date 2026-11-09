@@ -1,5 +1,9 @@
 # hamper
 
+hamper is early software in development. Versions are 0.x, and any minor
+release may change anything, including what the operator must do. Read the
+release notes before upgrading.
+
 What the household eats this week, and what to buy for it. A plan of meals
 against days, plus the other things wanted, becomes a shopping list that is
 edited against what is already in the kitchen and ticked off in the shop, on a
