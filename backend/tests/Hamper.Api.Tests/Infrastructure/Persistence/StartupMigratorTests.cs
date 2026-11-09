@@ -79,6 +79,28 @@ public sealed class StartupMigratorTests
             Backups(factory).Select(Path.GetFileName).Order(StringComparer.Ordinal));
     }
 
+    [Fact]
+    public async Task A_database_from_a_newer_image_stops_the_start()
+    {
+        using var factory = StartingAt(StartedAt);
+        var ct = TestContext.Current.CancellationToken;
+        await MigrateToAsync(factory.DatabasePath, migrationId: null, ct);
+        await using (var db = Open(factory.DatabasePath))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                """INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion") VALUES ('29991231000000_FromANewerImage', '10.0.10');""",
+                ct);
+        }
+
+        SqliteConnection.ClearAllPools();
+
+        var error = Assert.Throws<InvalidOperationException>(() => factory.Services);
+        Assert.Equal(
+            "The database has migration 29991231000000_FromANewerImage, which this image does not know. "
+            + $"Run the image that created it, or restore a backup from {StartupMigrator.BackupsDirectory(factory.DataDir)}.",
+            error.Message);
+    }
+
     private static HamperApiFactory StartingAt(DateTimeOffset now) =>
         new(services => services.AddSingleton<TimeProvider>(new FakeTimeProvider(now)));
 

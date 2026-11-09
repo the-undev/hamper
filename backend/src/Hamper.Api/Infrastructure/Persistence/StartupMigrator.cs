@@ -19,7 +19,7 @@ public static class StartupMigrator
     /// <summary>Returns the backups directory under the data directory.</summary>
     public static string BackupsDirectory(string dataDir) => Path.Combine(dataDir, "backups");
 
-    /// <summary>Backs up the database when it exists and has pending migrations, keeps the newest backups, then migrates.</summary>
+    /// <summary>Refuses a database ahead of the image, backs up an existing database with pending migrations, keeps the newest backups, then migrates.</summary>
     public static async Task MigrateAsync(
         HamperDbContext db,
         IFileStorage storage,
@@ -31,17 +31,33 @@ public static class StartupMigrator
             ?? throw new InvalidOperationException("The database has no connection string.");
         // Checked before EF Core opens a connection, which creates the file.
         var databaseExisted = storage.FileExists(new SqliteConnectionStringBuilder(connectionString).DataSource);
+        var backupsDir = BackupsDirectory(dataDir);
+        var appliedMigrationIds = (await db.Database.GetAppliedMigrationsAsync(cancellationToken)).ToList();
+        RefuseUnknownMigrations(db, appliedMigrationIds, backupsDir);
         var pendingMigrationIds = await db.Database.GetPendingMigrationsAsync(cancellationToken);
         if (databaseExisted && pendingMigrationIds.Any())
         {
-            var appliedMigrationIds = await db.Database.GetAppliedMigrationsAsync(cancellationToken);
             var label = appliedMigrationIds.LastOrDefault() ?? EmptyLabel;
-            var backupsDir = BackupsDirectory(dataDir);
             await BackUpAsync(storage, connectionString, backupsDir, label, time.GetUtcNow());
             PruneBackups(storage, backupsDir);
         }
 
         await db.Database.MigrateAsync(cancellationToken);
+    }
+
+    /// <summary>Throws when the database has a migration this image does not have, which a newer image applied.</summary>
+    private static void RefuseUnknownMigrations(HamperDbContext db, IReadOnlyList<string> appliedMigrationIds, string backupsDir)
+    {
+        var knownMigrationIds = db.Database.GetMigrations().ToHashSet(StringComparer.Ordinal);
+        var unknownMigrationId = appliedMigrationIds.FirstOrDefault(id => !knownMigrationIds.Contains(id));
+        if (unknownMigrationId is null)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"The database has migration {unknownMigrationId}, which this image does not know. "
+            + $"Run the image that created it, or restore a backup from {backupsDir}.");
     }
 
     /// <summary>Copies the database through SQLite's online backup, so a WAL database is copied consistently.</summary>
