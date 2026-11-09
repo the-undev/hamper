@@ -1,6 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ChangeEvent, useState } from "react";
-import { importExport, RestError } from "@/api/rest";
+import { fetchHealth, healthKey, importExport, RestError } from "@/api/rest";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { hint } from "@/components/styles";
 import { useLiveItems } from "@/hooks/data";
@@ -24,12 +25,13 @@ export function syncSummary(status: SyncStatus): string {
   return `${lastSync}${offline}${problem}`;
 }
 
-/** The menu: Items, History, Export, Import, the sync status, and the HTTPS line on an insecure page. */
+/** The menu: Items, History, Export, Import, the sync status, the HTTPS line on an insecure page, and the server version. */
 export function MoreScreen() {
   const items = useLiveItems();
   const loop = useSyncLoop();
   const status = useSyncStatus(loop);
   const secure = useSecureContext();
+  const health = useQuery({ queryKey: healthKey, queryFn: fetchHealth });
   const [importResult, setImportResult] = useState<string | null>(null);
 
   const importFile = async (
@@ -93,6 +95,7 @@ export function MoreScreen() {
           Offline, install and share need the HTTPS address.
         </p>
       )}
+      {health.data && <p className={hint}>Server {health.data.version}</p>}
     </>
   );
 }

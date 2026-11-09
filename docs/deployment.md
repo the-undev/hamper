@@ -66,8 +66,10 @@ docker run -d --name hamper -v <dir>:/data -p <port>:8080 ghcr.io/the-undev/hamp
 Use `:edge` to follow `main`. Use `:latest` or a version tag to stay put until
 the next release.
 
-Once it is up, `GET /health` on the mapped port answers `{"status":"ok"}`, or a
-503 problem when the database cannot be reached. The first start creates
+Once it is up, `GET /health` on the mapped port answers
+`{"status":"ok","version":"<informational version>"}`, or a 503 problem
+when the database cannot be reached. The version is the build's stamp, such as
+`0.1.0+abc1234`, and the More screen shows it. The first start creates
 `hamper.db` in `<dir>`.
 
 ## Unraid

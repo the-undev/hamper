@@ -111,7 +111,8 @@ from history, so it is left out while offline.
 
 A menu: Items, History, Export, Import, and the sync status with the time of
 the last sync. Import says "Imported", or the reason the server refused the
-file.
+file. A quiet line at the bottom names the server's version, "Server
+0.1.0+abc1234", once the server has answered.
 
 **Items.** A search, then every item with its usual size. Tapping one opens
 the editor: the picture with Take photo, Choose photo and Remove photo as on

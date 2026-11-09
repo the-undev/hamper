@@ -62,7 +62,9 @@ Every endpoint lives under `/api` except `/health`, the `/sync` endpoints and
 unknown path under `/api`, `/sync` or `/images` is a problem+json 404; any
 other unknown path gets the app shell.
 
-- `GET /health`: the status for a monitor.
+- `GET /health`: the status for a monitor and the running version,
+  `{"status":"ok","version":"<informational version>"}`. The More screen
+  shows the version as "Server <version>".
 - `POST /api/shops/{id}/archive`: copies an open shop into history and
   tombstones it.
 - `GET /api/history`: archived shops, newest first, with a line count.

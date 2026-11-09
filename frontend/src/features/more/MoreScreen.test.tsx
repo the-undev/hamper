@@ -57,7 +57,9 @@ test("import_posts_the_file_says_imported_and_syncs", async () => {
   const zip = chooseZip();
 
   expect(await screen.findByText("Imported")).toBeInTheDocument();
-  expect(calls).toEqual([{ method: "POST", path: "/api/import", body: zip }]);
+  expect(calls.filter((call) => call.path === "/api/import")).toEqual([
+    { method: "POST", path: "/api/import", body: zip },
+  ]);
   expect(loop.syncNow).toHaveBeenCalledTimes(1);
 });
 
@@ -107,4 +109,14 @@ test("the_https_line_shows_only_on_an_insecure_context", async () => {
   renderApp("/more", db, fakeLoop());
 
   expect(await screen.findByText(httpsLine)).toBeInTheDocument();
+});
+
+test("shows the server version", async () => {
+  fakeFetch({
+    "GET /health": () =>
+      Response.json({ status: "ok", version: "0.1.0+abc1234" }),
+  });
+  renderApp("/more", db, fakeLoop());
+
+  expect(await screen.findByText("Server 0.1.0+abc1234")).toBeInTheDocument();
 });
