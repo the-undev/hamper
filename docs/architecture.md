@@ -36,9 +36,9 @@ Makefile   setup, dev, live-test, check, e2e, image
 .github/workflows/   ci.yml (the gates), release.yml (the image on a v* tag)
 ```
 
-`make check` runs build, format, backend tests, lint, typecheck, frontend
-tests and the frontend build, which fails when it emits no `sw.js` or
-`manifest.webmanifest`. Nothing merges without it. `make e2e` runs the
+`make check` runs build, format, the missing-migration check, backend tests,
+lint, typecheck, frontend tests and the frontend build, which fails when it
+emits no `sw.js` or `manifest.webmanifest`. Nothing merges without it. `make e2e` runs the
 browser suite; it runs before a merge and in CI.
 
 ### Ports

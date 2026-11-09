@@ -3,11 +3,12 @@ FRONTEND := frontend
 SLN := $(BACKEND)/Hamper.slnx
 
 .PHONY: setup dev live-test check e2e e2e-ui image image-check \
-	backend-build backend-format backend-test \
+	backend-build backend-format backend-migrations backend-test \
 	frontend-lint frontend-typecheck frontend-test frontend-build
 
 setup:
 	dotnet restore $(SLN)
+	cd $(BACKEND) && dotnet tool restore
 	pnpm -C $(FRONTEND) install
 
 # The API in the background and Vite in the foreground; the trap stops the API when Vite exits.
@@ -53,7 +54,7 @@ e2e-ui:
 	pnpm -C $(FRONTEND) build
 	pnpm -C $(FRONTEND) exec playwright test --ui
 
-check: backend-build backend-format backend-test \
+check: backend-build backend-format backend-migrations backend-test \
 	frontend-lint frontend-typecheck frontend-test frontend-build
 	@echo "All checks passed."
 
@@ -62,6 +63,10 @@ backend-build:
 
 backend-format:
 	dotnet format $(SLN) --verify-no-changes
+
+# Fails when the model has changed since the last migration; it reads the build, so it follows backend-build.
+backend-migrations: backend-build
+	cd $(BACKEND) && dotnet ef migrations has-pending-model-changes --project src/Hamper.Api --no-build
 
 backend-test:
 	dotnet test $(SLN)

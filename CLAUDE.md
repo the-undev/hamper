@@ -36,6 +36,7 @@ to phones. The code follows the docs, never the other way round.
 | Cut a release | Push a `v*` tag; the Release workflow runs the gates and publishes the image |
 | Backend build and test | `cd backend && dotnet build && dotnet test` |
 | Backend format check | `cd backend && dotnet format Hamper.slnx --verify-no-changes` |
+| Check no migration is missing (after a build) | `make backend-migrations` |
 | Add an EF migration | `cd backend && dotnet ef migrations add <Name> --project src/Hamper.Api -o Infrastructure/Persistence/Migrations` |
 | Frontend gates | `cd frontend && pnpm lint && pnpm typecheck && pnpm test && pnpm build` |
 
