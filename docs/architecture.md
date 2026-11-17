@@ -1,7 +1,6 @@
 # Architecture
 
-How hamper is built. The shape is skarrow's, without Aspire, with sync and a
-PWA added.
+How hamper is built.
 
 ## Stack
 
@@ -22,8 +21,7 @@ One process: the API serves the built frontend from `wwwroot`. One `/data`
 volume holds `hamper.db` and `images/`.
 
 Time goes through `TimeProvider` and file IO through one storage seam,
-`IFileStorage`, both enforced by `Microsoft.CodeAnalysis.BannedApiAnalyzers`,
-as in skarrow.
+`IFileStorage`, both enforced by `Microsoft.CodeAnalysis.BannedApiAnalyzers`.
 
 ## Layout
 
@@ -32,7 +30,7 @@ backend/   Hamper.slnx: src/Hamper.Api, tests/Hamper.Api.Tests
 frontend/  Vite + React, pnpm; e2e/ holds the Playwright suite
 docs/
 Dockerfile
-Makefile   setup, dev, live-test, check, e2e, image
+Makefile   build (the default), setup, dev, live-test, check, e2e, image
 .github/workflows/   ci.yml (the gates), release.yml (the image on a v* tag)
 ```
 
@@ -51,9 +49,6 @@ browser suite; it runs before a merge and in CI.
 | API, live test (own database and data dir) | 8777 |
 | API, browser tests (own temp database and data dir) | 8778 |
 | Container | 8080 |
-
-Chosen clear of skarrow (8766, 5273, 4273, 8767, 8768) and the legacy app
-(8765, 5173) on the same machine.
 
 ## Migrations
 

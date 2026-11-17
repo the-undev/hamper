@@ -28,7 +28,7 @@ live-test: frontend-build
 	ASPNETCORE_URLS=http://127.0.0.1:8777 \
 	ConnectionStrings__Hamper="Data Source=$(LIVE_TEST_DIR)/live-test.db" \
 	Storage__DataDir=$(LIVE_TEST_DIR)/data \
-	dotnet run --no-launch-profile -- --webroot $(CURDIR)/$(FRONTEND)/dist
+	dotnet run --no-launch-profile -c Release -- --webroot $(CURDIR)/$(FRONTEND)/dist
 
 # VERSION=x.y.z stamps the build and tags the image; without it both stay 0.0.0-dev.
 IMAGE ?= hamper

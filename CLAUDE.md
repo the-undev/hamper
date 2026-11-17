@@ -28,7 +28,7 @@ to phones.
 | Full check, every gate | `make check` |
 | Build the backend and the frontend | `make` |
 | Dev instance: the API and Vite, on the developer's own database `backend/src/Hamper.Api/hamper.db` and data directory `backend/src/Hamper.Api/hamper-data/` | `make dev` |
-| Isolated run: the API serving a fresh frontend build on 8777, with its own database and data directory under `/tmp/hamper-live-test`; open `http://127.0.0.1:8777` | `make live-test` |
+| Isolated run: the API in Release serving a fresh frontend build on 8777, with its own database and data directory under `/tmp/hamper-live-test`; open `http://127.0.0.1:8777` | `make live-test` |
 | Browser tests, before a merge; CI runs it too | `make e2e` |
 | Build the production image | `make image` (optional `VERSION=x.y.z`) |
 | Run the image as uid 99 and as root and check it; CI runs it too | `make image-check` |
