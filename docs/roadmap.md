@@ -22,6 +22,18 @@ Chosen when the container is added, from what is free on the server.
 The host's backup covers `/data`. Whether to also take an export on a
 schedule, and where to put it, is undecided.
 
+### Frontend bundle size
+
+The Vite build warns that one chunk is over 700 kB. The warning does not fail
+`make check`. Clearing it means splitting the frontend bundle. TBD whether to.
+
+### The migration-safety branch
+
+The `migration-safety` branch has two commits not on main. Its copy of the
+database before a migration was superseded by `StartupMigrator` on main. Its
+rules for a schema change never reached main. TBD whether they come to main or
+the branch is dropped.
+
 ### Testing sync from a phone
 
 The dev and live-test instances are on the developer's machine. A phone needs
