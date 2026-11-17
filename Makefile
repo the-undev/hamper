@@ -2,9 +2,11 @@ BACKEND := backend
 FRONTEND := frontend
 SLN := $(BACKEND)/Hamper.slnx
 
-.PHONY: setup dev live-test check e2e e2e-ui image image-check \
+.PHONY: build setup dev live-test check e2e e2e-ui image image-check \
 	backend-build backend-format backend-migrations backend-test \
 	frontend-lint frontend-typecheck frontend-test frontend-build
+
+build: backend-build frontend-build
 
 setup:
 	dotnet restore $(SLN)
@@ -18,15 +20,15 @@ dev:
 	trap 'kill $$api_pid 2>/dev/null' EXIT INT TERM; \
 	pnpm -C $(FRONTEND) dev
 
-# The API alone on its own port, database and data directory, clear of the dev database.
+# The API serving a fresh frontend build on its own port, database and data directory, clear of the dev database.
 LIVE_TEST_DIR ?= /tmp/hamper-live-test
-live-test:
+live-test: frontend-build
 	mkdir -p $(LIVE_TEST_DIR)
 	cd $(BACKEND)/src/Hamper.Api && \
 	ASPNETCORE_URLS=http://127.0.0.1:8777 \
 	ConnectionStrings__Hamper="Data Source=$(LIVE_TEST_DIR)/live-test.db" \
 	Storage__DataDir=$(LIVE_TEST_DIR)/data \
-	dotnet run --no-launch-profile
+	dotnet run --no-launch-profile -c Release -- --webroot $(CURDIR)/$(FRONTEND)/dist
 
 # VERSION=x.y.z stamps the build and tags the image; without it both stay 0.0.0-dev.
 IMAGE ?= hamper

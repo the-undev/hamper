@@ -189,12 +189,14 @@ commands. Development logs every command.
 ## Development
 
 `make setup` restores the .NET packages, the `dotnet-ef` tool pinned in
-`backend/dotnet-tools.json`, and the frontend's packages. `make dev`
+`backend/dotnet-tools.json`, and the frontend's packages. A bare `make` builds
+the backend and the frontend. `make dev`
 runs the API on `localhost:8776` and Vite on 5276 against the developer's own
-database and data directory in the checkout. `make live-test` runs the API
-alone on `127.0.0.1:8777` with its own database and data directory under
+database and data directory in the checkout. `make live-test` builds the
+frontend and runs the API in Release, serving that build, on `127.0.0.1:8777`
+with its own database and data directory under
 `/tmp/hamper-live-test`, which `LIVE_TEST_DIR` moves, for manual checks, and
-never touches the dev database. `make check` runs every gate. Among them, `make backend-migrations` runs
+never touches the dev database or the dev instance's build. `make check` runs every gate. Among them, `make backend-migrations` runs
 `dotnet ef migrations has-pending-model-changes` against the build and fails
 when the model has changed since the last migration; the CI workflow runs it
 in the backend job. `make e2e`

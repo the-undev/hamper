@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 hamper: a household's meal plan and shopping list, served from the home server
-to phones. The code follows the docs, never the other way round.
+to phones.
 
 ## Read first
 
@@ -9,8 +9,7 @@ to phones. The code follows the docs, never the other way round.
   feature that breaks one is not worth having.
 - [docs/domain.md](docs/domain.md) before touching the model or the schema.
 - [docs/architecture.md](docs/architecture.md) before writing code.
-- [docs/roadmap.md](docs/roadmap.md) holds everything parked. Anything worth
-  returning to goes there, in a commit, never in chat.
+- [docs/roadmap.md](docs/roadmap.md) holds everything parked.
 
 ## Layout
 
@@ -26,10 +25,11 @@ to phones. The code follows the docs, never the other way round.
 
 | What | Command |
 | --- | --- |
-| Every gate | `make check` |
+| Full check, every gate | `make check` |
+| Build the backend and the frontend | `make` |
+| Dev instance: the API and Vite, on the developer's own database `backend/src/Hamper.Api/hamper.db` and data directory `backend/src/Hamper.Api/hamper-data/` | `make dev` |
+| Isolated run: the API in Release serving a fresh frontend build on 8777, with its own database and data directory under `/tmp/hamper-live-test`; open `http://127.0.0.1:8777` | `make live-test` |
 | Browser tests, before a merge; CI runs it too | `make e2e` |
-| Run the API and Vite | `make dev` |
-| Isolated API for live checks (own database and data dir) | `make live-test` |
 | Build the production image | `make image` (optional `VERSION=x.y.z`) |
 | Run the image as uid 99 and as root and check it; CI runs it too | `make image-check` |
 | Publish an edge image | Push to main, or run the Publish edge workflow on a branch |
@@ -40,7 +40,7 @@ to phones. The code follows the docs, never the other way round.
 | Add an EF migration | `cd backend && dotnet ef migrations add <Name> --project src/Hamper.Api -o Infrastructure/Persistence/Migrations` |
 | Frontend gates | `cd frontend && pnpm lint && pnpm typecheck && pnpm test && pnpm build` |
 
-### Ports
+## Ports
 
 | What | Port |
 | --- | --- |
@@ -51,47 +51,23 @@ to phones. The code follows the docs, never the other way round.
 | API, browser tests | 8778 |
 | Container | 8080 |
 
-Never use skarrow's ports (8766, 8767, 8768, 5273, 4273) or the legacy app's
-(8765, 5173). Both run on the same machine.
-
-## Never touch the dev database
-
-`backend/src/Hamper.Api/hamper.db` and `hamper-data/` belong to the developer.
-Never delete them, never reset them, and treat anything listening on 8776 as
-the developer's own session. Every live check goes through `make live-test`,
-which runs the API on 8777 with its own database and data directory.
-
-## Hard conventions
+## Conventions
 
 [docs/architecture.md](docs/architecture.md) is the authority. The headlines:
 
 - Vertical slices: one folder per feature under `Features/`, one file per
   operation. `Infrastructure/` is cross-cutting plumbing only.
-- Every behaviour change ships with a test in the same commit, an integration
-  test through `HamperApiFactory` by default. Never mock the database.
+- Integration tests go through `HamperApiFactory`.
 - A behaviour the jsdom suite cannot see (gestures, timing, the worker, the
   network) ships with a Playwright test under `frontend/e2e/` instead.
-- Dependencies are required parameters, never optional with a null guard.
-- No infrastructure without a consumer.
 - API errors are always problem+json.
 - File IO only through the storage seam (`IFileStorage`), time only through
   `TimeProvider`. Both are enforced by the analyzer through
   `BannedSymbols.txt`.
-- Warnings are errors. Fix the cause; a suppression carries a one-line
-  comment saying why.
 
 ## Workflow
 
-- Plan before code. The plan is approved in text before any file changes.
-- Small commits on a branch. `main` moves only when told.
-- Every behaviour change ships with its test in the same commit.
-- Verify before claiming done, and report actual command output.
+- Changes go into main by merging the ticket branch locally, then pushing
+  main.
 - A change to how the model works updates `docs/domain.md` in the same commit.
   A change to how it is built or run updates `docs/deployment.md`.
-
-## Writing
-
-British English. Plain declarative sentences, one idea each. State a fact once.
-No em dashes. No "X is not Y, it is Z". No marketing adjectives. Docs say how
-things are now; what was rejected and why lives in commit bodies and the
-roadmap. Unknown is `TBD`, never a guess.
