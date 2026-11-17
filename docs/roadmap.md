@@ -3,6 +3,14 @@
 Work identified and not done, and decisions still open. Each has its own
 heading so a document can link to it.
 
+## High priority: check for personal data
+
+Before the repository goes public, check it for personal information: real
+names, account names, email addresses, home paths, hostnames and the names of
+the owner's other projects. Check the files, commit messages, branch names and
+the whole history, including deleted files. Replace what is found with invented
+values, and rewrite the history if any is found there.
+
 ## Open decisions
 
 ### Published port
