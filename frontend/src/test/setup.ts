@@ -1,16 +1,20 @@
 import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
-import { afterEach } from "vitest";
+import { afterEach, expect } from "vitest";
 import { FakeResizeObserver } from "./fake-resize-observer";
 
 // Without Vitest globals mode, Testing Library's auto-cleanup never registers.
-afterEach(() => {
+afterEach(async () => {
+  // Sonner keeps its toasts in module state and removes a dismissed one on a timer that unmounting does not clear,
+  // so every toast is dismissed and gone before cleanup, or the timer can fire after the file's jsdom is torn down.
+  toast.dismiss();
+  await waitFor(() =>
+    expect(document.querySelector("[data-sonner-toast]")).toBeNull(),
+  );
   cleanup();
   window.localStorage.clear();
-  // Sonner keeps its toasts in module state and shows any still open to the next test's toaster.
-  toast.dismiss();
 });
 
 // Node's experimental localStorage global (Node >= 25) shadows jsdom's and does nothing without --localstorage-file.
